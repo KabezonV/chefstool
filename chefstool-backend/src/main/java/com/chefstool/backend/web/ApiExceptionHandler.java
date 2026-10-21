@@ -16,6 +16,12 @@ public class ApiExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> noEncontrado(RecursoNoEncontradoException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> validacion(MethodArgumentNotValidException ex) {

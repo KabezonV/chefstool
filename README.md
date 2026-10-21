@@ -34,6 +34,21 @@ npm run dev
 Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 `vite.config.js`), así que no hay que configurar CORS en desarrollo.
 
+## API
+
+Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
+`PUT /{id}` (edición) y `DELETE /{id}` (borrado lógico, responde 204).
+
+| Recurso | Ruta |
+| --- | --- |
+| Productos | `/api/productos` |
+| Proveedores | `/api/proveedores` |
+| Clientes | `/api/clientes` |
+| Eventos | `/api/eventos` |
+
+Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
+duplicados) o 404 (registro inexistente).
+
 ## Requisitos
 
 - JDK 25 (`java -version` debe mostrar 25.x)
@@ -45,7 +60,7 @@ Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 | --- | --- | --- |
 | 0 | Java 25, git, secretos fuera del código, esqueleto del frontend | Completada |
 | 1 | Modelo de datos (Flyway) y entidades JPA | Completada |
-| 2 | CRUDs de productos, proveedores, clientes y eventos | Pendiente |
+| 2 | CRUDs de productos, proveedores, clientes y eventos | Completada |
 | 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Pendiente |
 | 4 | Compras, histórico de precios y alertas de subida | Pendiente |
 | 5 | Fichas técnicas y escandallos | Pendiente |

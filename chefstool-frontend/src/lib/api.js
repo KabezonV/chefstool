@@ -10,7 +10,8 @@ async function request(path, options = {}) {
   })
 
   if (!response.ok) {
-    throw new Error(`Error ${response.status} en ${path}`)
+    const cuerpo = await response.json().catch(() => null)
+    throw new Error(cuerpo?.error ?? `Error ${response.status} en ${path}`)
   }
 
   if (response.status === 204) {

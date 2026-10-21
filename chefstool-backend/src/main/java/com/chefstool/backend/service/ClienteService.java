@@ -1,0 +1,87 @@
+package com.chefstool.backend.service;
+
+import com.chefstool.backend.domain.Cliente;
+import com.chefstool.backend.repository.ClienteRepository;
+import com.chefstool.backend.web.RecursoNoEncontradoException;
+import com.chefstool.backend.web.dto.ClienteRequest;
+import com.chefstool.backend.web.dto.ClienteResponse;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class ClienteService {
+
+    private final ClienteRepository clienteRepository;
+    private final OrganizacionService organizacionService;
+
+    public ClienteService(
+            ClienteRepository clienteRepository, OrganizacionService organizacionService) {
+        this.clienteRepository = clienteRepository;
+        this.organizacionService = organizacionService;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClienteResponse> listar() {
+        return clienteRepository
+                .findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(
+                        organizacionService.organizacionActual())
+                .stream()
+                .map(ClienteResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public ClienteResponse crear(ClienteRequest request) {
+        UUID organizacionId = organizacionService.organizacionActual();
+        String nombre = request.nombre().trim();
+        comprobarNombreLibre(organizacionId, nombre);
+
+        Cliente cliente = new Cliente();
+        cliente.setOrganizacionId(organizacionId);
+        cliente.setNombre(nombre);
+        aplicar(cliente, request);
+        return ClienteResponse.from(clienteRepository.save(cliente));
+    }
+
+    @Transactional
+    public ClienteResponse actualizar(UUID id, ClienteRequest request) {
+        Cliente cliente = buscar(id);
+        String nombre = request.nombre().trim();
+
+        if (!cliente.getNombre().equalsIgnoreCase(nombre)) {
+            comprobarNombreLibre(cliente.getOrganizacionId(), nombre);
+        }
+
+        cliente.setNombre(nombre);
+        aplicar(cliente, request);
+        return ClienteResponse.from(clienteRepository.save(cliente));
+    }
+
+    @Transactional
+    public void eliminar(UUID id) {
+        buscar(id).setDeletedAt(OffsetDateTime.now());
+    }
+
+    private void aplicar(Cliente cliente, ClienteRequest request) {
+        cliente.setEmail(request.email());
+        cliente.setTelefono(request.telefono());
+        cliente.setNotas(request.notas());
+    }
+
+    private void comprobarNombreLibre(UUID organizacionId, String nombre) {
+        if (clienteRepository.existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(
+                organizacionId, nombre)) {
+            throw new IllegalArgumentException("Ya existe un cliente llamado " + nombre);
+        }
+    }
+
+    private Cliente buscar(UUID id) {
+        return clienteRepository
+                .findById(id)
+                .filter(cliente -> cliente.getDeletedAt() == null)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
+    }
+}

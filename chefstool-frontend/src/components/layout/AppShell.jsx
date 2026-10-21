@@ -77,7 +77,7 @@ export default function AppShell() {
         </nav>
 
         <div className="border-t border-border px-4 py-3 text-xs text-muted">
-          Fase 0 · esqueleto
+          v0.1 · entorno local
         </div>
       </aside>
 

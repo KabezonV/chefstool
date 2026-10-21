@@ -11,8 +11,10 @@ import static org.mockito.Mockito.when;
 
 import com.chefstool.backend.domain.Producto;
 import com.chefstool.backend.repository.ProductoRepository;
+import com.chefstool.backend.web.RecursoNoEncontradoException;
 import com.chefstool.backend.web.dto.ProductoRequest;
 import com.chefstool.backend.web.dto.ProductoResponse;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,5 +83,66 @@ class ProductoServiceTest {
                 .hasMessageContaining("Tomate");
 
         verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void actualizaProductoExistente() {
+        Producto existente = producto("Tomate");
+        when(productoRepository.findById(existente.getId())).thenReturn(Optional.of(existente));
+        when(productoRepository.existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(
+                        ORG, "Tomate pera"))
+                .thenReturn(false);
+        when(productoRepository.save(any(Producto.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProductoResponse actualizado =
+                productoService.actualizar(
+                        existente.getId(), new ProductoRequest("Tomate pera", "Verdura", "kg"));
+
+        assertThat(actualizado.nombre()).isEqualTo("Tomate pera");
+        assertThat(actualizado.categoria()).isEqualTo("Verdura");
+    }
+
+    @Test
+    void permiteMantenerElMismoNombreAlActualizar() {
+        Producto existente = producto("Tomate");
+        when(productoRepository.findById(existente.getId())).thenReturn(Optional.of(existente));
+        when(productoRepository.save(any(Producto.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        productoService.actualizar(
+                existente.getId(), new ProductoRequest("tomate", "Verdura", "kg"));
+
+        verify(productoRepository, never())
+                .existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(any(), any());
+    }
+
+    @Test
+    void eliminarAplicaBorradoLogico() {
+        Producto existente = producto("Tomate");
+        when(productoRepository.findById(existente.getId())).thenReturn(Optional.of(existente));
+
+        productoService.eliminar(existente.getId());
+
+        assertThat(existente.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    void actualizarProductoInexistenteDevuelve404() {
+        UUID id = UUID.randomUUID();
+        when(productoRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () -> productoService.actualizar(id, new ProductoRequest("X", null, "kg")))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
+    private Producto producto(String nombre) {
+        Producto producto = new Producto();
+        producto.setId(UUID.randomUUID());
+        producto.setOrganizacionId(ORG);
+        producto.setNombre(nombre);
+        producto.setUnidadBase("kg");
+        return producto;
     }
 }
