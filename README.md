@@ -34,6 +34,30 @@ npm run dev
 Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 `vite.config.js`), así que no hay que configurar CORS en desarrollo.
 
+## Arquitectura
+
+El backend sigue una **arquitectura hexagonal pragmática**:
+
+```
+com.chefstool.backend
+├── domain/model        Entidades y conceptos del negocio (Producto, Compra, Ficha…)
+├── domain/port/out     Puertos de salida: repositorios, almacenamiento y OCR
+├── application         Casos de uso; solo dependen del dominio y de los puertos
+├── adapter/in/web      Controladores REST, DTOs y manejo de errores
+└── adapter/out         Implementaciones: Spring Data, OCR y almacenamiento
+```
+
+Las dependencias apuntan siempre hacia dentro: `adapter → application → domain`.
+Cambiar el motor de OCR, sustituir el disco por Supabase Storage o migrar de base
+de datos no obliga a tocar los casos de uso.
+
+Dos compromisos conscientes para no añadir indirección innecesaria a este tamaño:
+
+- Las entidades JPA son también el modelo de dominio. Separarlas exigiría duplicar
+  el mapeo de 13 entidades; se hará el día que cambie el motor de persistencia.
+- Los repositorios de Spring Data viven en `domain/port/out` como puertos; Spring
+  genera las implementaciones, que actúan como adaptador implícito.
+
 ## API
 
 Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
