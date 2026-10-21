@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { ChefHat, Menu, Plus, X } from 'lucide-react'
+import { ChefHat, LogOut, Menu, Plus, X } from 'lucide-react'
 import { navItems } from '@/config/navigation'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/lib/auth-context'
 import { cn } from '@/lib/utils'
 
 export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { sesion, salir } = useAuth()
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
@@ -76,8 +78,19 @@ export default function AppShell() {
           </ul>
         </nav>
 
-        <div className="border-t border-border px-4 py-3 text-xs text-muted">
-          v0.1 · entorno local
+        <div className="border-t border-border px-4 py-3">
+          <p className="truncate text-sm font-medium">{sesion?.nombre ?? 'Invitado'}</p>
+          <p className="truncate text-xs text-muted">
+            {sesion?.organizacion ?? 'Sin organizacion'} · {sesion?.rol ?? ''}
+          </p>
+          <button
+            type="button"
+            onClick={salir}
+            className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-foreground"
+          >
+            <LogOut className="size-3.5" />
+            Cerrar sesión
+          </button>
         </div>
       </aside>
 

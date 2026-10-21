@@ -16,6 +16,12 @@ public class ApiExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, String> noAutorizado(CredencialesInvalidasException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
     @ExceptionHandler(ConflictoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> conflictoDeEstado(ConflictoException ex) {

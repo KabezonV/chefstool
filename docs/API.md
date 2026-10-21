@@ -1,0 +1,249 @@
+# API de Chefstool
+
+Base: `http://localhost:8080/api`
+
+## Convenciones
+
+- Autenticación: `Authorization: Bearer <token>` en todas las rutas salvo
+  `POST /auth/login` y `POST /auth/registro`.
+- Los importes son `number` en euros; las fechas, `YYYY-MM-DD`.
+- Los errores devuelven `{"error": "mensaje"}` con el código HTTP adecuado:
+
+| Código | Significado |
+| --- | --- |
+| 400 | Datos no válidos, duplicado o regla de negocio incumplida |
+| 401 | Token ausente/caducado o credenciales incorrectas |
+| 404 | El recurso no existe (o está borrado) |
+| 409 | Conflicto de estado (documento ya confirmado/descartado) |
+
+## Autenticación
+
+### Registro
+
+```bash
+curl -X POST http://localhost:8080/api/auth/registro \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"chef@cocina.es","password":"secreto123",
+       "nombre":"Ana","organizacion":"Cocina Norte"}'
+```
+
+`201` con:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "usuarioId": "…",
+  "email": "chef@cocina.es",
+  "nombre": "Ana",
+  "organizacionId": "…",
+  "organizacion": "Cocina Norte",
+  "rol": "propietario"
+}
+```
+
+### Login
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"chef@cocina.es","password":"secreto123"}'
+```
+
+Devuelve el mismo objeto `SesionResponse`. Con contraseña incorrecta: `401`.
+
+### Sesión actual
+
+```bash
+curl http://localhost:8080/api/auth/yo -H "Authorization: Bearer $TOKEN"
+```
+
+## Productos
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/productos` | Listado activo ordenado por nombre |
+| POST | `/productos` | Alta (`nombre`, `categoria`, `unidadBase`) |
+| PUT | `/productos/{id}` | Edición |
+| DELETE | `/productos/{id}` | Borrado lógico (204) |
+| GET | `/productos/{id}/precios` | Histórico y comparativa por proveedor |
+
+```bash
+curl -X POST http://localhost:8080/api/productos \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"nombre":"Tomate pera","categoria":"Verdura","unidadBase":"kg"}'
+```
+
+`GET /productos/{id}/precios`:
+
+```json
+{
+  "productoId": "…",
+  "nombre": "Harina de trigo",
+  "unidadBase": "kg",
+  "mejorProveedor": "Verduras Lopez",
+  "mejorPrecio": 8.90,
+  "proveedores": [
+    {"proveedorId":"…","proveedorNombre":"Verduras Lopez","precioActual":8.90,
+     "precioMinimo":8.90,"precioMaximo":8.90,"ultimaCompra":"2026-10-12"},
+    {"proveedorId":"…","proveedorNombre":"Frutas Garcia","precioActual":13.20,
+     "precioMinimo":9.50,"precioMaximo":13.20,"ultimaCompra":"2026-10-05"}
+  ],
+  "evolucion": [
+    {"fecha":"2026-08-15","precio":9.50,"proveedorNombre":"Frutas Garcia"}
+  ]
+}
+```
+
+## Proveedores
+
+`GET|POST /proveedores`, `PUT|DELETE /proveedores/{id}`.
+Campos: `nombre` (obligatorio), `cif`, `email`, `telefono`, `notas`.
+
+## Clientes
+
+`GET|POST /clientes`, `PUT|DELETE /clientes/{id}`.
+Campos: `nombre` (obligatorio), `email`, `telefono`, `notas`.
+
+## Eventos
+
+`GET|POST /eventos`, `PUT|DELETE /eventos/{id}`.
+Campos: `nombre` (obligatorio), `fecha`, `comensales`, `clienteId`, `notas`.
+
+## Documentos
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/documentos` | Bandeja (todos los estados) |
+| POST | `/documentos` | Multipart `archivo` + `origen` (`subida`/`camara`) |
+| POST | `/documentos` | Solo `origen=demo` → albarán de ejemplo sin archivo |
+| GET | `/documentos/{id}` | Detalle con la extracción |
+| PUT | `/documentos/{id}` | Guarda el borrador revisado (mismo cuerpo que la extracción) |
+| POST | `/documentos/{id}/confirmar` | Crea la compra |
+| DELETE | `/documentos/{id}` | Descarta (204) |
+| GET | `/documentos/{id}/archivo` | Devuelve el archivo original |
+
+```bash
+# Subir una foto
+curl -X POST http://localhost:8080/api/documentos \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "archivo=@albaran.jpg" -F "origen=camara"
+
+# Generar uno de demostración
+curl -X POST http://localhost:8080/api/documentos \
+  -H "Authorization: Bearer $TOKEN" -F "origen=demo"
+```
+
+Cuerpo de revisión y confirmación (`ExtraccionDocumento`):
+
+```json
+{
+  "proveedorId": "…",
+  "proveedorNombre": "Frutas Garcia",
+  "numeroDocumento": "ALB-1234",
+  "fecha": "2026-10-05",
+  "moneda": "EUR",
+  "importeNeto": 100.00,
+  "importeIva": 10.00,
+  "importeTotal": 110.00,
+  "lineas": [
+    {"descripcion":"Tomate","cantidad":10,"unidad":"kg",
+     "precioUnitario":2.50,"importe":25.00,
+     "productoId":"…","clienteId":null,"eventoId":null}
+  ]
+}
+```
+
+Al confirmar se crea la compra, se actualiza `proveedor_productos` y se genera
+una alerta si el precio sube ≥5 % respecto al último registrado.
+
+## Compras
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/compras` | Filtros opcionales `proveedorId`, `desde`, `hasta` |
+| GET | `/compras/{id}` | Detalle con líneas |
+
+## Alertas de precio
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/alertas` | Pendientes (`?todas=true` incluye reconocidas) |
+| POST | `/alertas/{id}/reconocer` | Marca como revisada (204) |
+
+## Fichas técnicas
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/fichas` | Listado con coste por ración y margen |
+| GET | `/fichas/{id}` | Detalle con líneas y precios aplicados |
+| POST | `/fichas` | Alta con líneas |
+| PUT | `/fichas/{id}` | Edición (recalcula costes) |
+| DELETE | `/fichas/{id}` | Borrado lógico |
+
+```json
+{
+  "nombre": "Salsa de tomate",
+  "descripcion": "Base para pizzas",
+  "raciones": 4,
+  "precioVenta": 12.00,
+  "lineas": [
+    {"productoId":"…","descripcion":"Tomate","cantidad":2,"unidad":"kg"}
+  ]
+}
+```
+
+El coste usa el **mejor precio vigente** del producto entre todos los proveedores.
+La respuesta incluye `costeTotal`, `costePorRacion`, `margenPct` y
+`productosSinPrecio`.
+
+## Panel e informes
+
+```bash
+curl http://localhost:8080/api/informes/panel -H "Authorization: Bearer $TOKEN"
+```
+
+```json
+{
+  "kpis": {
+    "gastoMes": 364.54, "gastoMesAnterior": 140.25, "variacionPct": 159.92,
+    "comprasMes": 3, "documentosPendientes": 0, "alertasPendientes": 2
+  },
+  "ahorroPotencial": 72.00,
+  "lineasMejorables": 5,
+  "comprasAnalizadas": 6,
+  "gastoTotal": 609.29,
+  "gastoPorProveedor": [{"etiqueta":"Frutas Garcia","importe":145.20}],
+  "gastoPorMes": [{"etiqueta":"2026-10","importe":364.54}],
+  "mayoresVariaciones": [
+    {"producto":"Harina de trigo","proveedor":"Frutas Garcia",
+     "porcentaje":26.92,"precioAnterior":10.40,"precioNuevo":13.20}
+  ],
+  "alertas": [{"id":"…","mensaje":"…","severidad":"critico"}],
+  "documentosPorRevisar": [{"id":"…","nombreOriginal":"albaran.pdf"}]
+}
+```
+
+## Usuarios y organización
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/usuarios` | Miembros de la organización |
+| PUT | `/usuarios/{id}/rol` | Cambia el rol (`propietario`, `admin`, `miembro`) |
+| GET | `/organizacion` | Datos de la organización |
+| PUT | `/organizacion` | Renombra la organización |
+
+## Flujo completo de ejemplo
+
+```bash
+TOKEN=$(curl -s -X POST localhost:8080/api/auth/registro -H 'Content-Type: application/json' \
+  -d '{"email":"demo@chef.es","password":"secreto123"}' | jq -r .token)
+
+DOC=$(curl -s -X POST localhost:8080/api/documentos -H "Authorization: Bearer $TOKEN" \
+  -F "origen=demo" | jq -r .id)
+
+curl -s -X POST localhost:8080/api/documentos/$DOC/confirmar \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d @extraccion.json
+
+curl -s localhost:8080/api/informes/panel -H "Authorization: Bearer $TOKEN" | jq .kpis
+```
