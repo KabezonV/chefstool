@@ -10,6 +10,7 @@ import Documentos from '@/pages/Documentos'
 import FichaDetalle from '@/pages/FichaDetalle'
 import FichaNuevo from '@/pages/FichaNuevo'
 import Fichas from '@/pages/Fichas'
+import Informes from '@/pages/Informes'
 import Eventos from '@/pages/Eventos'
 import Placeholder from '@/pages/Placeholder'
 import ProductoDetalle from '@/pages/ProductoDetalle'
@@ -20,6 +21,7 @@ const paginas = {
   '/documentos': <Documentos />,
   '/compras': <Compras />,
   '/fichas': <Fichas />,
+  '/informes': <Informes />,
   '/productos': <Productos />,
   '/proveedores': <Proveedores />,
   '/clientes': <Clientes />,

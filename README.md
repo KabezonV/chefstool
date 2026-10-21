@@ -72,6 +72,7 @@ Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
 | Compras | `/api/compras` (filtros `proveedorId`, `desde`, `hasta`) |
 | Alertas de precio | `/api/alertas` (`todas=true` incluye reconocidas) |
 | Fichas técnicas | `/api/fichas` |
+| Panel e informes | `/api/informes/panel` |
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
@@ -86,6 +87,13 @@ duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
 | `PUT` | `/api/documentos/{id}` | Guarda el borrador revisado |
 | `POST` | `/api/documentos/{id}/confirmar` | Crea la compra y actualiza precios |
 | `DELETE` | `/api/documentos/{id}` | Descarta el documento |
+
+### Panel
+
+`GET /api/informes/panel` devuelve en una sola llamada los KPIs del mes, la
+variación frente al mes anterior, el gasto por proveedor y por mes, las alertas,
+los documentos pendientes y el ahorro potencial (diferencia entre lo pagado y el
+mejor precio histórico de cada producto).
 
 ### Fichas técnicas
 
@@ -121,5 +129,5 @@ conectar un motor real basta con añadir otra implementación.
 | 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Completada |
 | 4 | Compras, histórico de precios y alertas de subida | Completada |
 | 5 | Fichas técnicas y escandallos | Completada |
-| 6 | Dashboard e informes | Pendiente |
+| 6 | Dashboard e informes | Completada |
 | 7 | Autenticación, organizaciones, roles y PWA | Pendiente |

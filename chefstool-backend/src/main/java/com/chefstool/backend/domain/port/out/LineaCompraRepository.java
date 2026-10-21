@@ -20,4 +20,15 @@ public interface LineaCompraRepository extends JpaRepository<LineaCompra, UUID> 
             order by c.fecha asc
             """)
     List<LineaCompra> historialPorProducto(@Param("productoId") UUID productoId);
+
+    @Query(
+            """
+            select l from LineaCompra l
+            join fetch l.compra c
+            left join fetch c.proveedor
+            left join fetch l.producto
+            where c.organizacionId = :organizacionId
+            order by c.fecha asc
+            """)
+    List<LineaCompra> lineasDeOrganizacion(@Param("organizacionId") UUID organizacionId);
 }

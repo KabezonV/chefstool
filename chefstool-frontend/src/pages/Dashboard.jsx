@@ -1,78 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, PlugZap } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, BellRing, FileText, PiggyBank } from 'lucide-react'
 import { api } from '@/lib/api'
+import { fechaCorta, moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Barras from '@/components/ui/barras'
 
-function Kpi({ label, value, hint }) {
+function Kpi({ etiqueta, valor, detalle, tono }) {
   return (
     <Card>
       <CardContent className="pt-5">
-        <p className="text-xs font-medium text-muted">{label}</p>
-        <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
-      </CardContent>
-    </Card>
-  )
-}
-
-function BackendStatus() {
-  const [state, setState] = useState({ status: 'loading', data: null, error: null })
-
-  useEffect(() => {
-    let active = true
-
-    api
-      .get('/productos')
-      .then((data) => active && setState({ status: 'ok', data, error: null }))
-      .catch((error) =>
-        active && setState({ status: 'error', data: null, error: error.message }),
-      )
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <PlugZap className="size-4" />
-          Conexión con el backend
-        </CardTitle>
-        {state.status === 'loading' && <Badge>Comprobando…</Badge>}
-        {state.status === 'ok' && <Badge tone="success">Conectado</Badge>}
-        {state.status === 'error' && <Badge tone="danger">Sin conexión</Badge>}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {state.status === 'error' && (
-          <p className="text-sm text-muted">
-            {state.error}. Arranca el backend con{' '}
-            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 text-xs">
-              ./mvnw spring-boot:run
-            </code>{' '}
-            en <code className="text-xs">chefstool-backend</code>.
+        <p className="text-xs font-medium text-muted">{etiqueta}</p>
+        <p className="mt-1 text-2xl font-semibold tracking-tight">{valor}</p>
+        {detalle && (
+          <p
+            className={
+              tono === 'danger'
+                ? 'mt-1 flex items-center gap-1 text-xs text-danger'
+                : tono === 'success'
+                  ? 'mt-1 flex items-center gap-1 text-xs text-success'
+                  : 'mt-1 text-xs text-muted'
+            }
+          >
+            {detalle}
           </p>
-        )}
-
-        {state.status === 'ok' && (
-          <>
-            <p className="text-sm text-muted">
-              GET <code className="text-xs">/api/productos</code> devuelve{' '}
-              {state.data?.length ?? 0} productos del catálogo.
-            </p>
-            <ul className="flex flex-wrap gap-2">
-              {(state.data ?? []).map((producto) => (
-                <li key={producto.id}>
-                  <Badge>
-                    {producto.nombre} · {producto.unidadBase}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          </>
         )}
       </CardContent>
     </Card>
@@ -80,46 +33,186 @@ function BackendStatus() {
 }
 
 export default function Dashboard() {
+  const [panel, setPanel] = useState(null)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let activo = true
+
+    api
+      .get('/informes/panel')
+      .then((datos) => activo && setPanel(datos))
+      .catch((err) => activo && setError(err.message))
+
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        {error}
+      </div>
+    )
+  }
+
+  if (!panel) {
+    return <p className="text-sm text-muted">Cargando panel…</p>
+  }
+
+  const { kpis } = panel
+  const variacion = kpis.variacionPct === null ? null : Number(kpis.variacionPct)
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">
-          Resumen de tu operación
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Los indicadores se activarán cuando registres compras.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight">Resumen de tu operación</h1>
+        <p className="mt-1 text-sm text-muted">Datos reales de tus compras confirmadas.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Gasto del mes" value="—" hint="Sin compras confirmadas" />
-        <Kpi label="Gasto mes anterior" value="—" hint="Sin histórico" />
-        <Kpi label="Variación" value="—" hint="Comparativa mensual" />
-        <Kpi label="Documentos por revisar" value="0" hint="Albaranes pendientes" />
+        <Kpi
+          etiqueta="Gasto del mes"
+          valor={moneda(kpis.gastoMes)}
+          detalle={
+            variacion === null ? (
+              'Sin mes anterior para comparar'
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                {variacion >= 0 ? (
+                  <ArrowUpRight className="size-3.5" />
+                ) : (
+                  <ArrowDownRight className="size-3.5" />
+                )}
+                {variacion >= 0 ? '+' : ''}
+                {variacion.toFixed(1)} % vs mes anterior
+              </span>
+            )
+          }
+          tono={variacion === null ? null : variacion > 0 ? 'danger' : 'success'}
+        />
+        <Kpi
+          etiqueta="Compras del mes"
+          valor={kpis.comprasMes}
+          detalle={panel.comprasAnalizadas + ' compras históricas'}
+        />
+        <Kpi
+          etiqueta="Documentos por revisar"
+          valor={kpis.documentosPendientes}
+          detalle="Albaranes pendientes de confirmar"
+        />
+        <Kpi
+          etiqueta="Ahorro potencial"
+          valor={moneda(panel.ahorroPotencial)}
+          detalle={panel.lineasMejorables + ' líneas por encima del mejor precio'}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <BackendStatus />
+        <Card>
+          <CardHeader>
+            <CardTitle>Gasto por proveedor (mes)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Barras datos={panel.gastoPorProveedor} etiquetaVacia="Sin compras este mes." />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Siguiente paso</CardTitle>
+            <CardTitle>Gasto de los últimos meses</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted">
-            <p>
-              Etapa 1: modelo de datos (productos, proveedores, compras, líneas,
-              fichas y alertas de precio).
-            </p>
-            <Link
-              to="/documentos"
-              className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline"
-            >
-              Ver documentos
-              <ArrowRight className="size-4" />
-            </Link>
+          <CardContent>
+            <Barras datos={panel.gastoPorMes} etiquetaVacia="Sin histórico." />
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BellRing className="size-4" />
+              Alertas de precio
+            </CardTitle>
+            <Link to="/compras" className="text-xs font-medium text-muted hover:text-foreground">
+              Ver compras
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {panel.alertas.length === 0 ? (
+              <p className="text-sm text-muted">No hay subidas de precio pendientes.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {panel.alertas.map((alerta) => (
+                  <li key={alerta.id} className="flex items-start gap-2">
+                    <Badge tone={alerta.severidad === 'critico' ? 'danger' : 'warning'}>
+                      {alerta.severidad}
+                    </Badge>
+                    <span>{alerta.mensaje}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="size-4" />
+              Documentos por revisar
+            </CardTitle>
+            <Link to="/documentos" className="text-xs font-medium text-muted hover:text-foreground">
+              Ver documentos
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {panel.documentosPorRevisar.length === 0 ? (
+              <p className="text-sm text-muted">Todo revisado.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {panel.documentosPorRevisar.map((documento) => (
+                  <li key={documento.id}>
+                    <Link
+                      to={'/documentos/' + documento.id}
+                      className="flex items-center justify-between gap-2 hover:underline"
+                    >
+                      <span className="truncate">{documento.nombreOriginal}</span>
+                      <span className="shrink-0 text-xs text-muted">
+                        {fechaCorta(documento.createdAt)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PiggyBank className="size-4" />
+            Ahorro potencial
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted">
+          <p>
+            Estimación comparando cada compra con el mejor precio histórico del mismo
+            producto. Ahora mismo asciende a{' '}
+            <span className="font-semibold text-foreground">
+              {moneda(panel.ahorroPotencial)}
+            </span>{' '}
+            en {panel.lineasMejorables} líneas.
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-3">
+            <Link to="/informes">Ver informe completo</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
