@@ -45,6 +45,8 @@ Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
 | Proveedores | `/api/proveedores` |
 | Clientes | `/api/clientes` |
 | Eventos | `/api/eventos` |
+| Compras | `/api/compras` (filtros `proveedorId`, `desde`, `hasta`) |
+| Alertas de precio | `/api/alertas` (`todas=true` incluye reconocidas) |
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
@@ -59,6 +61,15 @@ duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
 | `PUT` | `/api/documentos/{id}` | Guarda el borrador revisado |
 | `POST` | `/api/documentos/{id}/confirmar` | Crea la compra y actualiza precios |
 | `DELETE` | `/api/documentos/{id}` | Descarta el documento |
+
+### Precios
+
+`GET /api/productos/{id}/precios` devuelve el histórico del producto: precio actual
+por proveedor, mínimo y máximo, mejor proveedor y la evolución cronológica.
+
+`POST /api/alertas/{id}/reconocer` marca una alerta como revisada.
+
+### OCR
 
 El OCR está detrás de la interfaz `ExtractorDocumento`. Hoy se usa
 `ExtractorDemo`, que genera una extracción realista con el catálogo actual; para
@@ -77,7 +88,7 @@ conectar un motor real basta con añadir otra implementación.
 | 1 | Modelo de datos (Flyway) y entidades JPA | Completada |
 | 2 | CRUDs de productos, proveedores, clientes y eventos | Completada |
 | 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Completada |
-| 4 | Compras, histórico de precios y alertas de subida | Pendiente |
+| 4 | Compras, histórico de precios y alertas de subida | Completada |
 | 5 | Fichas técnicas y escandallos | Pendiente |
 | 6 | Dashboard e informes | Pendiente |
 | 7 | Autenticación, organizaciones, roles y PWA | Pendiente |

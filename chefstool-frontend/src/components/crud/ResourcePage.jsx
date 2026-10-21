@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -74,7 +76,8 @@ function Campo({ campo, valor, onChange, opciones }) {
 }
 
 export default function ResourcePage({ recurso }) {
-  const { endpoint, titulo, descripcion, columnas, campos, singular, vacio } = recurso
+  const { endpoint, titulo, descripcion, columnas, campos, singular, vacio, detalle } = recurso
+  const navigate = useNavigate()
 
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -297,7 +300,14 @@ export default function ResourcePage({ recurso }) {
                 </thead>
                 <tbody>
                   {items.map((item) => (
-                    <tr key={item.id} className="border-b border-border/60 last:border-0">
+                    <tr
+                      key={item.id}
+                      onClick={detalle ? () => navigate(detalle(item)) : undefined}
+                      className={cn(
+                        'border-b border-border/60 last:border-0',
+                        detalle && 'cursor-pointer hover:bg-black/[0.02]',
+                      )}
+                    >
                       {columnas.map((columna) => (
                         <td key={columna.key} className="px-5 py-3">
                           {columna.format
@@ -305,7 +315,7 @@ export default function ResourcePage({ recurso }) {
                             : (item[columna.key] ?? '—')}
                         </td>
                       ))}
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"

@@ -10,6 +10,7 @@ export const productos = {
   singular: 'producto',
   descripcion: 'Catálogo normalizado de ingredientes y materias primas.',
   vacio: 'Todavía no hay productos en el catálogo.',
+  detalle: (producto) => `/productos/${producto.id}`,
   columnas: [
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoria', label: 'Categoría' },

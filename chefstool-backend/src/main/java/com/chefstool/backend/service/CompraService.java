@@ -18,8 +18,11 @@ import com.chefstool.backend.repository.ProductoRepository;
 import com.chefstool.backend.repository.ProveedorProductoRepository;
 import com.chefstool.backend.repository.ProveedorRepository;
 import com.chefstool.backend.web.RecursoNoEncontradoException;
+import com.chefstool.backend.web.dto.CompraDetalle;
 import com.chefstool.backend.web.dto.CompraResponse;
+import com.chefstool.backend.web.dto.CompraResumen;
 import com.chefstool.backend.web.dto.ExtraccionDocumento;
+import com.chefstool.backend.web.dto.LineaCompraResponse;
 import com.chefstool.backend.web.dto.LineaExtraccion;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -45,6 +48,7 @@ public class CompraService {
     private final EventoRepository eventoRepository;
     private final ProveedorProductoRepository proveedorProductoRepository;
     private final AlertaPrecioRepository alertaPrecioRepository;
+    private final OrganizacionService organizacionService;
 
     public CompraService(
             CompraRepository compraRepository,
@@ -54,7 +58,8 @@ public class CompraService {
             ClienteRepository clienteRepository,
             EventoRepository eventoRepository,
             ProveedorProductoRepository proveedorProductoRepository,
-            AlertaPrecioRepository alertaPrecioRepository) {
+            AlertaPrecioRepository alertaPrecioRepository,
+            OrganizacionService organizacionService) {
         this.compraRepository = compraRepository;
         this.lineaCompraRepository = lineaCompraRepository;
         this.proveedorRepository = proveedorRepository;
@@ -63,6 +68,30 @@ public class CompraService {
         this.eventoRepository = eventoRepository;
         this.proveedorProductoRepository = proveedorProductoRepository;
         this.alertaPrecioRepository = alertaPrecioRepository;
+        this.organizacionService = organizacionService;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CompraResumen> listar(UUID proveedorId, LocalDate desde, LocalDate hasta) {
+        return compraRepository
+                .buscar(organizacionService.organizacionActual(), proveedorId, desde, hasta)
+                .stream()
+                .map(CompraResumen::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CompraDetalle obtener(UUID id) {
+        Compra compra =
+                compraRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RecursoNoEncontradoException("Compra no encontrada"));
+        List<LineaCompraResponse> lineas =
+                lineaCompraRepository.findByCompraId(id).stream()
+                        .map(LineaCompraResponse::from)
+                        .toList();
+        return CompraDetalle.from(compra, lineas);
     }
 
     @Transactional

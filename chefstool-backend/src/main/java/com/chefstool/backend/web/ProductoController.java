@@ -1,6 +1,7 @@
 package com.chefstool.backend.web;
 
 import com.chefstool.backend.service.ProductoService;
+import com.chefstool.backend.web.dto.HistoricoPrecios;
 import com.chefstool.backend.web.dto.ProductoRequest;
 import com.chefstool.backend.web.dto.ProductoResponse;
 import jakarta.validation.Valid;
@@ -42,6 +43,11 @@ public class ProductoController {
     public ProductoResponse actualizar(
             @PathVariable UUID id, @Valid @RequestBody ProductoRequest request) {
         return productoService.actualizar(id, request);
+    }
+
+    @GetMapping("/{id}/precios")
+    public HistoricoPrecios precios(@PathVariable UUID id) {
+        return productoService.historico(id);
     }
 
     @DeleteMapping("/{id}")
