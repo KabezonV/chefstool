@@ -47,6 +47,7 @@ Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
 | Eventos | `/api/eventos` |
 | Compras | `/api/compras` (filtros `proveedorId`, `desde`, `hasta`) |
 | Alertas de precio | `/api/alertas` (`todas=true` incluye reconocidas) |
+| Fichas técnicas | `/api/fichas` |
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
@@ -61,6 +62,12 @@ duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
 | `PUT` | `/api/documentos/{id}` | Guarda el borrador revisado |
 | `POST` | `/api/documentos/{id}/confirmar` | Crea la compra y actualiza precios |
 | `DELETE` | `/api/documentos/{id}` | Descarta el documento |
+
+### Fichas técnicas
+
+`/api/fichas` permite crear escandallos con sus ingredientes. El coste de cada
+línea se calcula automáticamente con el **mejor precio vigente** del producto
+entre todos los proveedores, y el margen sale del precio de venta por ración.
 
 ### Precios
 
@@ -89,6 +96,6 @@ conectar un motor real basta con añadir otra implementación.
 | 2 | CRUDs de productos, proveedores, clientes y eventos | Completada |
 | 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Completada |
 | 4 | Compras, histórico de precios y alertas de subida | Completada |
-| 5 | Fichas técnicas y escandallos | Pendiente |
+| 5 | Fichas técnicas y escandallos | Completada |
 | 6 | Dashboard e informes | Pendiente |
 | 7 | Autenticación, organizaciones, roles y PWA | Pendiente |
