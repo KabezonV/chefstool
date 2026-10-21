@@ -1,0 +1,17 @@
+.DS_Store
+*.log
+
+# Entorno / secretos
+.env
+.env.*
+!.env.example
+
+# Backend (Maven)
+**/target/
+
+# Frontend (Node)
+node_modules/
+dist/
+dist-ssr/
+.vite/
+coverage/
