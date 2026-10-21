@@ -18,7 +18,10 @@ cp .env.example .env   # rellena DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 ./mvnw spring-boot:run
 ```
 
-La API queda en `http://localhost:8080/api`, por ejemplo `GET /api/ingredientes`.
+La API queda en `http://localhost:8080/api`, por ejemplo `GET /api/productos`.
+
+El esquema de base de datos lo gestiona Flyway (`src/main/resources/db/migration`).
+Las migraciones se aplican solas al arrancar; Hibernate solo valida el modelo.
 
 ### Frontend
 
@@ -41,7 +44,7 @@ Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 | Etapa | Alcance | Estado |
 | --- | --- | --- |
 | 0 | Java 25, git, secretos fuera del código, esqueleto del frontend | Completada |
-| 1 | Modelo de datos (Flyway) y entidades JPA | Pendiente |
+| 1 | Modelo de datos (Flyway) y entidades JPA | Completada |
 | 2 | CRUDs de productos, proveedores, clientes y eventos | Pendiente |
 | 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Pendiente |
 | 4 | Compras, histórico de precios y alertas de subida | Pendiente |

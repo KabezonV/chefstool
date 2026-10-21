@@ -5,11 +5,6 @@ import { api } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-const eur = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-})
-
 function Kpi({ label, value, hint }) {
   return (
     <Card>
@@ -29,7 +24,7 @@ function BackendStatus() {
     let active = true
 
     api
-      .get('/ingredientes')
+      .get('/productos')
       .then((data) => active && setState({ status: 'ok', data, error: null }))
       .catch((error) =>
         active && setState({ status: 'error', data: null, error: error.message }),
@@ -65,15 +60,14 @@ function BackendStatus() {
         {state.status === 'ok' && (
           <>
             <p className="text-sm text-muted">
-              GET <code className="text-xs">/api/ingredientes</code> responde con{' '}
-              {state.data?.length ?? 0} registros (datos de prueba).
+              GET <code className="text-xs">/api/productos</code> devuelve{' '}
+              {state.data?.length ?? 0} productos del catálogo.
             </p>
             <ul className="flex flex-wrap gap-2">
-              {(state.data ?? []).map((ingrediente) => (
-                <li key={ingrediente.id}>
+              {(state.data ?? []).map((producto) => (
+                <li key={producto.id}>
                   <Badge>
-                    {ingrediente.nombre} · {eur.format(ingrediente.precio ?? 0)} /{' '}
-                    {ingrediente.unidadMedida}
+                    {producto.nombre} · {producto.unidadBase}
                   </Badge>
                 </li>
               ))}
