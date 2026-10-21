@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 /** Albaran o factura subido, pendiente de revision o ya confirmado. */
@@ -66,5 +67,6 @@ public class DocumentoCompra {
     @CreationTimestamp
     private OffsetDateTime createdAt;
 
+    @UpdateTimestamp
     private OffsetDateTime updatedAt;
 }

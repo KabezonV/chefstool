@@ -47,7 +47,22 @@ Todos los recursos exponen el mismo contrato: `GET` (listado), `POST` (alta),
 | Eventos | `/api/eventos` |
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
-duplicados) o 404 (registro inexistente).
+duplicados), 404 (registro inexistente) o 409 (documento ya confirmado).
+
+### Documentos y OCR
+
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| `POST` | `/api/documentos` | Multipart con `archivo` y `origen` (`subida`/`camara`) |
+| `POST` | `/api/documentos` | Con solo `origen=demo` genera un albarán de ejemplo |
+| `GET` | `/api/documentos/{id}/archivo` | Abre el original |
+| `PUT` | `/api/documentos/{id}` | Guarda el borrador revisado |
+| `POST` | `/api/documentos/{id}/confirmar` | Crea la compra y actualiza precios |
+| `DELETE` | `/api/documentos/{id}` | Descarta el documento |
+
+El OCR está detrás de la interfaz `ExtractorDocumento`. Hoy se usa
+`ExtractorDemo`, que genera una extracción realista con el catálogo actual; para
+conectar un motor real basta con añadir otra implementación.
 
 ## Requisitos
 
@@ -61,7 +76,7 @@ duplicados) o 404 (registro inexistente).
 | 0 | Java 25, git, secretos fuera del código, esqueleto del frontend | Completada |
 | 1 | Modelo de datos (Flyway) y entidades JPA | Completada |
 | 2 | CRUDs de productos, proveedores, clientes y eventos | Completada |
-| 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Pendiente |
+| 3 | Documentos + OCR (cámara, extracción, revisión y confirmación) | Completada |
 | 4 | Compras, histórico de precios y alertas de subida | Pendiente |
 | 5 | Fichas técnicas y escandallos | Pendiente |
 | 6 | Dashboard e informes | Pendiente |

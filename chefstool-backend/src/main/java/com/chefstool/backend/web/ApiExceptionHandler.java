@@ -16,6 +16,12 @@ public class ApiExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
+    @ExceptionHandler(ConflictoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> conflictoDeEstado(ConflictoException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
     @ExceptionHandler(RecursoNoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> noEncontrado(RecursoNoEncontradoException ex) {

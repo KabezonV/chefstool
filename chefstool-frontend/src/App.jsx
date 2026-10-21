@@ -3,12 +3,16 @@ import AppShell from '@/components/layout/AppShell'
 import { navItems } from '@/config/navigation'
 import Clientes from '@/pages/Clientes'
 import Dashboard from '@/pages/Dashboard'
+import DocumentoDetalle from '@/pages/DocumentoDetalle'
+import DocumentoNuevo from '@/pages/DocumentoNuevo'
+import Documentos from '@/pages/Documentos'
 import Eventos from '@/pages/Eventos'
 import Placeholder from '@/pages/Placeholder'
 import Productos from '@/pages/Productos'
 import Proveedores from '@/pages/Proveedores'
 
 const paginas = {
+  '/documentos': <Documentos />,
   '/productos': <Productos />,
   '/proveedores': <Proveedores />,
   '/clientes': <Clientes />,
@@ -32,15 +36,8 @@ export default function App() {
             />
           ))}
 
-        <Route
-          path="/documentos/nuevo"
-          element={
-            <Placeholder
-              title="Nuevo documento"
-              description="Captura con cámara, subida de albarán y extracción OCR: Etapa 3."
-            />
-          }
-        />
+        <Route path="/documentos/nuevo" element={<DocumentoNuevo />} />
+        <Route path="/documentos/:id" element={<DocumentoDetalle />} />
 
         <Route
           path="*"
