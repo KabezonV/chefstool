@@ -13,17 +13,23 @@ Son dos piezas independientes:
 
 ## 1. Base de datos
 
-El esquema lo aplica Flyway al arrancar el backend. No hay que ejecutar SQL a mano.
+Cualquier **PostgreSQL 14 o superior** sirve: un contenedor propio, un servidor con Docker
+o una instancia gestionada (Amazon RDS, Aurora, Azure Database…). El esquema lo aplica
+Flyway al arrancar el backend, no hay que ejecutar SQL a mano.
+
+Para Amazon RDS: instancia PostgreSQL 17 `db.t4g.micro` (free tier 12 meses), 20 GB,
+copias automáticas 7 días, security group que solo permita el servidor de la aplicación y
+`DB_SSLMODE=require`. Guía completa y comparativa de costes:
+[MIGRACION-BASE-DE-DATOS.md](MIGRACION-BASE-DE-DATOS.md).
 
 - Usa una base de datos **distinta** para producción y para desarrollo.
-- Si el proyecto Supabase es nuevo, crea el `.env` con sus credenciales y arranca
-  el backend una vez: las migraciones V1–V4 se aplican solas.
+- Si la base es nueva, arranca el backend una vez: las migraciones V1–V6 se aplican solas.
 - **Copia de seguridad**: activa los backups automáticos de Supabase y prueba una
   restauración antes de dar acceso a usuarios reales.
 
-> El pooler de Supabase en modo sesión limita a **15 conexiones**. Por eso el
-> backend usa `maximum-pool-size=3` y `minimum-idle=0`. Si lo despliegas con más
-> de una instancia, baja aún más el pool o usa el pooler en modo transacción.
+> El pool es pequeño a propósito (`DB_POOL_MAX`, 5 por defecto) para no agotar las
+> conexiones de instancias gestionadas pequeñas. Con varias instancias, reparte ese
+> número o usa un pooler (RDS Proxy).
 
 ## 2. Backend
 
@@ -33,7 +39,8 @@ El esquema lo aplica Flyway al arrancar el backend. No hay que ejecutar SQL a ma
 # Obligatorias
 DB_HOST=...
 DB_PORT=5432
-DB_NAME=postgres
+DB_NAME=chefstool
+DB_SSLMODE=require
 DB_USER=...
 DB_PASSWORD=...
 CHEFSTOOL_JWT_SECRET=<cadena aleatoria de 32+ caracteres>

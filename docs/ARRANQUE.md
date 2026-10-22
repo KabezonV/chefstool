@@ -8,8 +8,8 @@ Guía para tener la aplicación funcionando en local en unos 5 minutos.
   [macOS](https://docs.docker.com/desktop/install/mac-install/)). En Windows, deja que
   active WSL 2 cuando lo pida.
 - Git (ya lo tienes, has clonado el repositorio).
-- Las credenciales de la base de datos (te las paso aparte por privado, no están en el
-  repositorio por seguridad).
+- Nada más: la base de datos **PostgreSQL va incluida** en el `docker-compose` y se crea
+  sola la primera vez.
 
 ## Pasos
 
@@ -23,12 +23,12 @@ Edita `.env` y rellena:
 
 | Variable | Qué poner |
 | --- | --- |
-| `DB_HOST` | `aws-0-eu-west-1.pooler.supabase.com` |
+| `DB_HOST` | `postgres` (el servicio de la propia composición) |
 | `DB_PORT` | `5432` |
-| `DB_NAME` | `postgres` |
-| `DB_USER` | el usuario de Supabase que te paso |
-| `DB_PASSWORD` | la contraseña que te paso |
-| `CHEFSTOOL_JWT_SECRET` | una cadena larga: `openssl rand -base64 48` (en Windows, cualquier texto de más de 32 caracteres sirve) |
+| `DB_NAME` | `chefstool` |
+| `DB_USER` | `chefstool` |
+| `DB_PASSWORD` | `chefstool` (cámbiala si el equipo es compartido) |
+| `CHEFSTOOL_JWT_SECRET` | ya viene un valor de ejemplo; en un servidor, uno propio |
 
 El resto puede quedarse como está. Después:
 
@@ -64,10 +64,16 @@ La primera vez tarda unos minutos (descarga Java, Node y Tesseract). Cuando term
 | Síntoma | Solución |
 | --- | --- |
 | `docker: command not found` | Docker Desktop no está abierto o no está instalado |
-| La API no arranca y dice `Connection refused` | Revisa `DB_HOST`, `DB_USER` y `DB_PASSWORD` del `.env` |
+| La API no arranca y dice `Connection refused` | Espera 20 s (la base tarda en aceptar conexiones) y comprueba con `docker compose ps` que `chefstool-db` está *healthy* |
 | `chefstool.seguridad.jwt-secret debe tener al menos 32 caracteres` | Pon una cadena más larga en `CHEFSTOOL_JWT_SECRET` |
 | El puerto 8080 u 8081 está ocupado | Cambia el número de la izquierda en `docker-compose.yml` (`'8090:8080'`) |
 | La lectura de fotos no encuentra texto | Es normal con fotos muy movidas o escritas a mano: se corrige a mano en la pantalla de revisión |
+
+## Dónde están los datos
+
+- Base de datos: volumen `chefstool_datos` (sobrevive a reinicios).
+- Albaranes: volumen `chefstool_albaranes`.
+- Para empezar de cero: `docker compose down -v` (borra ambos volúmenes).
 
 ## Parar y limpiar
 

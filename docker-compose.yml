@@ -1,21 +1,48 @@
 # Chefstool completo en un comando:  docker compose up --build
 # Antes: copia .env.ejemplo a .env y rellena las credenciales de Supabase.
 services:
+  # PostgreSQL propio: la aplicacion no necesita ningun servicio de base de datos de pago.
+  # En produccion se apunta DB_HOST a la instancia gestionada (por ejemplo RDS) y este
+  # servicio se puede quitar.
+  postgres:
+    image: postgres:17-alpine
+    container_name: chefstool-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-chefstool}
+      POSTGRES_USER: ${DB_USER:-chefstool}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-chefstool}
+    volumes:
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-chefstool} -d ${DB_NAME:-chefstool}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      # Solo para poder conectarse con psql/DBeaver desde el equipo; no es necesario
+      - '${DB_PUBLIC_PORT:-5433}:5432'
+
   backend:
     build: ./chefstool-backend
     container_name: chefstool-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-postgres}
+      DB_NAME: ${DB_NAME:-chefstool}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: ${DB_SSLMODE:-prefer}
       CHEFSTOOL_JWT_SECRET: ${CHEFSTOOL_JWT_SECRET}
       CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:8081}
       CHEFSTOOL_ENLACE_DIRECTO: ${CHEFSTOOL_ENLACE_DIRECTO:-false}
       CHEFSTOOL_ALMACEN: ${CHEFSTOOL_ALMACEN:-local}
+      # Almacen de albaranes en la nube (opcional; por defecto se usa el volumen local)
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-}
       SUPABASE_BUCKET: ${SUPABASE_BUCKET:-documentos}
@@ -43,3 +70,4 @@ services:
 
 volumes:
   albaranes:
+  datos:

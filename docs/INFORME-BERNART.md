@@ -120,9 +120,12 @@ Las invitaciones y la recuperación de contraseña **ya funcionan**, pero sin en
 | **Render** (servidor + web) | Sencillo, se conecta a GitHub, plan gratuito para probar | 0 € demo · 7–25 €/mes en uso real |
 | **Azure** (lo más probable si la empresa ya lo usa) | Facturación y soporte de siempre, cumplimiento | 30–60 €/mes (a confirmar) |
 | **Fly.io** | Muy barato y rápido en Europa | 5–15 €/mes |
-| Base de datos | Supabase | 0 € (plan gratuito) · 25 $/mes plan Pro con copias |
+| Base de datos | **PostgreSQL propio o Amazon RDS** | 0 € en el servidor de demo · 15–25 €/mes en RDS `db.t4g.micro` con copias |
 
-**Mi recomendación:** empezar en **Render** con Supabase (coste casi 0) para la demo y el piloto; si la empresa prefiere Azure por facturación, se migra sin tocar código (está en un contenedor estándar).
+**Mi recomendación:** empezar en **Render** (o el servidor que indique informática) con
+**PostgreSQL propio** para la demo y el piloto: la base de datos ya no depende de Supabase
+y se puede alojar en Amazon RDS cuando dirección lo decida, sin tocar código
+(detalle y costes en [MIGRACION-BASE-DE-DATOS.md](MIGRACION-BASE-DE-DATOS.md)).
 
 ### Decisión 4 — Protección de datos (RGPD)
 
@@ -143,7 +146,7 @@ Estimación para **una cocina con 2–5 usuarios y unos 300 albaranes al mes** (
 | Concepto | Mensual |
 | --- | --- |
 | Servidor de la aplicación | 7–25 € |
-| Base de datos (Supabase) | 0–25 € |
+| Base de datos (PostgreSQL/RDS) | 0–25 € |
 | Correo transaccional | 0–15 € |
 | Lectura externa de albaranes (si se activa, 300 docs) | 3–30 € |
 | Dominio y certificados | ~1 € |
