@@ -5,14 +5,17 @@ import com.chefstool.backend.adapter.in.web.RecursoNoEncontradoException;
 import com.chefstool.backend.adapter.in.web.dto.LoginRequest;
 import com.chefstool.backend.adapter.in.web.dto.RegistroRequest;
 import com.chefstool.backend.adapter.in.web.dto.SesionResponse;
+import com.chefstool.backend.domain.model.Invitacion;
 import com.chefstool.backend.domain.model.MiembroOrganizacion;
 import com.chefstool.backend.domain.model.Organizacion;
 import com.chefstool.backend.domain.model.Usuario;
+import com.chefstool.backend.domain.port.out.InvitacionRepository;
 import com.chefstool.backend.domain.port.out.MiembroOrganizacionRepository;
 import com.chefstool.backend.domain.port.out.OrganizacionRepository;
 import com.chefstool.backend.domain.port.out.UsuarioRepository;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +33,7 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final OrganizacionRepository organizacionRepository;
     private final MiembroOrganizacionRepository miembroRepository;
+    private final InvitacionRepository invitacionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
     private final long horasToken;
@@ -38,12 +42,14 @@ public class AuthService {
             UsuarioRepository usuarioRepository,
             OrganizacionRepository organizacionRepository,
             MiembroOrganizacionRepository miembroRepository,
+            InvitacionRepository invitacionRepository,
             PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
             @Value("${chefstool.seguridad.jwt-horas:12}") long horasToken) {
         this.usuarioRepository = usuarioRepository;
         this.organizacionRepository = organizacionRepository;
         this.miembroRepository = miembroRepository;
+        this.invitacionRepository = invitacionRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
         this.horasToken = horasToken;
@@ -65,6 +71,14 @@ public class AuthService {
         usuario.setPasswordHash(passwordEncoder.encode(peticion.password()));
         usuario = usuarioRepository.save(usuario);
 
+        List<Invitacion> invitaciones =
+                invitacionRepository.findByEmailIgnoreCaseAndAceptadaAtIsNullOrderByCreatedAtAsc(
+                        email);
+
+        if (!invitaciones.isEmpty()) {
+            return unirAOrganizacionesInvitadas(usuario, invitaciones);
+        }
+
         Organizacion organizacion = new Organizacion();
         organizacion.setNombre(
                 peticion.organizacion() == null || peticion.organizacion().isBlank()
@@ -81,6 +95,39 @@ public class AuthService {
         miembroRepository.save(miembro);
 
         return sesion(usuario, organizacion, miembro.getRol());
+    }
+
+    /** El correo estaba invitado: se une a esas organizaciones en lugar de crear una. */
+    private SesionResponse unirAOrganizacionesInvitadas(
+            Usuario usuario, List<Invitacion> invitaciones) {
+        Organizacion primera = null;
+        String rolEnPrimera = null;
+
+        for (Invitacion invitacion : invitaciones) {
+            MiembroOrganizacion miembro = new MiembroOrganizacion();
+            miembro.setOrganizacionId(invitacion.getOrganizacionId());
+            miembro.setUsuarioId(usuario.getId());
+            miembro.setEmail(usuario.getEmail());
+            miembro.setNombre(usuario.getNombre());
+            miembro.setRol(invitacion.getRol());
+            miembroRepository.save(miembro);
+
+            invitacion.setAceptadaAt(java.time.OffsetDateTime.now());
+            invitacionRepository.save(invitacion);
+
+            if (primera == null) {
+                primera =
+                        organizacionRepository
+                                .findById(invitacion.getOrganizacionId())
+                                .orElseThrow(
+                                        () ->
+                                                new RecursoNoEncontradoException(
+                                                        "Organizacion no encontrada"));
+                rolEnPrimera = invitacion.getRol();
+            }
+        }
+
+        return sesion(usuario, primera, rolEnPrimera);
     }
 
     @Transactional(readOnly = true)

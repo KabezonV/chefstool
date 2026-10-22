@@ -84,8 +84,31 @@ Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 - Roles: `propietario`, `admin`, `miembro`. La organización no puede quedarse sin
   al menos un propietario.
 - En los tests la seguridad se desactiva con el perfil `test`
-  (`application-test.properties`), salvo en `AuthControllerTest`, que la ejercita
-  de verdad.
+  (`application-test.properties`), salvo en los tests de autenticación y equipo,
+  que la ejercitan de verdad.
+
+### Invitar a un compañero
+
+En **Usuarios → Invitar a tu equipo** se invita por correo:
+
+- Si la persona **ya tiene cuenta**, se añade a la organización al momento.
+- Si **no la tiene**, la invitación queda pendiente (con su rol) y se resuelve sola
+  cuando se registre con ese correo: entra en tu organización en vez de crear una
+  propia.
+
+No hace falta servicio de email: la invitación se guarda y se aplica en el
+registro. Se puede cancelar desde la misma pantalla.
+
+### Permisos por rol
+
+| Acción | miembro | admin | propietario |
+| --- | --- | --- | --- |
+| Ver y trabajar con productos, albaranes, compras y fichas | ✅ | ✅ | ✅ |
+| Invitar, cancelar invitaciones y cambiar roles | ❌ | ✅ | ✅ |
+| Cambiar el nombre de la organización | ❌ | ✅ | ✅ |
+
+Los permisos se comprueban en el backend con `@PreAuthorize` a partir del rol
+firmado en el token, no solo ocultando botones en la interfaz.
 
 ## Arquitectura
 
@@ -199,6 +222,7 @@ cd chefstool-frontend && npm run lint && npm run build
 | 6 | Dashboard e informes | Completada |
 | 7 | Autenticación, organizaciones, roles y PWA | Completada |
 | 8 | OCR local real (PDF + Tesseract) y parser de albaranes | Completada |
+| 9 | Invitaciones de equipo y permisos por rol | Completada |
 
 ## Siguientes pasos
 
@@ -206,6 +230,7 @@ cd chefstool-frontend && npm run lint && npm run build
    proveedor. Si la precisión con fotos no basta, conectar un OCR en la nube
    (el código ya está preparado: una implementación nueva y su clave).
 2. **Despliegue**: ver [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
-3. **Invitaciones por correo**: hoy un miembro nuevo debe registrarse con su propia
-   organización; falta el envío de invitaciones y la comprobación de permisos por
-   rol en cada endpoint.
+3. **Aviso por email de las invitaciones**: hoy se guardan y se aplican al
+   registrarse, pero no se envía ningún correo de aviso.
+4. **Recuperar contraseña** y permisos más finos sobre los datos (por ejemplo, que
+   un miembro no pueda borrar).

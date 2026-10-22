@@ -4,6 +4,7 @@ import com.chefstool.backend.adapter.in.web.dto.OrganizacionRequest;
 import com.chefstool.backend.adapter.in.web.dto.OrganizacionResponse;
 import com.chefstool.backend.application.OrganizacionGestionService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ public class OrganizacionController {
     }
 
     @PutMapping
+    @PreAuthorize("hasAnyRole('propietario','admin')")
     public OrganizacionResponse renombrar(@Valid @RequestBody OrganizacionRequest peticion) {
         return organizacionService.renombrar(peticion.nombre());
     }

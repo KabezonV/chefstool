@@ -116,10 +116,11 @@ devuelva `index.html` (si no, recargar en `/compras` da 404).
 - **El OCR de fotos requiere Tesseract**: sin él solo se leen PDF con texto.
 - **El parser es heurístico**: entiende formatos habituales de albarán español,
   pero conviene probarlo con los documentos reales de cada proveedor.
-- **No hay invitación por correo**: cada registro crea su propia organización.
-  Compartir organización requiere implementar invitaciones.
-- **Los roles aún no limitan acciones**: se guardan y se muestran, pero cualquier
-  miembro autenticado puede editar. Falta comprobación por rol en los endpoints.
+- **Las invitaciones no envían email**: se guardan y se aplican cuando la persona
+  se registra con ese correo. Falta integrar un proveedor de email si se quiere
+  avisar.
+- **Permisos por rol básicos**: separan gestión de equipo/configuración de trabajo
+  diario; no distinguen operaciones sobre datos (por ejemplo, borrar un producto).
 - **Sin rate limiting** en `/api/auth/login`.
 - **Los tests apuntan a la base de datos real**: son transaccionales (hacen
   rollback), pero conviene moverlos a Testcontainers antes de crecer.

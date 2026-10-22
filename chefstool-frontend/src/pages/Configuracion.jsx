@@ -9,6 +9,7 @@ import { Field, Input } from '@/components/ui/input'
 
 export default function Configuracion() {
   const { sesion } = useAuth()
+  const puedeEditar = sesion?.rol === 'propietario' || sesion?.rol === 'admin'
   const [organizacion, setOrganizacion] = useState(null)
   const [nombre, setNombre] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -72,6 +73,7 @@ export default function Configuracion() {
             <Field label="Nombre" htmlFor="organizacion-nombre">
               <Input
                 id="organizacion-nombre"
+                disabled={!puedeEditar}
                 value={nombre}
                 onChange={(event) => {
                   setNombre(event.target.value)
@@ -80,10 +82,15 @@ export default function Configuracion() {
               />
             </Field>
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={guardando || !nombre.trim()}>
+              <Button type="submit" disabled={!puedeEditar || guardando || !nombre.trim()}>
                 {guardando ? <Loader2 className="size-4 animate-spin" /> : null}
                 Guardar
               </Button>
+              {!puedeEditar && (
+                <span className="text-xs text-muted">
+                  Solo propietarios y administradores pueden cambiar el nombre.
+                </span>
+              )}
               {guardado && (
                 <span className="inline-flex items-center gap-1 text-sm text-success">
                   <Check className="size-4" />

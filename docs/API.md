@@ -237,9 +237,35 @@ curl http://localhost:8080/api/informes/panel -H "Authorization: Bearer $TOKEN"
 | Método | Ruta | Descripción |
 | --- | --- | --- |
 | GET | `/usuarios` | Miembros de la organización |
+| POST | `/usuarios/invitar` | Invita por correo (`email`, `rol`) |
+| GET | `/usuarios/invitaciones` | Invitaciones pendientes |
+| DELETE | `/usuarios/invitaciones/{id}` | Cancela una invitación |
 | PUT | `/usuarios/{id}/rol` | Cambia el rol (`propietario`, `admin`, `miembro`) |
 | GET | `/organizacion` | Datos de la organización |
 | PUT | `/organizacion` | Renombra la organización |
+
+### Invitaciones
+
+```bash
+curl -X POST http://localhost:8080/api/usuarios/invitar \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"email":"chef@cocina.es","rol":"miembro"}'
+```
+
+Devuelve `estado: "anadido"` si la cuenta ya existía (se añade al momento) o
+`estado: "pendiente"` si hay que esperar a que se registre con ese correo. En ese
+caso, al registrarse entra en la organización que le invitó en lugar de crear una
+propia.
+
+### Permisos
+
+| Acción | miembro | admin | propietario |
+| --- | --- | --- | --- |
+| Datos operativos (productos, albaranes, compras, fichas) | ✅ | ✅ | ✅ |
+| Invitaciones y cambio de roles | ❌ | ✅ | ✅ |
+| Renombrar la organización | ❌ | ✅ | ✅ |
+
+Un rol sin permiso recibe `403`.
 
 ## Flujo completo de ejemplo
 
