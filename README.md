@@ -187,6 +187,9 @@ la interfaz cambian.
 
 Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 
+Resumen del proyecto y propuesta de puesta en marcha para dirección:
+[docs/INFORME-BERNART.md](docs/INFORME-BERNART.md).
+
 | Recurso | Ruta |
 | --- | --- |
 | Autenticación | `/api/auth/registro`, `/api/auth/login`, `/api/auth/yo`, `/api/auth/recuperar`, `/api/auth/restablecer` |
