@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, listarTodo } from '@/lib/api'
 import { moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -36,7 +36,7 @@ export default function FichaDetalle() {
   useEffect(() => {
     let activo = true
 
-    Promise.all([api.get(`/fichas/${id}`), api.get('/productos')])
+    Promise.all([api.get(`/fichas/${id}`), listarTodo('/productos')])
       .then(([detalle, catalogo]) => {
         if (!activo) return
         setFicha(detalle)

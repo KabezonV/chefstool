@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Barras from '@/components/ui/barras'
+import DatosEjemplo from '@/components/DatosEjemplo'
 
 function Kpi({ etiqueta, valor, detalle, tono }) {
   return (
@@ -35,6 +36,7 @@ function Kpi({ etiqueta, valor, detalle, tono }) {
 export default function Dashboard() {
   const [panel, setPanel] = useState(null)
   const [error, setError] = useState(null)
+  const [recarga, setRecarga] = useState(0)
 
   useEffect(() => {
     let activo = true
@@ -47,7 +49,7 @@ export default function Dashboard() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [recarga])
 
   if (error) {
     return (
@@ -70,6 +72,10 @@ export default function Dashboard() {
         <h1 className="text-xl font-semibold tracking-tight">Resumen de tu operación</h1>
         <p className="mt-1 text-sm text-muted">Datos reales de tus compras confirmadas.</p>
       </div>
+
+      {panel.comprasAnalizadas === 0 && (
+        <DatosEjemplo onCargado={() => setRecarga((valor) => valor + 1)} />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi

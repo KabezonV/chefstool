@@ -11,4 +11,11 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
 
     boolean existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(
             UUID organizacionId, String nombre);
+
+    org.springframework.data.domain.Page<Cliente> findByOrganizacionIdAndDeletedAtIsNull(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Cliente>
+            findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                    UUID organizacionId, String nombre, org.springframework.data.domain.Pageable pageable);
 }

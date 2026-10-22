@@ -19,6 +19,7 @@ import com.chefstool.backend.domain.port.out.ProveedorProductoRepository;
 import com.chefstool.backend.domain.port.out.ProveedorRepository;
 import com.chefstool.backend.adapter.in.web.RecursoNoEncontradoException;
 import com.chefstool.backend.adapter.in.web.dto.CompraDetalle;
+import com.chefstool.backend.application.dto.Pagina;
 import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.CompraResumen;
 import com.chefstool.backend.domain.model.ExtraccionDocumento;
@@ -29,6 +30,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,12 +75,22 @@ public class CompraService {
     }
 
     @Transactional(readOnly = true)
-    public List<CompraResumen> listar(UUID proveedorId, LocalDate desde, LocalDate hasta) {
-        return compraRepository
-                .buscar(organizacionService.organizacionActual(), proveedorId, desde, hasta)
-                .stream()
-                .map(CompraResumen::from)
-                .toList();
+    public Pagina<CompraResumen> listar(
+            UUID proveedorId, LocalDate desde, LocalDate hasta, int pagina, int tamano) {
+        Pageable orden =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Sort.by("fecha").descending().and(Sort.by("createdAt").descending()));
+
+        return Pagina.desde(
+                        compraRepository.buscarPaginado(
+                                organizacionService.organizacionActual(),
+                                proveedorId,
+                                desde,
+                                hasta,
+                                orden))
+                .map(CompraResumen::from);
     }
 
     @Transactional(readOnly = true)

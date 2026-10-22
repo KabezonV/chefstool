@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, conParametros, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
+import Paginador, { Buscador } from '@/components/ui/paginador'
 
 function valoresIniciales(campos) {
   return Object.fromEntries(campos.map((campo) => [campo.name, '']))
@@ -79,7 +80,11 @@ export default function ResourcePage({ recurso }) {
   const { endpoint, titulo, descripcion, columnas, campos, singular, vacio, detalle } = recurso
   const navigate = useNavigate()
 
-  const [items, setItems] = useState([])
+  const [datos, setDatos] = useState(() => paginaVacia())
+  const [pagina, setPagina] = useState(0)
+  const [tamano, setTamano] = useState(20)
+  const [busqueda, setBusqueda] = useState('')
+  const [busquedaAplicada, setBusquedaAplicada] = useState('')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [formAbierto, setFormAbierto] = useState(false)
@@ -87,41 +92,59 @@ export default function ResourcePage({ recurso }) {
   const [valores, setValores] = useState(() => valoresIniciales(campos))
   const [guardando, setGuardando] = useState(false)
   const [fuentes, setFuentes] = useState({})
+  const [recarga, setRecarga] = useState(0)
+  const temporizadorBusqueda = useRef(null)
+
+  const items = datos.contenido
 
   const camposSelect = useMemo(
     () => campos.filter((campo) => campo.type === 'select'),
     [campos],
   )
 
-  const recargar = useCallback(async () => {
-    setCargando(true)
-    try {
-      setItems(await api.get(endpoint))
-      setError(null)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setCargando(false)
-    }
-  }, [endpoint])
+  const cargar = useCallback(
+    () =>
+      api
+        .get(conParametros(endpoint, { pagina, tamano, q: busquedaAplicada }))
+        .then((datos) => normalizarPagina(datos, tamano)),
+    [endpoint, pagina, tamano, busquedaAplicada],
+  )
 
   useEffect(() => {
     let activo = true
 
-    api
-      .get(endpoint)
-      .then((datos) => {
+    cargar()
+      .then((resultado) => {
         if (!activo) return
-        setItems(datos)
+        setDatos(resultado)
         setError(null)
+        setCargando(false)
       })
-      .catch((err) => activo && setError(err.message))
-      .finally(() => activo && setCargando(false))
+      .catch((err) => {
+        if (!activo) return
+        setError(err.message)
+        setCargando(false)
+      })
 
     return () => {
       activo = false
     }
-  }, [endpoint])
+  }, [cargar, recarga])
+
+  useEffect(() => () => clearTimeout(temporizadorBusqueda.current), [])
+
+  function cambiarBusqueda(valor) {
+    setBusqueda(valor)
+    setPagina(0)
+    setCargando(true)
+    clearTimeout(temporizadorBusqueda.current)
+    temporizadorBusqueda.current = setTimeout(() => setBusquedaAplicada(valor.trim()), 300)
+  }
+
+  function refrescar() {
+    setCargando(true)
+    setRecarga((valor) => valor + 1)
+  }
 
   useEffect(() => {
     let activo = true
@@ -130,10 +153,10 @@ export default function ResourcePage({ recurso }) {
       const entradas = await Promise.all(
         camposSelect.map(async (campo) => {
           try {
-            const datos = await api.get(campo.fuente.endpoint)
+            const filas = await listarTodo(campo.fuente.endpoint)
             return [
               campo.name,
-              datos.map((fila) => ({
+              filas.map((fila) => ({
                 valor: fila[campo.fuente.valor],
                 etiqueta: fila[campo.fuente.etiqueta],
               })),
@@ -203,7 +226,12 @@ export default function ResourcePage({ recurso }) {
         await api.post(endpoint, payload)
       }
       cerrarFormulario()
-      await recargar()
+      if (pagina !== 0) {
+        setPagina(0)
+        setCargando(true)
+      } else {
+        refrescar()
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -218,7 +246,12 @@ export default function ResourcePage({ recurso }) {
     }
     try {
       await api.delete(`${endpoint}/${item.id}`)
-      await recargar()
+      if (items.length === 1 && pagina > 0) {
+        setCargando(true)
+        setPagina(pagina - 1)
+      } else {
+        refrescar()
+      }
     } catch (err) {
       setError(err.message)
     }
@@ -278,13 +311,20 @@ export default function ResourcePage({ recurso }) {
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-wrap">
           <CardTitle>{titulo}</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${items.length} registros`}</Badge>
+          <Buscador
+            valor={busqueda}
+            onChange={cambiarBusqueda}
+            placeholder="Buscar por nombre…"
+          />
+          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} registros`}</Badge>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {!cargando && items.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted">{vacio}</p>
+            <p className="px-5 pb-5 text-sm text-muted">
+              {busquedaAplicada ? `Sin resultados para «${busquedaAplicada}».` : vacio}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -341,6 +381,17 @@ export default function ResourcePage({ recurso }) {
               </table>
             </div>
           )}
+          <Paginador
+            pagina={pagina}
+            tamano={tamano}
+            totalElementos={datos.totalElementos}
+            totalPaginas={datos.totalPaginas}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
+              setCargando(true)
+              setPagina(nuevaPagina)
+              setTamano(nuevoTamano)
+            }}
+          />
         </CardContent>
       </Card>
     </div>

@@ -5,9 +5,23 @@ import { MemoryRouter } from 'react-router-dom'
 import { api } from '@/lib/api'
 import ResourcePage from '@/components/crud/ResourcePage'
 
-vi.mock('@/lib/api', () => ({
-  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
-}))
+vi.mock('@/lib/api', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  }
+})
+
+function pagina(contenido, { pagina: numero = 0, tamano = 20, total = contenido.length } = {}) {
+  return {
+    contenido,
+    pagina: numero,
+    tamano,
+    totalElementos: total,
+    totalPaginas: Math.ceil(total / tamano),
+  }
+}
 
 const recurso = {
   endpoint: '/productos',
@@ -39,10 +53,12 @@ describe('ResourcePage', () => {
   })
 
   it('muestra los registros que devuelve la api', async () => {
-    api.get.mockResolvedValue([
-      { id: '1', nombre: 'Tomate pera', unidadBase: 'kg' },
-      { id: '2', nombre: 'Cebolla', unidadBase: 'kg' },
-    ])
+    api.get.mockResolvedValue(
+      pagina([
+        { id: '1', nombre: 'Tomate pera', unidadBase: 'kg' },
+        { id: '2', nombre: 'Cebolla', unidadBase: 'kg' },
+      ]),
+    )
 
     montar()
 
@@ -52,7 +68,7 @@ describe('ResourcePage', () => {
   })
 
   it('muestra el estado vacio', async () => {
-    api.get.mockResolvedValue([])
+    api.get.mockResolvedValue(pagina([]))
     montar()
 
     expect(await screen.findByText('No hay productos')).toBeInTheDocument()
@@ -67,7 +83,7 @@ describe('ResourcePage', () => {
   })
 
   it('abre el formulario al pulsar nuevo y envia los datos', async () => {
-    api.get.mockResolvedValue([])
+    api.get.mockResolvedValue(pagina([]))
     api.post.mockResolvedValue({ id: '9' })
     const usuario = userEvent.setup()
 
@@ -87,7 +103,7 @@ describe('ResourcePage', () => {
   })
 
   it('envia null en los campos vacios', async () => {
-    api.get.mockResolvedValue([])
+    api.get.mockResolvedValue(pagina([]))
     api.post.mockResolvedValue({ id: '9' })
     const usuario = userEvent.setup()
 
@@ -103,5 +119,45 @@ describe('ResourcePage', () => {
         unidadBase: null,
       })
     })
+  })
+
+  it('pagina los resultados y pide la siguiente pagina', async () => {
+    api.get.mockResolvedValueOnce(
+      pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }], { total: 30 }),
+    )
+    api.get.mockResolvedValueOnce(
+      pagina([{ id: '21', nombre: 'Azafran', unidadBase: 'g' }], {
+        pagina: 1,
+        total: 30,
+      }),
+    )
+    const usuario = userEvent.setup()
+
+    montar()
+
+    expect(await screen.findByText('Tomate pera')).toBeInTheDocument()
+    expect(screen.getByText('1–20 de 30')).toBeInTheDocument()
+
+    await usuario.click(screen.getByRole('button', { name: 'Página siguiente' }))
+
+    expect(await screen.findByText('Azafran')).toBeInTheDocument()
+    expect(api.get).toHaveBeenLastCalledWith('/productos?pagina=1&tamano=20')
+  })
+
+  it('busca por nombre y vuelve a la primera pagina', async () => {
+    api.get.mockResolvedValue(pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]))
+    const usuario = userEvent.setup()
+
+    montar()
+
+    await screen.findByText('Tomate pera')
+    await usuario.type(screen.getByRole('searchbox'), 'cebolla')
+
+    await waitFor(
+      () => {
+        expect(api.get).toHaveBeenLastCalledWith('/productos?pagina=0&tamano=20&q=cebolla')
+      },
+      { timeout: 2000 },
+    )
   })
 })

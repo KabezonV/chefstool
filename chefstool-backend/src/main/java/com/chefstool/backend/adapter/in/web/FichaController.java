@@ -5,16 +5,17 @@ import com.chefstool.backend.adapter.in.web.dto.FichaDetalle;
 import com.chefstool.backend.adapter.in.web.dto.FichaRequest;
 import com.chefstool.backend.adapter.in.web.dto.FichaResumen;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import com.chefstool.backend.application.dto.Pagina;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,8 +30,10 @@ public class FichaController {
     }
 
     @GetMapping
-    public List<FichaResumen> listar() {
-        return fichaService.listar();
+    public Pagina<FichaResumen> listar(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamano) {
+        return fichaService.listar(pagina, tamano);
     }
 
     @GetMapping("/{id}")

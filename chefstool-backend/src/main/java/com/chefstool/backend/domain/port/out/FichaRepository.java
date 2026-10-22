@@ -8,4 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface FichaRepository extends JpaRepository<Ficha, UUID> {
 
     List<Ficha> findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(UUID organizacionId);
+
+    org.springframework.data.domain.Page<Ficha> findByOrganizacionIdAndDeletedAtIsNull(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
 }

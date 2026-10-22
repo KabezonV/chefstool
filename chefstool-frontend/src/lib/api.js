@@ -59,3 +59,42 @@ export const api = {
   delete: (path) => request(path, { method: 'DELETE' }),
   subir: (path, formData) => request(path, { method: 'POST', body: formData }),
 }
+
+/** Envoltorio de paginacion que devuelve el backend. */
+export function paginaVacia(tamano = 20) {
+  return { contenido: [], pagina: 0, tamano, totalElementos: 0, totalPaginas: 0 }
+}
+
+export function normalizarPagina(datos, tamano = 20) {
+  return Array.isArray(datos) ? { ...paginaVacia(tamano), contenido: datos, totalElementos: datos.length, totalPaginas: datos.length > 0 ? 1 : 0 } : datos
+}
+
+function conParametros(path, parametros) {
+  const query = Object.entries(parametros)
+    .filter(([, valor]) => valor !== undefined && valor !== null && valor !== '')
+    .map(([clave, valor]) => `${clave}=${encodeURIComponent(valor)}`)
+    .join('&')
+  if (query === '') return path
+  return path.includes('?') ? `${path}&${query}` : `${path}?${query}`
+}
+
+/** Lista completa, pagina a pagina, para alimentar desplegables. */
+export async function listarTodo(path, tamano = 100) {
+  const primera = normalizarPagina(
+    await request(conParametros(path, { pagina: 0, tamano })),
+    tamano,
+  )
+  const items = [...primera.contenido]
+
+  for (let pagina = 1; pagina < primera.totalPaginas; pagina += 1) {
+    const siguiente = normalizarPagina(
+      await request(conParametros(path, { pagina, tamano })),
+      tamano,
+    )
+    items.push(...siguiente.contenido)
+  }
+
+  return items
+}
+
+export { conParametros }

@@ -10,6 +10,10 @@ import com.chefstool.backend.adapter.in.web.dto.EventoResponse;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import com.chefstool.backend.application.dto.Pagina;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +34,20 @@ public class EventoService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventoResponse> listar() {
-        return eventoRepository
-                .findByOrganizacionIdAndDeletedAtIsNullOrderByFechaDesc(
-                        organizacionService.organizacionActual())
-                .stream()
-                .map(EventoResponse::from)
-                .toList();
+    public Pagina<EventoResponse> listar(int pagina, int tamano, String busqueda) {
+        UUID organizacionId = organizacionService.organizacionActual();
+        Pageable orden =
+                Pagina.peticion(pagina, tamano, Sort.by("fecha").descending());
+
+        Page<Evento> resultado =
+                busqueda == null || busqueda.isBlank()
+                        ? eventoRepository.findByOrganizacionIdAndDeletedAtIsNull(
+                                organizacionId, orden)
+                        : eventoRepository
+                                .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                                        organizacionId, busqueda.trim(), orden);
+
+        return Pagina.desde(resultado).map(EventoResponse::from);
     }
 
     @Transactional

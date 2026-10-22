@@ -66,8 +66,9 @@ class ComprasYPreciosTest {
         assertThat(ids(todas)).contains(primera.id().toString(), segunda.id().toString(), tercera.id().toString());
 
         var delCaro = json(get("/api/compras").param("proveedorId", caro.getId().toString()));
-        assertThat(delCaro).hasSize(2);
-        assertThat(delCaro.get(0).get("proveedorNombre").asString()).isEqualTo(caro.getNombre());
+        assertThat(delCaro.get("totalElementos").asInt()).isEqualTo(2);
+        assertThat(delCaro.get("contenido").get(0).get("proveedorNombre").asString())
+                .isEqualTo(caro.getNombre());
     }
 
     @Test
@@ -141,7 +142,8 @@ class ComprasYPreciosTest {
 
     private java.util.List<String> ids(tools.jackson.databind.JsonNode nodos) {
         java.util.List<String> ids = new java.util.ArrayList<>();
-        nodos.forEach(nodo -> ids.add(nodo.get("id").asString()));
+        var lista = nodos.isArray() ? nodos : nodos.get("contenido");
+        lista.forEach(nodo -> ids.add(nodo.get("id").asString()));
         return ids;
     }
 

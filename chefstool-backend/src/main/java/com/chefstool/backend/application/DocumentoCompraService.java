@@ -8,6 +8,7 @@ import com.chefstool.backend.domain.model.ResultadoExtraccion;
 import com.chefstool.backend.adapter.in.web.ConflictoException;
 import com.chefstool.backend.adapter.in.web.RecursoNoEncontradoException;
 import com.chefstool.backend.adapter.in.web.dto.ArchivoDescargable;
+import com.chefstool.backend.application.dto.Pagina;
 import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoDetalle;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoResumen;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -97,12 +100,13 @@ public class DocumentoCompraService {
     }
 
     @Transactional(readOnly = true)
-    public List<DocumentoResumen> listar() {
-        return documentoRepository
-                .findByOrganizacionIdOrderByCreatedAtDesc(organizacionService.organizacionActual())
-                .stream()
-                .map(DocumentoResumen::from)
-                .toList();
+    public Pagina<DocumentoResumen> listar(int pagina, int tamano) {
+        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("createdAt").descending());
+
+        return Pagina.desde(
+                        documentoRepository.findByOrganizacionId(
+                                organizacionService.organizacionActual(), orden))
+                .map(DocumentoResumen::from);
     }
 
     @Transactional(readOnly = true)

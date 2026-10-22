@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellRing, Check, ExternalLink } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
 import { fechaCorta, moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
+import Paginador from '@/components/ui/paginador'
 
 const tonos = { info: 'neutral', aviso: 'warning', critico: 'danger' }
 
 export default function Compras() {
-  const [compras, setCompras] = useState([])
+  const [datos, setDatos] = useState(() => paginaVacia())
+  const [pagina, setPagina] = useState(0)
+  const [tamano, setTamano] = useState(20)
   const [proveedores, setProveedores] = useState([])
   const [alertas, setAlertas] = useState([])
   const [detalle, setDetalle] = useState(null)
@@ -19,9 +22,10 @@ export default function Compras() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
+  const compras = datos.contenido
+
   useEffect(() => {
-    api
-      .get('/proveedores')
+    listarTodo('/proveedores')
       .then(setProveedores)
       .catch(() => setProveedores([]))
   }, [])
@@ -32,12 +36,14 @@ export default function Compras() {
     if (filtros.proveedorId) parametros.set('proveedorId', filtros.proveedorId)
     if (filtros.desde) parametros.set('desde', filtros.desde)
     if (filtros.hasta) parametros.set('hasta', filtros.hasta)
+    parametros.set('pagina', pagina)
+    parametros.set('tamano', tamano)
 
     api
       .get(`/compras?${parametros.toString()}`)
-      .then((datos) => {
+      .then((respuesta) => {
         if (!activo) return
-        setCompras(datos)
+        setDatos(normalizarPagina(respuesta, tamano))
         setError(null)
       })
       .catch((err) => activo && setError(err.message))
@@ -46,10 +52,11 @@ export default function Compras() {
     return () => {
       activo = false
     }
-  }, [filtros])
+  }, [filtros, pagina, tamano])
 
   function actualizarFiltro(campo, valor) {
     setCargando(true)
+    setPagina(0)
     setFiltros((previos) => ({ ...previos, [campo]: valor }))
   }
 
@@ -132,7 +139,7 @@ export default function Compras() {
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${compras.length} compras`}</Badge>
+          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} compras`}</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
@@ -212,6 +219,17 @@ export default function Compras() {
               </table>
             </div>
           )}
+          <Paginador
+            pagina={pagina}
+            tamano={tamano}
+            totalElementos={datos.totalElementos}
+            totalPaginas={datos.totalPaginas}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
+              setCargando(true)
+              setPagina(nuevaPagina)
+              setTamano(nuevoTamano)
+            }}
+          />
         </CardContent>
       </Card>
 

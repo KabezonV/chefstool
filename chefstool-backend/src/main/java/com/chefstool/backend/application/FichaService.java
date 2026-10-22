@@ -14,6 +14,7 @@ import com.chefstool.backend.adapter.in.web.dto.FichaLineaRequest;
 import com.chefstool.backend.adapter.in.web.dto.FichaLineaResponse;
 import com.chefstool.backend.adapter.in.web.dto.FichaRequest;
 import com.chefstool.backend.adapter.in.web.dto.FichaResumen;
+import com.chefstool.backend.application.dto.Pagina;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
@@ -22,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,14 +57,16 @@ public class FichaService {
     }
 
     @Transactional(readOnly = true)
-    public List<FichaResumen> listar() {
+    public Pagina<FichaResumen> listar(int pagina, int tamano) {
         UUID organizacionId = organizacionService.organizacionActual();
         Map<UUID, BigDecimal> precios = mejoresPrecios(organizacionId);
 
-        return fichaRepository
-                .findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(organizacionId)
-                .stream()
-                .map(
+        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+
+        return Pagina.desde(
+                        fichaRepository.findByOrganizacionIdAndDeletedAtIsNull(
+                                organizacionId, orden)
+                                .map(
                         ficha -> {
                             List<FichaLinea> lineas =
                                     fichaLineaRepository.findByFichaId(ficha.getId());
@@ -75,8 +80,7 @@ public class FichaService {
                                     porRacion,
                                     margen(ficha.getPrecioVenta(), porRacion),
                                     lineas.size());
-                        })
-                .toList();
+                        }));
     }
 
     @Transactional(readOnly = true)

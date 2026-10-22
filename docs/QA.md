@@ -3,10 +3,10 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 70 tests (unitarios, integración y seguridad)
+# Backend: 74 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 20 tests (Vitest + Testing Library)
+# Frontend: 22 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -32,7 +32,9 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
 | Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes |
-| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, pantalla de acceso |
+| Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |
+| Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q` |
+| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación y búsqueda, pantalla de acceso |
 
 ## Pasada de QA en navegador
 
@@ -70,15 +72,15 @@ nuevas para no contaminar datos existentes.
 
 ## Observaciones (no son fallos)
 
-1. **Confianza baja sin catálogo**: si la organización no tiene proveedores dados
-   de alta, la extracción no puede emparejar el proveedor y baja la confianza.
-   Es correcto, pero conviene explicarlo en la interfaz.
-2. **Cuenta nueva sin datos**: al registrarse la app está vacía. Un botón
-   "cargar datos de ejemplo" ayudaría en la primera demo.
+1. **Confianza baja**: la pantalla de revisión ya explica que, por debajo del
+   85 %, hay que revisar proveedor, importes y líneas antes de confirmar.
+2. **Cuenta nueva sin datos**: resuelto con la tarjeta *Cargar datos de ejemplo*
+   del dashboard (`POST /api/demo/datos`).
 3. **Nombre del albarán de ejemplo**: siempre es `albaran-demo.pdf`.
 
 ## Pendiente de verificar a mano
 
 - Albaranes reales de proveedores concretos (formatos y descuentos).
 - iPad físico en vertical y horizontal, y captura con la cámara.
-- Comportamiento con muchos registros (paginación no implementada).
+- Comportamiento con muchos registros: la paginación está cubierta por tests,
+  falta probarla con volúmenes reales (miles de compras).

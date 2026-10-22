@@ -13,4 +13,7 @@ public interface DocumentoCompraRepository extends JpaRepository<DocumentoCompra
             UUID organizacionId, String estado);
 
     long countByOrganizacionIdAndEstado(UUID organizacionId, String estado);
+
+    org.springframework.data.domain.Page<DocumentoCompra> findByOrganizacionId(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
 }

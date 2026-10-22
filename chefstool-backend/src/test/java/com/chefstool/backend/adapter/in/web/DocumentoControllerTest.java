@@ -189,7 +189,7 @@ class DocumentoControllerTest {
 
         mockMvc.perform(get("/api/documentos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id=='" + id + "')].estado").value("descartado"));
+                .andExpect(jsonPath("$.contenido[?(@.id=='" + id + "')].estado").value("descartado"));
     }
 
     @Test

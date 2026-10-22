@@ -8,6 +8,10 @@ import com.chefstool.backend.adapter.in.web.dto.ProveedorResponse;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import com.chefstool.backend.application.dto.Pagina;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +28,19 @@ public class ProveedorService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProveedorResponse> listar() {
-        return proveedorRepository
-                .findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(
-                        organizacionService.organizacionActual())
-                .stream()
-                .map(ProveedorResponse::from)
-                .toList();
+    public Pagina<ProveedorResponse> listar(int pagina, int tamano, String busqueda) {
+        UUID organizacionId = organizacionService.organizacionActual();
+        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+
+        Page<Proveedor> resultado =
+                busqueda == null || busqueda.isBlank()
+                        ? proveedorRepository.findByOrganizacionIdAndDeletedAtIsNull(
+                                organizacionId, orden)
+                        : proveedorRepository
+                                .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                                        organizacionId, busqueda.trim(), orden);
+
+        return Pagina.desde(resultado).map(ProveedorResponse::from);
     }
 
     @Transactional

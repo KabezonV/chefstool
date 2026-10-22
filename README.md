@@ -18,6 +18,7 @@ obtén costes reales, márgenes y comparativas de proveedores.
 | Alertas | Aviso automático cuando un proveedor sube el precio ≥5 % |
 | Dashboard e informes | Gasto mensual, gasto por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
+| Datos de ejemplo | Rellena una organización nueva con catálogo, albaranes y fichas para probar |
 
 ## Arranque en local
 
@@ -58,10 +59,13 @@ Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 1. Abre la aplicación: te llevará a `/auth`.
 2. Pulsa **Crear cuenta**. Al registrarte se crea tu organización y quedas como
    *propietario*.
-3. Entra en **Documentos → Añadir documento → Probar con un ejemplo** para generar
-   un albarán de demostración (no necesita cámara).
-4. Revisa las líneas y pulsa **Confirmar y guardar**.
-5. El dashboard y los informes se rellenan con la compra confirmada.
+3. La primera vez, el dashboard ofrece **Cargar datos de ejemplo**: crea 8 productos,
+   3 proveedores, 2 clientes, 2 eventos, 3 albaranes confirmados (con una alerta de
+   subida de precio) y 2 fichas técnicas. También puedes hacerlo con
+   `POST /api/demo/datos`.
+4. Si prefieres ir paso a paso: **Documentos → Añadir documento → Probar con un ejemplo**,
+   revisa las líneas y pulsa **Confirmar y guardar**.
+5. El dashboard y los informes se rellenan con las compras confirmadas.
 
 ## Variables de entorno
 
@@ -189,6 +193,13 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 | Fichas técnicas | `/api/fichas` |
 | Panel e informes | `/api/informes/panel` |
 | Usuarios y organización | `/api/usuarios`, `/api/organizacion` |
+| Datos de ejemplo | `/api/demo/datos` (POST) |
+
+Los listados de productos, proveedores, clientes, eventos, documentos, compras y
+fichas están **paginados** (`?pagina=0&tamano=20`) y devuelven
+`{contenido, pagina, tamano, totalElementos, totalPaginas}`. Productos, proveedores,
+clientes y eventos admiten además `q` para buscar por nombre desde la barra de
+búsqueda de cada listado.
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 401 (credenciales o token), 404 (registro inexistente) o 409
@@ -205,8 +216,8 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 70 tests
-cd chefstool-frontend && npm test                  # 20 tests
+cd chefstool-backend && ./mvnw clean test          # 74 tests
+cd chefstool-frontend && npm test                  # 22 tests
 cd chefstool-frontend && npm run lint && npm run build
 ```
 

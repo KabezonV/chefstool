@@ -6,12 +6,12 @@ import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoDetalle;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoResumen;
 import com.chefstool.backend.domain.model.ExtraccionDocumento;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import com.chefstool.backend.application.dto.Pagina;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,8 +34,10 @@ public class DocumentoController {
     }
 
     @GetMapping
-    public List<DocumentoResumen> listar() {
-        return documentoService.listar();
+    public Pagina<DocumentoResumen> listar(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamano) {
+        return documentoService.listar(pagina, tamano);
     }
 
     @GetMapping("/{id}")

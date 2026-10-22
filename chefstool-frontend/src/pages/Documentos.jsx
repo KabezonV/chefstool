@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { FileText, Plus } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, normalizarPagina, paginaVacia } from '@/lib/api'
 import { estados, fechaCorta } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Paginador from '@/components/ui/paginador'
 
 function confianza(valor) {
   if (valor === null || valor === undefined) return '—'
@@ -15,18 +16,22 @@ function confianza(valor) {
 export default function Documentos() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [documentos, setDocumentos] = useState([])
+  const [datos, setDatos] = useState(() => paginaVacia())
+  const [pagina, setPagina] = useState(0)
+  const [tamano, setTamano] = useState(20)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+
+  const documentos = datos.contenido
 
   useEffect(() => {
     let activo = true
 
     api
-      .get('/documentos')
-      .then((datos) => {
+      .get(`/documentos?pagina=${pagina}&tamano=${tamano}`)
+      .then((respuesta) => {
         if (!activo) return
-        setDocumentos(datos)
+        setDatos(normalizarPagina(respuesta, tamano))
         setError(null)
       })
       .catch((err) => activo && setError(err.message))
@@ -35,7 +40,7 @@ export default function Documentos() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [pagina, tamano])
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -69,7 +74,7 @@ export default function Documentos() {
       <Card>
         <CardHeader>
           <CardTitle>Bandeja de entrada</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${documentos.length} documentos`}</Badge>
+          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} documentos`}</Badge>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {!cargando && documentos.length === 0 ? (
@@ -126,6 +131,17 @@ export default function Documentos() {
               </table>
             </div>
           )}
+          <Paginador
+            pagina={pagina}
+            tamano={tamano}
+            totalElementos={datos.totalElementos}
+            totalPaginas={datos.totalPaginas}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
+              setCargando(true)
+              setPagina(nuevaPagina)
+              setTamano(nuevoTamano)
+            }}
+          />
         </CardContent>
       </Card>
     </div>

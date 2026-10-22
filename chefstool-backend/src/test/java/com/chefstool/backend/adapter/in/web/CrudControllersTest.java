@@ -85,7 +85,7 @@ class CrudControllersTest {
 
         mockMvc.perform(get("/api/eventos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id=='" + id + "')].clienteNombre").value(cliente));
+                .andExpect(jsonPath("$.contenido[?(@.id=='" + id + "')].clienteNombre").value(cliente));
 
         mockMvc.perform(delete("/api/eventos/" + id)).andExpect(status().isNoContent());
     }
@@ -151,7 +151,7 @@ class CrudControllersTest {
                         .getContentAsString();
 
         List<String> nombres = new ArrayList<>();
-        for (var nodo : objectMapper.readTree(respuesta)) {
+        for (var nodo : objectMapper.readTree(respuesta).get("contenido")) {
             nombres.add(nodo.get("nombre").asString());
         }
         return nombres;

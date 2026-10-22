@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, normalizarPagina, paginaVacia } from '@/lib/api'
 import { moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Paginador from '@/components/ui/paginador'
 
 function tonoMargen(margen) {
   if (margen === null || margen === undefined) return 'neutral'
@@ -16,18 +17,22 @@ function tonoMargen(margen) {
 
 export default function Fichas() {
   const navigate = useNavigate()
-  const [fichas, setFichas] = useState([])
+  const [datos, setDatos] = useState(() => paginaVacia())
+  const [pagina, setPagina] = useState(0)
+  const [tamano, setTamano] = useState(20)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+
+  const fichas = datos.contenido
 
   useEffect(() => {
     let activo = true
 
     api
-      .get('/fichas')
-      .then((datos) => {
+      .get(`/fichas?pagina=${pagina}&tamano=${tamano}`)
+      .then((respuesta) => {
         if (!activo) return
-        setFichas(datos)
+        setDatos(normalizarPagina(respuesta, tamano))
         setError(null)
       })
       .catch((err) => activo && setError(err.message))
@@ -36,7 +41,7 @@ export default function Fichas() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [pagina, tamano])
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -64,7 +69,7 @@ export default function Fichas() {
       <Card>
         <CardHeader>
           <CardTitle>Recetario</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${fichas.length} fichas`}</Badge>
+          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} fichas`}</Badge>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {!cargando && fichas.length === 0 ? (
@@ -113,6 +118,17 @@ export default function Fichas() {
               </table>
             </div>
           )}
+          <Paginador
+            pagina={pagina}
+            tamano={tamano}
+            totalElementos={datos.totalElementos}
+            totalPaginas={datos.totalPaginas}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
+              setCargando(true)
+              setPagina(nuevaPagina)
+              setTamano(nuevoTamano)
+            }}
+          />
         </CardContent>
       </Card>
     </div>

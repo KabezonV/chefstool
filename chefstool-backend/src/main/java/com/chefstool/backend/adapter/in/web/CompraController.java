@@ -4,9 +4,9 @@ import com.chefstool.backend.application.CompraService;
 import com.chefstool.backend.adapter.in.web.dto.CompraDetalle;
 import com.chefstool.backend.adapter.in.web.dto.CompraResumen;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.chefstool.backend.application.dto.Pagina;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +24,15 @@ public class CompraController {
     }
 
     @GetMapping
-    public List<CompraResumen> listar(
+    public Pagina<CompraResumen> listar(
             @RequestParam(required = false) UUID proveedorId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                     LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-                    LocalDate hasta) {
-        return compraService.listar(proveedorId, desde, hasta);
+                    LocalDate hasta,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamano) {
+        return compraService.listar(proveedorId, desde, hasta, pagina, tamano);
     }
 
     @GetMapping("/{id}")

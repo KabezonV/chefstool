@@ -28,10 +28,29 @@ class ProductoControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @Test
-    void listaProductos() throws Exception {
-        mockMvc.perform(get("/api/productos"))
+    void listaProductosPaginado() throws Exception {
+        mockMvc.perform(get("/api/productos").param("pagina", "0").param("tamano", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.contenido").isArray())
+                .andExpect(jsonPath("$.pagina").value(0))
+                .andExpect(jsonPath("$.tamano").value(2))
+                .andExpect(jsonPath("$.totalElementos").isNumber())
+                .andExpect(jsonPath("$.totalPaginas").isNumber());
+    }
+
+    @Test
+    void buscaProductosPorNombre() throws Exception {
+        String nombre = "Busqueda " + UUID.randomUUID();
+        crear(nombre, "kg");
+
+        mockMvc.perform(get("/api/productos").param("q", nombre))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido[?(@.nombre=='" + nombre + "')]").isNotEmpty())
+                .andExpect(jsonPath("$.contenido[?(@.nombre=='No existe " + nombre + "')]").isEmpty());
+
+        mockMvc.perform(get("/api/productos").param("q", "no-existe-" + UUID.randomUUID()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElementos").value(0));
     }
 
     @Test
@@ -41,7 +60,7 @@ class ProductoControllerTest {
 
         mockMvc.perform(get("/api/productos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id=='" + id + "')].nombre").value(nombre));
+                .andExpect(jsonPath("$.contenido[?(@.id=='" + id + "')].nombre").value(nombre));
 
         String nuevoNombre = "Renombrado " + UUID.randomUUID();
         mockMvc.perform(
@@ -65,7 +84,7 @@ class ProductoControllerTest {
 
         mockMvc.perform(get("/api/productos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id=='" + id + "')]").isEmpty());
+                .andExpect(jsonPath("$.contenido[?(@.id=='" + id + "')]").isEmpty());
     }
 
     @Test

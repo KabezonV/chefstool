@@ -7,6 +7,22 @@ Base: `http://localhost:8080/api`
 - Autenticación: `Authorization: Bearer <token>` en todas las rutas salvo
   `POST /auth/login` y `POST /auth/registro`.
 - Los importes son `number` en euros; las fechas, `YYYY-MM-DD`.
+- **Listados paginados**: `GET /productos`, `/proveedores`, `/clientes`, `/eventos`,
+  `/documentos`, `/compras` y `/fichas` aceptan `pagina` (0-based, por defecto `0`) y
+  `tamano` (1-100, por defecto `20`) y devuelven:
+
+  ```json
+  {
+    "contenido": [ … ],
+    "pagina": 0,
+    "tamano": 20,
+    "totalElementos": 42,
+    "totalPaginas": 3
+  }
+  ```
+
+  `/productos`, `/proveedores`, `/clientes` y `/eventos` aceptan además `q` para buscar
+  por nombre (sin distinguir mayúsculas ni acentos de la consulta).
 - Los errores devuelven `{"error": "mensaje"}` con el código HTTP adecuado:
 
 | Código | Significado |
@@ -61,7 +77,7 @@ curl http://localhost:8080/api/auth/yo -H "Authorization: Bearer $TOKEN"
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/productos` | Listado activo ordenado por nombre |
+| GET | `/productos?pagina=0&tamano=20&q=tomate` | Listado paginado y buscable por nombre |
 | POST | `/productos` | Alta (`nombre`, `categoria`, `unidadBase`) |
 | PUT | `/productos/{id}` | Edición |
 | DELETE | `/productos/{id}` | Borrado lógico (204) |
@@ -113,7 +129,7 @@ Campos: `nombre` (obligatorio), `fecha`, `comensales`, `clienteId`, `notas`.
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/documentos` | Bandeja (todos los estados) |
+| GET | `/documentos?pagina=0&tamano=20` | Bandeja paginada (todos los estados) |
 | POST | `/documentos` | Multipart `archivo` + `origen` (`subida`/`camara`) |
 | POST | `/documentos` | Solo `origen=demo` → albarán de ejemplo sin archivo |
 | GET | `/documentos/{id}` | Detalle con la extracción |
@@ -266,6 +282,19 @@ propia.
 | Renombrar la organización | ❌ | ✅ | ✅ |
 
 Un rol sin permiso recibe `403`.
+
+## Datos de ejemplo
+
+`POST /demo/datos` (solo `propietario` o `admin`) siembra la organización actual con un juego
+de prueba: 8 productos, 3 proveedores, 2 clientes, 2 eventos, 3 albaranes ya confirmados (uno
+de ellos genera una alerta de subida de precio) y 2 fichas técnicas.
+
+```bash
+curl -X POST http://localhost:8080/api/demo/datos -H "Authorization: Bearer $TOKEN"
+```
+
+Respuesta: `{"productos":8,"proveedores":3,"clientes":2,"eventos":2,"compras":3,"fichas":2}`.
+Devuelve `409` si la organización ya tiene productos, para no duplicar datos.
 
 ## Flujo completo de ejemplo
 

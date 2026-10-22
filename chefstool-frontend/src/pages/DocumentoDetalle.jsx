@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api, listarTodo } from '@/lib/api'
 import { estados, fechaCorta, moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,7 +46,11 @@ export default function DocumentoDetalle() {
   useEffect(() => {
     let activo = true
 
-    Promise.all([api.get(`/documentos/${id}`), api.get('/productos'), api.get('/proveedores')])
+    Promise.all([
+      api.get(`/documentos/${id}`),
+      listarTodo('/productos'),
+      listarTodo('/proveedores'),
+    ])
       .then(([detalle, catalogo, listaProveedores]) => {
         if (!activo) return
         setDocumento(detalle)
@@ -204,7 +208,10 @@ export default function DocumentoDetalle() {
           </h1>
           <Badge tone={estado.tono}>{estado.texto}</Badge>
           {documento.confianzaExtraccion !== null && (
-            <Badge>
+            <Badge
+              tone={Number(documento.confianzaExtraccion) < 0.85 ? 'warning' : 'success'}
+              title="Porcentaje de campos e importes que la lectura automática ha reconocido con seguridad"
+            >
               Confianza {Math.round(Number(documento.confianzaExtraccion) * 100)} %
             </Badge>
           )}
@@ -223,6 +230,13 @@ export default function DocumentoDetalle() {
         <p className="mt-1 text-sm text-muted">
           Subido el {fechaCorta(documento.createdAt)} · origen {documento.origen}
         </p>
+        {documento.confianzaExtraccion !== null &&
+          Number(documento.confianzaExtraccion) < 0.85 && (
+            <p className="mt-1 text-xs text-amber-800">
+              La lectura automática no ha reconocido todo con seguridad: revisa proveedor,
+              importes y líneas antes de confirmar.
+            </p>
+          )}
       </div>
 
       {error && (

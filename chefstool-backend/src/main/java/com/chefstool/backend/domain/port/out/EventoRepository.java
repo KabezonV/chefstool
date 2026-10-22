@@ -8,4 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface EventoRepository extends JpaRepository<Evento, UUID> {
 
     List<Evento> findByOrganizacionIdAndDeletedAtIsNullOrderByFechaDesc(UUID organizacionId);
+
+    org.springframework.data.domain.Page<Evento> findByOrganizacionIdAndDeletedAtIsNull(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Evento>
+            findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                    UUID organizacionId, String nombre, org.springframework.data.domain.Pageable pageable);
 }

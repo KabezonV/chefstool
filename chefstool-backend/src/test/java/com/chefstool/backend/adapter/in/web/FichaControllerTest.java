@@ -83,7 +83,7 @@ class FichaControllerTest {
 
         mockMvc.perform(get("/api/fichas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.nombre=='Ficha listada')].costePorRacion").value(10.00));
+                .andExpect(jsonPath("$.contenido[?(@.nombre=='Ficha listada')].costePorRacion").value(10.00));
     }
 
     @Test

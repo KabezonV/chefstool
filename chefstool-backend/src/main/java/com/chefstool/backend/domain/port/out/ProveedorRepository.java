@@ -11,4 +11,11 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, UUID> {
 
     boolean existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(
             UUID organizacionId, String nombre);
+
+    org.springframework.data.domain.Page<Proveedor> findByOrganizacionIdAndDeletedAtIsNull(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Proveedor>
+            findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                    UUID organizacionId, String nombre, org.springframework.data.domain.Pageable pageable);
 }

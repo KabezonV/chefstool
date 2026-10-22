@@ -11,4 +11,11 @@ public interface ProductoRepository extends JpaRepository<Producto, UUID> {
 
     boolean existsByOrganizacionIdAndNombreIgnoreCaseAndDeletedAtIsNull(
             UUID organizacionId, String nombre);
+
+    org.springframework.data.domain.Page<Producto> findByOrganizacionIdAndDeletedAtIsNull(
+            UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Producto>
+            findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
+                    UUID organizacionId, String nombre, org.springframework.data.domain.Pageable pageable);
 }
