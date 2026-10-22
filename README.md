@@ -200,6 +200,7 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 Resumen del proyecto y propuesta de puesta en marcha para dirección:
 [docs/INFORME-BERNART.md](docs/INFORME-BERNART.md).
 Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
+Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/ARRANQUE.md).
 
 | Recurso | Ruta |
 | --- | --- |
