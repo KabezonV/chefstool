@@ -1,0 +1,26 @@
+# Alternativa a Render: fly.io
+#   fly launch --no-deploy --dockerfile chefstool-backend/Dockerfile
+#   fly secrets set DB_HOST=... DB_USER=... DB_PASSWORD=... CHEFSTOOL_JWT_SECRET=...
+app = "chefstool-api"
+primary_region = "mad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "GET"
+    path = "/api/auth/yo"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

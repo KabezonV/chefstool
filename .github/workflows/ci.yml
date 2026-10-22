@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Java 25 + Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: chefstool
+          POSTGRES_USER: chefstool
+          POSTGRES_PASSWORD: chefstool
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: chefstool
+      DB_USER: chefstool
+      DB_PASSWORD: chefstool
+      CHEFSTOOL_JWT_SECRET: secreto-de-integracion-continua-con-32-caracteres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Instalar Tesseract (OCR de imagenes)
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-spa
+      - name: Tests
+        working-directory: chefstool-backend
+        run: ./mvnw -B clean verify
+
+  frontend:
+    name: Frontend (Node + Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chefstool-frontend/package-lock.json
+      - name: Instalar dependencias
+        working-directory: chefstool-frontend
+        run: npm ci
+      - name: Lint
+        working-directory: chefstool-frontend
+        run: npm run lint
+      - name: Tests
+        working-directory: chefstool-frontend
+        run: npm test
+      - name: Build
+        working-directory: chefstool-frontend
+        run: npm run build
+
+  imagen:
+    name: Imagen Docker (ghcr.io)
+    needs: [backend, frontend]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: chefstool-backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/backend:latest
+            ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,51 @@
+# Blueprint de Render: backend (Docker) + frontend (sitio estatico).
+# 1. Sube el repo a GitHub (ya hecho).
+# 2. En Render: New > Blueprint y elige este repositorio.
+# 3. Rellena los secretos que se piden (sync: false).
+services:
+  - type: web
+    name: chefstool-api
+    runtime: docker
+    dockerfilePath: ./chefstool-backend/Dockerfile
+    dockerContext: ./chefstool-backend
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/auth/yo
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: '5432'
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: CHEFSTOOL_JWT_SECRET
+        generateValue: true
+      - key: CHEFSTOOL_CORS
+        sync: false
+      - key: CHEFSTOOL_ALMACEN
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: documentos
+
+  - type: web
+    name: chefstool-web
+    runtime: static
+    buildCommand: cd chefstool-frontend && npm ci && npm run build
+    staticPublishPath: ./chefstool-frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
