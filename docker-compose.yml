@@ -22,8 +22,12 @@ services:
     volumes:
       # Solo se usa si CHEFSTOOL_ALMACEN=local
       - albaranes:/app/uploads
-    ports:
-      - '8080:8080'
+    # La API no se publica: se llega a ella por el proxy de nginx (mismo dominio,
+    # sin CORS). Si necesitas depurarla, descomenta y usa otro puerto libre.
+    expose:
+      - '8080'
+    # ports:
+    #   - '8090:8080'
 
   frontend:
     build:
