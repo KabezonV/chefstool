@@ -211,15 +211,17 @@ public class ParserAlbaran {
             BigDecimal cantidad = numero(conUnidad.group(2));
             BigDecimal precio = numero(conUnidad.group(4));
             BigDecimal importe = numero(conUnidad.group(5));
-            if (cuadra(cantidad, precio, importe)) {
-                return construir(
-                        conUnidad.group(1),
-                        cantidad,
-                        conUnidad.group(3),
-                        precio,
-                        importe,
-                        catalogo);
-            }
+
+            // La linea ya tiene la forma completa: si las cuentas no salen, es ruido.
+            return cuadra(cantidad, precio, importe)
+                    ? construir(
+                            conUnidad.group(1),
+                            cantidad,
+                            conUnidad.group(3),
+                            precio,
+                            importe,
+                            catalogo)
+                    : null;
         }
 
         Matcher sinUnidad = LINEA_SIN_UNIDAD.matcher(linea);

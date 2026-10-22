@@ -55,6 +55,21 @@ cd chefstool-backend
 java -jar target/chefstool-backend-0.0.1-SNAPSHOT.jar
 ```
 
+### OCR de imágenes (opcional)
+
+Los PDF con texto se leen sin dependencias extra. Para **fotos y escaneos** el
+servidor necesita Tesseract con el idioma español:
+
+```bash
+apt install tesseract-ocr tesseract-ocr-spa   # Debian/Ubuntu
+brew install tesseract tesseract-lang         # macOS
+```
+
+Si no está instalado, la app sigue funcionando: los documentos quedan por revisar
+con un aviso claro en lugar de inventar datos.
+
+### Puerto
+
 El servidor escucha en el puerto 8080 (`PORT` no está mapeado todavía; si tu
 plataforma lo impone, añade `server.port=${PORT:8080}`).
 
@@ -98,8 +113,9 @@ devuelva `index.html` (si no, recargar en `/compras` da 404).
 
 ## 5. Limitaciones conocidas
 
-- **El OCR es de demostración**: `ExtractorDemo` no lee el archivo, genera datos
-  plausibles. Conectar el motor real es el paso pendiente más importante.
+- **El OCR de fotos requiere Tesseract**: sin él solo se leen PDF con texto.
+- **El parser es heurístico**: entiende formatos habituales de albarán español,
+  pero conviene probarlo con los documentos reales de cada proveedor.
 - **No hay invitación por correo**: cada registro crea su propia organización.
   Compartir organización requiere implementar invitaciones.
 - **Los roles aún no limitan acciones**: se guardan y se muestran, pero cualquier

@@ -14,4 +14,5 @@ public record DocumentoDetalle(
         BigDecimal confianzaExtraccion,
         OffsetDateTime createdAt,
         boolean tieneArchivo,
+        String errorExtraccion,
         ExtraccionDocumento extraccion) {}

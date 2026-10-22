@@ -121,11 +121,33 @@ Dos compromisos conscientes para no añadir indirección innecesaria a este tama
 
 ### OCR
 
-La extracción está detrás de la interfaz `ExtractorDocumento`. Hoy se usa
-`ExtractorDemo`, que **no lee el archivo**: genera una extracción realista con el
-catálogo de la organización para poder recorrer el flujo completo. Para conectar
-un motor real (Mindee, Google Vision, un modelo de visión…) basta con añadir otra
-implementación y marcarla como primaria.
+La extracción está detrás de la interfaz `ExtractorDocumento` y hoy funciona **sin
+contratar ningún servicio**:
+
+| Entrada | Cómo se lee |
+| --- | --- |
+| PDF digital | Se extrae el texto embebido con PDFBox (máxima precisión, sin OCR) |
+| Imagen o PDF escaneado | OCR con **Tesseract** si está instalado en el servidor |
+| Sin archivo (`origen=demo`) | `ExtractorDemo` genera un ejemplo con tu catálogo |
+
+El texto se interpreta con un parser heurístico (`ParserAlbaran`): proveedor,
+fecha, número de documento, líneas (cantidad, unidad, precio, importe), IVA y
+total. Cada línea se empareja automáticamente con el catálogo de productos.
+
+Si el documento no se puede leer, queda **por revisar** con el aviso
+correspondiente y se completa a mano: nunca se inventan datos.
+
+Para imágenes hace falta Tesseract (una sola vez en el servidor):
+
+```bash
+brew install tesseract tesseract-lang   # macOS
+apt install tesseract-ocr tesseract-ocr-spa   # Debian/Ubuntu
+```
+
+Para contratar un proveedor en la nube (Mindee, Google Vision, un modelo de
+visión…) basta con añadir otra implementación de `ExtractorDocumento`, marcarla
+como `@Primary` y añadir su clave como variable de entorno. Ni los casos de uso ni
+la interfaz cambian.
 
 ## API
 
@@ -176,11 +198,13 @@ cd chefstool-frontend && npm run lint && npm run build
 | 5 | Fichas técnicas y escandallos | Completada |
 | 6 | Dashboard e informes | Completada |
 | 7 | Autenticación, organizaciones, roles y PWA | Completada |
+| 8 | OCR local real (PDF + Tesseract) y parser de albaranes | Completada |
 
 ## Siguientes pasos
 
-1. **OCR real**: elegir proveedor, implementar `ExtractorDocumento` y probar con
-   albaranes de verdad. Es lo único que separa la demo de una herramienta real.
+1. **Probar con albaranes reales** y ajustar el parser a los formatos que use cada
+   proveedor. Si la precisión con fotos no basta, conectar un OCR en la nube
+   (el código ya está preparado: una implementación nueva y su clave).
 2. **Despliegue**: ver [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 3. **Invitaciones por correo**: hoy un miembro nuevo debe registrarse con su propia
    organización; falta el envío de invitaciones y la comprobación de permisos por

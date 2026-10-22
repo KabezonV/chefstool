@@ -160,6 +160,7 @@ public class DocumentoCompraService {
                 documento.getConfianzaExtraccion(),
                 documento.getCreatedAt(),
                 documento.getRutaAlmacenamiento() != null,
+                documento.getErrorExtraccion(),
                 deserializar(documento.getExtraccionJson()));
     }
 

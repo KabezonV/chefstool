@@ -156,6 +156,15 @@ Cuerpo de revisión y confirmación (`ExtraccionDocumento`):
 Al confirmar se crea la compra, se actualiza `proveedor_productos` y se genera
 una alerta si el precio sube ≥5 % respecto al último registrado.
 
+Al subir el archivo, el backend intenta leerlo:
+
+- PDF digital → texto embebido (sin OCR).
+- Imagen o PDF escaneado → Tesseract, si está instalado en el servidor.
+
+Si no se puede leer, el documento se crea igualmente con
+`"errorExtraccion": "mensaje"` y `extraccion: null`; se puede completar a mano
+desde la pantalla de revisión.
+
 ## Compras
 
 | Método | Ruta | Descripción |

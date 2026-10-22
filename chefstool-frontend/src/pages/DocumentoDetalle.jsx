@@ -231,6 +231,16 @@ export default function DocumentoDetalle() {
         </div>
       )}
 
+      {documento.errorExtraccion && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-medium">No se ha podido leer el documento</p>
+          <p className="mt-1">{documento.errorExtraccion}</p>
+          <p className="mt-1">
+            Puedes añadir las líneas a mano y confirmar la compra igualmente.
+          </p>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Datos de la compra</CardTitle>

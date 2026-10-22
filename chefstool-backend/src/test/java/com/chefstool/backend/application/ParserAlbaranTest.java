@@ -1,0 +1,159 @@
+package com.chefstool.backend.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import com.chefstool.backend.domain.model.ExtraccionDocumento;
+import com.chefstool.backend.domain.model.LineaExtraccion;
+import com.chefstool.backend.domain.model.Producto;
+import com.chefstool.backend.domain.model.Proveedor;
+import com.chefstool.backend.domain.model.ResultadoExtraccion;
+import com.chefstool.backend.domain.port.out.ProductoRepository;
+import com.chefstool.backend.domain.port.out.ProveedorRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class ParserAlbaranTest {
+
+    private static final UUID ORG = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
+    @Mock private ProductoRepository productoRepository;
+    @Mock private ProveedorRepository proveedorRepository;
+    @InjectMocks private ParserAlbaran parser;
+
+    private static final String ALBARAN =
+            """
+            FRUTAS GARCIA S.L.
+            CIF B12345678
+            ALBARAN: ALB-9911
+            Fecha: 05/10/2026
+
+            Descripcion Cantidad Precio Importe
+            TOMATE PERA 10 kg 2,50 25,00
+            CEBOLLA 12 kg 1,15 13,80
+
+            Base imponible 38,80
+            IVA 10% 3,88
+            TOTAL 42,68
+            """;
+
+    @Test
+    void interpretaUnAlbaranCompleto() {
+        stubProveedores(proveedor("Frutas Garcia"));
+        stubCatalogo(producto("Tomate pera"), producto("Cebolla"));
+
+        ResultadoExtraccion resultado = parser.interpretar(ALBARAN, ORG);
+        ExtraccionDocumento extraccion = resultado.extraccion();
+
+        assertThat(extraccion.proveedorNombre()).isEqualTo("Frutas Garcia");
+        assertThat(extraccion.proveedorId()).isNotNull();
+        assertThat(extraccion.numeroDocumento()).isEqualTo("ALB-9911");
+        assertThat(extraccion.fecha()).isEqualTo(LocalDate.of(2026, 10, 5));
+        assertThat(extraccion.importeNeto()).isEqualByComparingTo("38.80");
+        assertThat(extraccion.importeIva()).isEqualByComparingTo("3.88");
+        assertThat(extraccion.importeTotal()).isEqualByComparingTo("42.68");
+
+        assertThat(extraccion.lineas()).hasSize(2);
+
+        LineaExtraccion tomate = extraccion.lineas().get(0);
+        assertThat(tomate.descripcion()).isEqualTo("TOMATE PERA");
+        assertThat(tomate.cantidad()).isEqualByComparingTo("10");
+        assertThat(tomate.unidad()).isEqualTo("kg");
+        assertThat(tomate.precioUnitario()).isEqualByComparingTo("2.50");
+        assertThat(tomate.importe()).isEqualByComparingTo("25.00");
+        assertThat(tomate.productoId()).isNotNull();
+
+        assertThat(resultado.confianza()).isGreaterThan(new BigDecimal("0.7"));
+    }
+
+    @Test
+    void relacionaCadaLineaConSuProducto() {
+        stubCatalogo(producto("Tomate pera"), producto("Cebolla"));
+
+        ExtraccionDocumento extraccion = parser.interpretar(ALBARAN, ORG).extraccion();
+
+        assertThat(extraccion.lineas())
+                .extracting(LineaExtraccion::productoId)
+                .doesNotContainNull()
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void ignoraLineasCuyoImporteNoCuadra() {
+        String roto =
+                """
+                ALBARAN: ALB-1
+                TOMATE PERA 10 kg 2,50 99,00
+                TOTAL 99,00
+                """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(roto, ORG).extraccion();
+
+        assertThat(extraccion.lineas()).isEmpty();
+        assertThat(extraccion.importeTotal()).isEqualByComparingTo("99.00");
+    }
+
+    @Test
+    void admiteLineasSinUnidadCalculandoLaCantidad() {
+        String sinUnidad =
+                """
+                ALBARAN: ALB-2
+                PIMIENTA NEGRA 8,00 16,00
+                """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(sinUnidad, ORG).extraccion();
+
+        assertThat(extraccion.lineas()).hasSize(1);
+        assertThat(extraccion.lineas().get(0).cantidad()).isEqualByComparingTo("2");
+        assertThat(extraccion.lineas().get(0).importe()).isEqualByComparingTo("16.00");
+    }
+
+    @Test
+    void devuelveExtraccionVaciaSiNoHayTexto() {
+        ResultadoExtraccion resultado = parser.interpretar("   ", ORG);
+
+        assertThat(resultado.extraccion().lineas()).isEmpty();
+        assertThat(resultado.extraccion().proveedorNombre()).isNull();
+        assertThat(resultado.confianza()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void interpretaImportesConMilesYComaDecimal() {
+        assertThat(ParserAlbaran.numero("1.234,56")).isEqualByComparingTo("1234.56");
+        assertThat(ParserAlbaran.numero("2,50")).isEqualByComparingTo("2.50");
+        assertThat(ParserAlbaran.numero("12")).isEqualByComparingTo("12");
+    }
+
+    private Proveedor proveedor(String nombre) {
+        Proveedor proveedor = new Proveedor();
+        proveedor.setId(UUID.randomUUID());
+        proveedor.setNombre(nombre);
+        return proveedor;
+    }
+
+    private Producto producto(String nombre) {
+        Producto producto = new Producto();
+        producto.setId(UUID.randomUUID());
+        producto.setNombre(nombre);
+        producto.setUnidadBase("kg");
+        return producto;
+    }
+
+    private void stubProveedores(Proveedor... proveedores) {
+        when(proveedorRepository.findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(ORG))
+                .thenReturn(List.of(proveedores));
+    }
+
+    private void stubCatalogo(Producto... productos) {
+        when(productoRepository.findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(ORG))
+                .thenReturn(List.of(productos));
+    }
+}
