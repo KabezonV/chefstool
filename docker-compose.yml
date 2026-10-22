@@ -1,0 +1,41 @@
+# Chefstool completo en un comando:  docker compose up --build
+# Antes: copia .env.ejemplo a .env y rellena las credenciales de Supabase.
+services:
+  backend:
+    build: ./chefstool-backend
+    container_name: chefstool-api
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CHEFSTOOL_JWT_SECRET: ${CHEFSTOOL_JWT_SECRET}
+      CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:8081}
+      CHEFSTOOL_ENLACE_DIRECTO: ${CHEFSTOOL_ENLACE_DIRECTO:-false}
+      CHEFSTOOL_ALMACEN: ${CHEFSTOOL_ALMACEN:-local}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-}
+      SUPABASE_BUCKET: ${SUPABASE_BUCKET:-documentos}
+    volumes:
+      # Solo se usa si CHEFSTOOL_ALMACEN=local
+      - albaranes:/app/uploads
+    ports:
+      - '8080:8080'
+
+  frontend:
+    build:
+      context: ./chefstool-frontend
+      args:
+        VITE_API_URL: /api
+    container_name: chefstool-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '8081:80'
+
+volumes:
+  albaranes:
