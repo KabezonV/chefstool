@@ -8,12 +8,20 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-/** Guarda los albaranes en disco. Para produccion se sustituye por object storage. */
-@Service
+/**
+ * Guarda los albaranes en disco (por defecto). En despliegues con disco efimero hay que
+ * usar object storage: {@code chefstool.almacenamiento.tipo=supabase}.
+ */
+@Component
+@ConditionalOnProperty(
+        name = "chefstool.almacenamiento.tipo",
+        havingValue = "local",
+        matchIfMissing = true)
 public class AlmacenamientoLocal implements AlmacenamientoArchivos {
 
     private final Path base;

@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 77 tests (unitarios, integración y seguridad)
+# Backend: 88 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 25 tests (Vitest + Testing Library)
@@ -30,6 +30,9 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral |
 | Fichas | `FichaServiceTest`, `FichaControllerTest` | Coste con el mejor precio, productos sin precio, margen (incluido negativo) |
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
+| Recuperación de contraseña | `RecuperacionPasswordServiceTest` | Enlace de un solo uso, caducidad, enlace nuevo anula el anterior, correo desconocido |
+| Fuerza bruta | `AuthControllerTest` | 5 intentos fallidos → 429 incluso con la contraseña correcta |
+| Almacenamiento | `AlmacenamientoSupabaseTest` | Subida al bucket con la ruta y cabeceras correctas, descarga, saneado del nombre, configuración obligatoria |
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
 | Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes, coste por proveedor (gasto, ticket medio, variación media y orden del ranking) |
 | Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |

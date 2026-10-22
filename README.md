@@ -91,6 +91,13 @@ Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
   (`application-test.properties`), salvo en los tests de autenticación y equipo,
   que la ejercitan de verdad.
 
+### Recuperar la contraseña
+
+En la pantalla de acceso, *¿Has olvidado la contraseña?* genera un enlace de un solo
+uso válido una hora. Mientras no haya proveedor de correo, el enlace aparece en el log
+del backend; con `CHEFSTOOL_ENLACE_DIRECTO=true` (solo demostración) también se muestra
+en la propia pantalla.
+
 ### Invitar a un compañero
 
 En **Usuarios → Invitar a tu equipo** se invita por correo:
@@ -182,7 +189,7 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 
 | Recurso | Ruta |
 | --- | --- |
-| Autenticación | `/api/auth/registro`, `/api/auth/login`, `/api/auth/yo` |
+| Autenticación | `/api/auth/registro`, `/api/auth/login`, `/api/auth/yo`, `/api/auth/recuperar`, `/api/auth/restablecer` |
 | Productos | `/api/productos` (+ `/api/productos/{id}/precios`) |
 | Proveedores | `/api/proveedores` |
 | Clientes | `/api/clientes` |
@@ -225,7 +232,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 77 tests
+cd chefstool-backend && ./mvnw clean test          # 88 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)

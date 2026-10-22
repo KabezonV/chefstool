@@ -4,6 +4,7 @@ import { navItems } from '@/config/navigation'
 import { AuthProvider } from '@/lib/auth'
 import { useAuth } from '@/lib/auth-context'
 import Auth from '@/pages/Auth'
+import Restablecer from '@/pages/Restablecer'
 import Clientes from '@/pages/Clientes'
 import Compras from '@/pages/Compras'
 import Configuracion from '@/pages/Configuracion'
@@ -45,6 +46,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/restablecer" element={<Restablecer />} />
 
         <Route element={<RutaPrivada />}>
           <Route index element={<Navigate to="/dashboard" replace />} />

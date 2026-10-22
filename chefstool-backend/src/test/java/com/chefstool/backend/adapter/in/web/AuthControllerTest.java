@@ -97,6 +97,37 @@ class AuthControllerTest {
     }
 
     @Test
+    void bloqueaTrasCincoIntentosFallidos() throws Exception {
+        String email = "fuerza-bruta-" + UUID.randomUUID() + "@chefstool.es";
+
+        mockMvc.perform(
+                        post("/api/auth/registro")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"email\":\"%s\",\"password\":\"secreto123\"}"
+                                        .formatted(email)))
+                .andExpect(status().isCreated());
+
+        for (int intento = 0; intento < 5; intento++) {
+            mockMvc.perform(
+                            post("/api/auth/login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"email\":\"%s\",\"password\":\"mal\"}"
+                                            .formatted(email)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // El sexto intento, incluso con la contrasena correcta, queda frenado
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"email\":\"%s\",\"password\":\"secreto123\"}"
+                                        .formatted(email)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.error").value(
+                        org.hamcrest.Matchers.containsString("Demasiados intentos")));
+    }
+
+    @Test
     void sinTokenNoSePuedeAccederALaApi() throws Exception {
         mockMvc.perform(get("/api/productos")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/informes/panel")).andExpect(status().isUnauthorized());

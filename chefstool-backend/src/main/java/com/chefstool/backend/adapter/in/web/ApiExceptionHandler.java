@@ -34,6 +34,12 @@ public class ApiExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
+    @ExceptionHandler(DemasiadosIntentosException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Map<String, String> demasiadosIntentos(DemasiadosIntentosException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> validacion(MethodArgumentNotValidException ex) {

@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ChefHat, Loader2 } from 'lucide-react'
+import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/input'
 
 export default function Auth() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const { sesion, entrar, registrar } = useAuth()
   const [modo, setModo] = useState('login')
+  const [aviso, setAviso] = useState(state?.aviso ?? null)
   const [datos, setDatos] = useState({
     email: '',
     password: '',
@@ -30,8 +33,18 @@ export default function Auth() {
     event.preventDefault()
     setCargando(true)
     setError(null)
+    setAviso(null)
 
     try {
+      if (modo === 'recuperar') {
+        const respuesta = await api.post('/auth/recuperar', { email: datos.email })
+        setAviso({
+          mensaje: respuesta.mensaje,
+          token: respuesta.token,
+        })
+        return
+      }
+
       if (modo === 'login') {
         await entrar(datos.email, datos.password)
       } else {
@@ -66,7 +79,13 @@ export default function Auth() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-black/[0.04] p-1">
+          <div
+            className={
+              modo === 'recuperar'
+                ? 'hidden'
+                : 'mb-4 grid grid-cols-2 gap-1 rounded-lg bg-black/[0.04] p-1'
+            }
+          >
             {[
               { clave: 'login', texto: 'Iniciar sesión' },
               { clave: 'registro', texto: 'Crear cuenta' },
@@ -92,6 +111,23 @@ export default function Auth() {
           {error && (
             <div className="mb-4 rounded-lg border border-danger/30 bg-red-50 px-3 py-2 text-sm text-danger">
               {error}
+            </div>
+          )}
+
+          {aviso && (
+            <div className="mb-4 space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-success">
+              <p>{aviso.mensaje}</p>
+              {aviso.token && (
+                <p>
+                  Modo demostración (no hay correo configurado):{' '}
+                  <Link
+                    to={`/auth/restablecer?token=${aviso.token}`}
+                    className="font-medium underline"
+                  >
+                    abrir el enlace de recuperación
+                  </Link>
+                </p>
+              )}
             </div>
           )}
 
@@ -129,23 +165,55 @@ export default function Auth() {
               />
             </Field>
 
-            <Field label="Contraseña" htmlFor="password">
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={modo === 'registro' ? 8 : undefined}
-                autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-                placeholder="Mínimo 8 caracteres"
-                value={datos.password}
-                onChange={(event) => cambiar('password', event.target.value)}
-              />
-            </Field>
+            {modo !== 'recuperar' && (
+              <Field label="Contraseña" htmlFor="password">
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={modo === 'registro' ? 8 : undefined}
+                  autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+                  placeholder="Mínimo 8 caracteres"
+                  value={datos.password}
+                  onChange={(event) => cambiar('password', event.target.value)}
+                />
+              </Field>
+            )}
+
+            {modo === 'login' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setModo('recuperar')
+                  setError(null)
+                  setAviso(null)
+                }}
+                className="text-xs font-medium text-muted hover:text-foreground"
+              >
+                ¿Has olvidado la contraseña?
+              </button>
+            )}
 
             <Button type="submit" variant="accent" className="w-full" disabled={cargando}>
               {cargando ? <Loader2 className="size-4 animate-spin" /> : null}
-              {modo === 'login' ? 'Entrar' : 'Crear cuenta'}
+              {modo === 'login' && 'Entrar'}
+              {modo === 'registro' && 'Crear cuenta'}
+              {modo === 'recuperar' && 'Enviar enlace'}
             </Button>
+
+            {modo === 'recuperar' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setModo('login')
+                  setAviso(null)
+                  setError(null)
+                }}
+                className="w-full text-xs font-medium text-muted hover:text-foreground"
+              >
+                Volver a iniciar sesión
+              </button>
+            )}
           </form>
         </div>
 
