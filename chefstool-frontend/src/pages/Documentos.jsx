@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
-import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 function confianza(valor) {
   if (valor === null || valor === undefined) return '—'
@@ -40,15 +40,19 @@ export default function Documentos() {
     exportar,
   } = useListado('/documentos')
 
-  function exportarCsv() {
-    exportar([
-      { label: 'Archivo', valor: (documento) => documento.nombreOriginal },
-      { label: 'Estado', valor: (documento) => documento.estado },
-      { label: 'Origen', valor: (documento) => documento.origen },
-      { label: 'Confianza', valor: (documento) => documento.confianzaExtraccion },
-      { label: 'Subido', valor: (documento) => documento.createdAt },
-    ])
-  }
+  const columnasExport = [
+    { label: 'Archivo', valor: (documento) => documento.nombreOriginal },
+    { label: 'Estado', valor: (documento) => documento.estado },
+    { label: 'Origen', valor: (documento) => documento.origen },
+    {
+      label: 'Confianza (%)',
+      valor: (documento) =>
+        documento.confianzaExtraccion === null
+          ? null
+          : Math.round(Number(documento.confianzaExtraccion) * 100),
+    },
+    { label: 'Subido', valor: (documento) => documento.createdAt },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -83,7 +87,11 @@ export default function Documentos() {
         <CardHeader>
           <CardTitle>Bandeja de entrada</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <BotonesExportar
+              onCsv={() => exportar(columnasExport)}
+              onExcel={() => exportar(columnasExport, 'xlsx')}
+              exportando={exportando}
+            />
             <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} documentos`}</Badge>
           </div>
         </CardHeader>

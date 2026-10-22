@@ -16,7 +16,7 @@ obtén costes reales, márgenes y comparativas de proveedores.
 | Proveedores / Clientes / Eventos | Imputación de compras y costes por servicio |
 | Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta |
 | Alertas | Aviso automático cuando un proveedor sube el precio ≥5 % |
-| Dashboard e informes | Gasto mensual, gasto por proveedor, variaciones y ahorro potencial |
+| Dashboard e informes | Gasto mensual, coste histórico por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
 | Datos de ejemplo | Rellena una organización nueva con catálogo, albaranes y fichas para probar |
 
@@ -191,7 +191,7 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 | Compras | `/api/compras` |
 | Alertas de precio | `/api/alertas` |
 | Fichas técnicas | `/api/fichas` |
-| Panel e informes | `/api/informes/panel` |
+| Panel e informes | `/api/informes/panel`, `/api/informes/proveedores` |
 | Usuarios y organización | `/api/usuarios`, `/api/organizacion` |
 | Datos de ejemplo | `/api/demo/datos` (POST) |
 
@@ -202,8 +202,13 @@ fichas están **paginados** (`?pagina=0&tamano=20`), se pueden **ordenar**
 clientes y eventos admiten además `q` para buscar por nombre.
 
 En la interfaz, cada listado recuerda página, tamaño, búsqueda y orden en la URL (al
-volver de un detalle sigues donde estabas) y ofrece **Exportar CSV** con todas las
-filas del filtro actual, listo para abrir en Excel.
+volver de un detalle sigues donde estabas) y ofrece **Excel** y **CSV** con todas las
+filas del filtro actual. El `.xlsx` se genera sin dependencias externas y escribe los
+importes como números, así que Excel los suma y los formatea directamente.
+
+El informe `GET /api/informes/proveedores` añade el coste histórico por proveedor:
+compras, gasto total, ticket medio, peso sobre el gasto, productos distintos, última
+compra y variación media de sus precios.
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 401 (credenciales o token), 404 (registro inexistente) o 409
@@ -220,9 +225,10 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 76 tests
-cd chefstool-frontend && npm test                  # 24 tests
+cd chefstool-backend && ./mvnw clean test          # 77 tests
+cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
+./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
 ```
 
 Detalle de qué cubre cada test y la pasada de QA en navegador:

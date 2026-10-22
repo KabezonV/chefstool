@@ -261,6 +261,24 @@ curl http://localhost:8080/api/informes/panel -H "Authorization: Bearer $TOKEN"
 }
 ```
 
+### Coste histórico por proveedor
+
+`GET /informes/proveedores` devuelve el ranking de proveedores ordenado por gasto:
+
+```json
+[
+  {
+    "proveedorId": "…", "nombre": "Distribuciones Norte",
+    "compras": 4, "gastoTotal": 1290.08, "ticketMedio": 322.52,
+    "porcentajeGasto": 82.0, "ultimaCompra": "2026-10-18",
+    "productos": 3, "variacionMediaPct": 17.4
+  }
+]
+```
+
+`variacionMediaPct` compara el primer y el último precio de cada producto servido por
+ese proveedor (media de las variaciones); es `null` si no hay dos precios comparables.
+
 ## Usuarios y organización
 
 | Método | Ruta | Descripción |

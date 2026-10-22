@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, ChevronsUpDown, Download } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronsUpDown, Download, FileSpreadsheet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -32,11 +32,17 @@ export function CabeceraOrdenable({ columna, orden, direccion, onOrdenar, classN
   )
 }
 
-export function BotonExportar({ onClick, exportando, etiqueta = 'Exportar CSV' }) {
+export function BotonesExportar({ onCsv, onExcel, exportando }) {
   return (
-    <Button variant="outline" size="sm" onClick={onClick} disabled={exportando}>
-      <Download className="size-4" />
-      {exportando ? 'Generando…' : etiqueta}
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={onExcel} disabled={exportando}>
+        <FileSpreadsheet className="size-4" />
+        {exportando ? 'Generando…' : 'Excel'}
+      </Button>
+      <Button variant="outline" size="sm" onClick={onCsv} disabled={exportando}>
+        <Download className="size-4" />
+        CSV
+      </Button>
+    </div>
   )
 }

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 import Paginador from '@/components/ui/paginador'
-import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 const tonos = { info: 'neutral', aviso: 'warning', critico: 'danger' }
 
@@ -58,14 +58,14 @@ export default function Compras() {
     actualizar({ [campo]: valor, pagina: 0 })
   }
 
-  function exportarCsv() {
-    exportar([
-      { label: 'Fecha', valor: (compra) => compra.fecha },
-      { label: 'Proveedor', valor: (compra) => compra.proveedorNombre },
-      { label: 'Documento', valor: (compra) => compra.numeroDocumento },
-      { label: 'Total', valor: (compra) => compra.importeTotal },
-    ])
-  }
+  const columnasExport = [
+    { label: 'Fecha', valor: (compra) => compra.fecha },
+    { label: 'Proveedor', valor: (compra) => compra.proveedorNombre },
+    { label: 'Documento', valor: (compra) => compra.numeroDocumento },
+    { label: 'Base', valor: (compra) => compra.importeNeto },
+    { label: 'IVA', valor: (compra) => compra.importeIva },
+    { label: 'Total', valor: (compra) => compra.importeTotal },
+  ]
 
   function cargarAlertas() {
     api
@@ -147,7 +147,11 @@ export default function Compras() {
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <BotonesExportar
+              onCsv={() => exportar(columnasExport)}
+              onExcel={() => exportar(columnasExport, 'xlsx')}
+              exportando={exportando}
+            />
             <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} compras`}</Badge>
           </div>
         </CardHeader>

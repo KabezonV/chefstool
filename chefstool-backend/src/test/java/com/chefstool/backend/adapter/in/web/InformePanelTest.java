@@ -44,6 +44,61 @@ class InformePanelTest {
     @Autowired private DocumentoCompraRepository documentoRepository;
 
     @Test
+    void informaDelCostePorProveedor() throws Exception {
+        Producto producto = producto();
+        Proveedor caro = proveedor();
+        Proveedor barato = proveedor();
+
+        compra(caro, producto, "10.00", LocalDate.now().minusDays(10));
+        compra(caro, producto, "12.00", LocalDate.now().minusDays(2));
+        compra(barato, producto, "5.00", LocalDate.now());
+
+        JsonNode resumen =
+                objectMapper.readTree(
+                        mockMvc.perform(get("/api/informes/proveedores"))
+                                .andExpect(status().isOk())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString());
+
+        JsonNode caroJson = null;
+        JsonNode baratoJson = null;
+        for (JsonNode nodo : resumen) {
+            if (nodo.get("nombre").asString().equals(caro.getNombre())) {
+                caroJson = nodo;
+            }
+            if (nodo.get("nombre").asString().equals(barato.getNombre())) {
+                baratoJson = nodo;
+            }
+        }
+
+        assertThat(caroJson).isNotNull();
+        assertThat(baratoJson).isNotNull();
+
+        // Dos compras: 2 x 10 = 20 de base + 10 % de IVA, y 2 x 12 = 24 + IVA
+        assertThat(caroJson.get("compras").asInt()).isEqualTo(2);
+        assertThat(new BigDecimal(caroJson.get("gastoTotal").asString()))
+                .isEqualByComparingTo(new BigDecimal("48.40"));
+        assertThat(new BigDecimal(caroJson.get("ticketMedio").asString()))
+                .isEqualByComparingTo(new BigDecimal("24.20"));
+        assertThat(caroJson.get("productos").asInt()).isEqualTo(1);
+        // De 10,00 a 12,00 euros el kilo: +20 %
+        assertThat(new BigDecimal(caroJson.get("variacionMediaPct").asString()))
+                .isEqualByComparingTo(new BigDecimal("20.0"));
+
+        assertThat(baratoJson.get("compras").asInt()).isEqualTo(1);
+        // Un solo precio: no hay variacion que calcular
+        assertThat(baratoJson.get("variacionMediaPct").isNull()).isTrue();
+
+        // El ranking viene ordenado de mayor a menor gasto (la base de datos de test
+        // puede tener compras de otras pruebas, asi que comparamos posiciones)
+        List<String> nombres = new java.util.ArrayList<>();
+        resumen.forEach(nodo -> nombres.add(nodo.get("nombre").asString()));
+        assertThat(nombres.indexOf(caro.getNombre()))
+                .isLessThan(nombres.indexOf(barato.getNombre()));
+    }
+
+    @Test
     void panelAgregaGastoAhorroYDocumentosPendientes() throws Exception {
         Producto producto = producto();
         Proveedor proveedor = proveedor();

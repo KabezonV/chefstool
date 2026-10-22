@@ -3,10 +3,10 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 76 tests (unitarios, integración y seguridad)
+# Backend: 77 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 24 tests (Vitest + Testing Library)
+# Frontend: 25 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -31,10 +31,10 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Fichas | `FichaServiceTest`, `FichaControllerTest` | Coste con el mejor precio, productos sin precio, margen (incluido negativo) |
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
-| Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes |
+| Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes, coste por proveedor (gasto, ticket medio, variación media y orden del ranking) |
 | Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |
 | Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q`, orden asc/desc y orden no permitido |
-| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación, búsqueda, orden por cabecera y exportación CSV, pantalla de acceso |
+| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido), pantalla de acceso |
 
 ## Pasada de QA en navegador
 
@@ -78,9 +78,30 @@ nuevas para no contaminar datos existentes.
    del dashboard (`POST /api/demo/datos`).
 3. **Nombre del albarán de ejemplo**: siempre es `albaran-demo.pdf`.
 
+## Prueba de volumen
+
+`scripts/qa-volumen.sh` registra una organización nueva, crea 120 compras confirmadas
+repartidas en 6 meses y mide los listados. Resultado del 22/10/2026:
+
+| Comprobación | Resultado |
+| --- | --- |
+| 120 compras creadas vía API (documento + confirmar) | 111 s (≈0,9 s por compra) |
+| `GET /compras?pagina=0&tamano=20` | 0,34 s · total 120 · 6 páginas · 20 filas |
+| `GET /compras?pagina=5` (última) | 0,32 s · 20 filas |
+| `GET /compras?orden=importeTotal&direccion=desc` | 0,32 s · orden correcto |
+| `GET /compras?proveedorId=…` | 0,21 s · 40 filas (1 de 3 proveedores) |
+| `GET /productos?q=aceite` | 0,14 s · 1 resultado |
+| `GET /documentos?pagina=0&tamano=20` | 0,20 s · 6 páginas |
+| `GET /informes/panel` | 0,48 s |
+| `GET /informes/proveedores` | 0,18 s |
+| Página fuera de rango (`pagina=99`) | 200 con `contenido` vacío y `totalElementos` correcto |
+
+Los tiempos incluyen la latencia hasta Supabase (la base no es local), así que el
+margen de mejora en producción es sobre todo de red.
+
 ## Pendiente de verificar a mano
 
 - Albaranes reales de proveedores concretos (formatos y descuentos).
 - iPad físico en vertical y horizontal, y captura con la cámara.
-- Comportamiento con muchos registros: la paginación está cubierta por tests,
-  falta probarla con volúmenes reales (miles de compras).
+- Volumen de miles de compras: probado con 120 (ver tabla); con miles convendría
+  revisar el informe del panel, que hoy recorre todas las compras de la organización.

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api, conParametros, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
 import { descargarCsv, fechaArchivo } from '@/lib/csv'
+import { descargarXlsx } from '@/lib/xlsx'
 
 /**
  * Estado de un listado paginado guardado en la URL (pagina, tamano, orden, direccion y q),
@@ -94,11 +95,16 @@ export function useListado(endpoint, filtros = {}) {
   }, [])
 
   const exportar = useCallback(
-    async (columnas) => {
+    async (columnas, formato = 'csv') => {
       setExportando(true)
       try {
         const filas = await listarTodo(conParametros(endpoint, consulta), 100)
-        descargarCsv(`${endpoint.replace('/', '')}-${fechaArchivo()}`, columnas, filas)
+        const nombre = `${endpoint.replace('/', '')}-${fechaArchivo()}`
+        if (formato === 'xlsx') {
+          descargarXlsx(nombre, { hoja: 'Datos', columnas, filas })
+        } else {
+          descargarCsv(nombre, columnas, filas)
+        }
       } catch (err) {
         setError(err.message)
       } finally {

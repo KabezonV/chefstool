@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import Paginador, { Buscador } from '@/components/ui/paginador'
-import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 function valoresIniciales(campos) {
   return Object.fromEntries(campos.map((campo) => [campo.name, '']))
@@ -122,14 +122,10 @@ export default function ResourcePage({ recurso }) {
     aplicarBusqueda(valor)
   }
 
-  function exportarCsv() {
-    exportar(
-      columnas.map((columna) => ({
-        label: columna.label,
-        valor: (fila) => fila[columna.key],
-      })),
-    )
-  }
+  const columnasExport = columnas.map((columna) => ({
+    label: columna.label,
+    valor: (fila) => fila[columna.key],
+  }))
 
   useEffect(() => {
     let activo = true
@@ -302,7 +298,11 @@ export default function ResourcePage({ recurso }) {
               onChange={cambiarBusqueda}
               placeholder="Buscar por nombre…"
             />
-            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <BotonesExportar
+              onCsv={() => exportar(columnasExport)}
+              onExcel={() => exportar(columnasExport, 'xlsx')}
+              exportando={exportando}
+            />
             <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} registros`}</Badge>
           </div>
         </CardHeader>

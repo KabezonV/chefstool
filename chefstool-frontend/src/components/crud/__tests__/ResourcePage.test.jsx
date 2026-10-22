@@ -205,7 +205,7 @@ describe('ResourcePage', () => {
     montar()
 
     await screen.findByText('Tomate pera')
-    await usuario.click(screen.getByRole('button', { name: /Exportar CSV/ }))
+    await usuario.click(screen.getByRole('button', { name: 'CSV' }))
 
     await waitFor(() => expect(objetoUrl).toHaveBeenCalled())
     expect(fetchMock).toHaveBeenCalledWith(
@@ -215,6 +215,39 @@ describe('ResourcePage', () => {
 
     const csv = await objetoUrl.mock.calls[0][0].text()
     expect(csv.replace('\uFEFF', '')).toBe('Nombre;Unidad\r\nTomate pera;kg')
+
+    click.mockRestore()
+    delete URL.createObjectURL
+    delete URL.revokeObjectURL
+    vi.unstubAllGlobals()
+  })
+
+  it('exporta a Excel con celdas numericas', async () => {
+    api.get.mockResolvedValue(pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]))
+    const objetoUrl = vi.fn(() => 'blob:xlsx')
+    URL.createObjectURL = objetoUrl
+    URL.revokeObjectURL = vi.fn()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      status: 200,
+      json: async () => pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]),
+    }))
+
+    const usuario = userEvent.setup()
+    montar()
+
+    await screen.findByText('Tomate pera')
+    await usuario.click(screen.getByRole('button', { name: 'Excel' }))
+
+    await waitFor(() => expect(objetoUrl).toHaveBeenCalled())
+
+    const bytes = new Uint8Array(await objetoUrl.mock.calls[0][0].arrayBuffer())
+    // Firma de un zip (todo .xlsx lo es) y una de sus partes
+    expect([...bytes.slice(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04])
+    const contenido = new TextDecoder().decode(bytes)
+    expect(contenido).toContain('xl/worksheets/sheet1.xml')
+    expect(contenido).toContain('Tomate pera')
 
     click.mockRestore()
     delete URL.createObjectURL

@@ -5,6 +5,7 @@ import com.chefstool.backend.application.dto.DocumentoPendiente;
 import com.chefstool.backend.application.dto.GastoAgrupado;
 import com.chefstool.backend.application.dto.KpiPanel;
 import com.chefstool.backend.application.dto.PanelInforme;
+import com.chefstool.backend.application.dto.ResumenProveedor;
 import com.chefstool.backend.application.dto.VariacionPrecio;
 import com.chefstool.backend.domain.model.AlertaPrecio;
 import com.chefstool.backend.domain.model.Compra;
@@ -16,12 +17,15 @@ import com.chefstool.backend.domain.port.out.DocumentoCompraRepository;
 import com.chefstool.backend.domain.port.out.LineaCompraRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -118,6 +122,128 @@ public class InformeService {
                 variaciones(organizacionId),
                 pendientes.stream().limit(5).map(AlertaResumen::from).toList(),
                 documentosPendientes.stream().limit(5).map(DocumentoPendiente::from).toList());
+    }
+
+    /**
+     * Ranking de proveedores: gasto historico, ticket medio, peso sobre el total y
+     * variacion media de los precios de los productos que sirve.
+     */
+    @Transactional(readOnly = true)
+    public List<ResumenProveedor> porProveedor() {
+        UUID organizacionId = organizacionService.organizacionActual();
+        List<Compra> compras = compraRepository.buscar(organizacionId, null, null, null);
+        List<LineaCompra> lineas = lineaCompraRepository.lineasDeOrganizacion(organizacionId);
+
+        BigDecimal gastoGlobal =
+                compras.stream().map(Compra::getImporteTotal).filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<UUID, List<Compra>> porProveedor =
+                compras.stream()
+                        .filter(compra -> compra.getProveedor() != null)
+                        .collect(Collectors.groupingBy(compra -> compra.getProveedor().getId()));
+
+        Map<UUID, BigDecimal> variacionesPorProveedor = variacionesPorProveedor(lineas);
+        Map<UUID, Integer> productosPorProveedor = productosPorProveedor(lineas);
+
+        List<ResumenProveedor> resumen = new ArrayList<>();
+        porProveedor.forEach(
+                (proveedorId, susCompras) -> {
+                    BigDecimal gasto =
+                            susCompras.stream().map(Compra::getImporteTotal).filter(Objects::nonNull)
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    LocalDate ultima =
+                            susCompras.stream().map(Compra::getFecha).filter(Objects::nonNull)
+                                    .max(LocalDate::compareTo)
+                                    .orElse(null);
+                    resumen.add(
+                            new ResumenProveedor(
+                                    proveedorId,
+                                    susCompras.getFirst().getProveedor().getNombre(),
+                                    susCompras.size(),
+                                    gasto.setScale(2, RoundingMode.HALF_UP),
+                                    gasto.divide(
+                                                    BigDecimal.valueOf(susCompras.size()),
+                                                    2,
+                                                    RoundingMode.HALF_UP),
+                                    gastoGlobal.signum() == 0
+                                            ? BigDecimal.ZERO
+                                            : gasto.multiply(CIEN)
+                                                    .divide(gastoGlobal, 1, RoundingMode.HALF_UP),
+                                    ultima,
+                                    productosPorProveedor.getOrDefault(proveedorId, 0),
+                                    variacionesPorProveedor.get(proveedorId)));
+                });
+
+        return resumen.stream()
+                .sorted(Comparator.comparing(ResumenProveedor::gastoTotal).reversed())
+                .toList();
+    }
+
+    /** Variacion media de precio por proveedor: primer vs ultimo precio de cada producto. */
+    private Map<UUID, BigDecimal> variacionesPorProveedor(List<LineaCompra> lineas) {
+        record Par(UUID proveedorId, UUID productoId) {}
+
+        Map<Par, List<LineaCompra>> series = new HashMap<>();
+        for (LineaCompra linea : lineas) {
+            if (linea.getProducto() == null
+                    || linea.getCompra().getProveedor() == null
+                    || precio(linea) == null) {
+                continue;
+            }
+            Par par =
+                    new Par(
+                            linea.getCompra().getProveedor().getId(), linea.getProducto().getId());
+            series.computeIfAbsent(par, clave -> new ArrayList<>()).add(linea);
+        }
+
+        Map<UUID, List<BigDecimal>> porcentajes = new HashMap<>();
+        series.forEach(
+                (par, suSerie) -> {
+                    if (suSerie.size() < 2) {
+                        return;
+                    }
+                    BigDecimal primero = precio(suSerie.getFirst());
+                    BigDecimal ultimo = precio(suSerie.getLast());
+                    if (primero == null || primero.signum() <= 0 || ultimo == null) {
+                        return;
+                    }
+                    BigDecimal porcentaje =
+                            ultimo.subtract(primero).multiply(CIEN)
+                                    .divide(primero, 2, RoundingMode.HALF_UP);
+                    porcentajes.computeIfAbsent(par.proveedorId(), clave -> new ArrayList<>())
+                            .add(porcentaje);
+                });
+
+        Map<UUID, BigDecimal> resultado = new HashMap<>();
+        porcentajes.forEach(
+                (proveedorId, valores) ->
+                        resultado.put(
+                                proveedorId,
+                                valores.stream()
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add)
+                                        .divide(
+                                                BigDecimal.valueOf(valores.size()),
+                                                1,
+                                                RoundingMode.HALF_UP)));
+        return resultado;
+    }
+
+    private Map<UUID, Integer> productosPorProveedor(List<LineaCompra> lineas) {
+        Map<UUID, java.util.Set<UUID>> productos = new HashMap<>();
+        for (LineaCompra linea : lineas) {
+            if (linea.getProducto() == null || linea.getCompra().getProveedor() == null) {
+                continue;
+            }
+            productos
+                    .computeIfAbsent(
+                            linea.getCompra().getProveedor().getId(),
+                            clave -> new java.util.HashSet<>())
+                    .add(linea.getProducto().getId());
+        }
+        Map<UUID, Integer> resultado = new HashMap<>();
+        productos.forEach((proveedorId, ids) -> resultado.put(proveedorId, ids.size()));
+        return resultado;
     }
 
     private List<GastoAgrupado> gastoPorProveedor(List<Compra> compras, YearMonth mes) {

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
-import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 function tonoMargen(margen) {
   if (margen === null || margen === undefined) return 'neutral'
@@ -41,15 +41,13 @@ export default function Fichas() {
     exportar,
   } = useListado('/fichas')
 
-  function exportarCsv() {
-    exportar([
-      { label: 'Ficha', valor: (ficha) => ficha.nombre },
-      { label: 'Raciones', valor: (ficha) => ficha.raciones },
-      { label: 'Coste por ración', valor: (ficha) => ficha.costePorRacion },
-      { label: 'Precio venta', valor: (ficha) => ficha.precioVenta },
-      { label: 'Margen', valor: (ficha) => ficha.margenPct },
-    ])
-  }
+  const columnasExport = [
+    { label: 'Ficha', valor: (ficha) => ficha.nombre },
+    { label: 'Raciones', valor: (ficha) => ficha.raciones },
+    { label: 'Coste por ración', valor: (ficha) => ficha.costePorRacion },
+    { label: 'Precio venta', valor: (ficha) => ficha.precioVenta },
+    { label: 'Margen (%)', valor: (ficha) => ficha.margenPct },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -78,7 +76,11 @@ export default function Fichas() {
         <CardHeader>
           <CardTitle>Recetario</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <BotonesExportar
+              onCsv={() => exportar(columnasExport)}
+              onExcel={() => exportar(columnasExport, 'xlsx')}
+              exportando={exportando}
+            />
             <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} fichas`}</Badge>
           </div>
         </CardHeader>
