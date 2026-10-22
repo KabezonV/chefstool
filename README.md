@@ -205,9 +205,13 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test   # 45 tests
+cd chefstool-backend && ./mvnw clean test          # 70 tests
+cd chefstool-frontend && npm test                  # 20 tests
 cd chefstool-frontend && npm run lint && npm run build
 ```
+
+Detalle de qué cubre cada test y la pasada de QA en navegador:
+[docs/QA.md](docs/QA.md).
 
 ## Cronograma
 

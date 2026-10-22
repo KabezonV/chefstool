@@ -11,8 +11,19 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+    include: ['src/**/*.test.{js,jsx}'],
+    css: false,
+  },
   server: {
     port: 5173,
+    // Escucha en la red local para poder abrirla desde la tablet/iPad
+    host: true,
+    // Vite bloquea nombres de host desconocidos (p. ej. MacBook.local): en local lo permitimos
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
