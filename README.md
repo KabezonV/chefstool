@@ -54,6 +54,16 @@ npm run dev
 Vite sirve en `http://localhost:5173` y redirige `/api` al backend (`proxy` en
 `vite.config.js`), así que en desarrollo no hay que configurar CORS.
 
+### Todo junto con Docker
+
+```bash
+cp .env.ejemplo .env      # rellena las credenciales de Supabase
+docker compose up --build # API en :8080 y web en :8081
+```
+
+Abre <http://localhost:8081>. La imagen del backend incluye Tesseract con español, así
+que la lectura de fotos de albarán funciona sin instalar nada más.
+
 ### Primer uso
 
 1. Abre la aplicación: te llevará a `/auth`.
@@ -189,6 +199,7 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 
 Resumen del proyecto y propuesta de puesta en marcha para dirección:
 [docs/INFORME-BERNART.md](docs/INFORME-BERNART.md).
+Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
 
 | Recurso | Ruta |
 | --- | --- |
