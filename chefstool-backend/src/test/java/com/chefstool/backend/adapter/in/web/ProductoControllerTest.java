@@ -1,6 +1,7 @@
 package com.chefstool.backend.adapter.in.web;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -8,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import tools.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +54,39 @@ class ProductoControllerTest {
         mockMvc.perform(get("/api/productos").param("q", "no-existe-" + UUID.randomUUID()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElementos").value(0));
+    }
+
+    @Test
+    void ordenaPorNombreEnAmbosSentidos() throws Exception {
+        crear("Aaa " + UUID.randomUUID(), "kg");
+        crear("Zzz " + UUID.randomUUID(), "kg");
+
+        String ascendente =
+                mockMvc.perform(get("/api/productos").param("orden", "nombre").param("direccion", "asc"))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+        String descendente =
+                mockMvc.perform(
+                                get("/api/productos")
+                                        .param("orden", "nombre")
+                                        .param("direccion", "desc"))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        var asc = nombres(ascendente);
+        var desc = nombres(descendente);
+        assertThat(desc).isEqualTo(asc.reversed());
+    }
+
+    @Test
+    void ignoraOrdenNoPermitido() throws Exception {
+        mockMvc.perform(get("/api/productos").param("orden", "drop table productos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido").isArray());
     }
 
     @Test
@@ -138,5 +174,13 @@ class ProductoControllerTest {
                         .getContentAsString();
 
         return objectMapper.readTree(respuesta).get("id").asText();
+    }
+
+    private List<String> nombres(String cuerpo) throws Exception {
+        List<String> nombres = new ArrayList<>();
+        for (var nodo : objectMapper.readTree(cuerpo).get("contenido")) {
+            nombres.add(nodo.get("nombre").asString());
+        }
+        return nombres;
     }
 }

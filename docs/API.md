@@ -23,6 +23,19 @@ Base: `http://localhost:8080/api`
 
   `/productos`, `/proveedores`, `/clientes` y `/eventos` aceptan además `q` para buscar
   por nombre (sin distinguir mayúsculas ni acentos de la consulta).
+- **Orden**: cualquier listado acepta `orden=<campo>&direccion=asc|desc`. El campo se
+  valida contra una lista blanca; si no es válido se aplica el orden por defecto (no da
+  error). Campos admitidos:
+
+  | Recurso | Campos de `orden` | Por defecto |
+  | --- | --- | --- |
+  | Productos | `nombre`, `categoria`, `unidadBase` | `nombre` asc |
+  | Proveedores | `nombre`, `cif`, `email` | `nombre` asc |
+  | Clientes | `nombre`, `email` | `nombre` asc |
+  | Eventos | `nombre`, `fecha`, `comensales` | `fecha` desc |
+  | Documentos | `createdAt`, `nombreOriginal`, `estado`, `confianzaExtraccion` | `createdAt` desc |
+  | Compras | `fecha`, `importeTotal`, `numeroDocumento`, `createdAt` | `fecha` desc |
+  | Fichas | `nombre`, `precioVenta`, `raciones` | `nombre` asc |
 - Los errores devuelven `{"error": "mensaje"}` con el código HTTP adecuado:
 
 | Código | Significado |
@@ -77,7 +90,7 @@ curl http://localhost:8080/api/auth/yo -H "Authorization: Bearer $TOKEN"
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/productos?pagina=0&tamano=20&q=tomate` | Listado paginado y buscable por nombre |
+| GET | `/productos?pagina=0&tamano=20&q=tomate&orden=nombre&direccion=asc` | Listado paginado, buscable y ordenable |
 | POST | `/productos` | Alta (`nombre`, `categoria`, `unidadBase`) |
 | PUT | `/productos/{id}` | Edición |
 | DELETE | `/productos/{id}` | Borrado lógico (204) |

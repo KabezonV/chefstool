@@ -57,15 +57,24 @@ public class FichaService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<FichaResumen> listar(int pagina, int tamano) {
+    public Pagina<FichaResumen> listar(
+            int pagina, int tamano, String orden, String direccion) {
         UUID organizacionId = organizacionService.organizacionActual();
         Map<UUID, BigDecimal> precios = mejoresPrecios(organizacionId);
 
-        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("nombre").ascending(),
+                                "nombre", "precioVenta", "raciones"));
 
         return Pagina.desde(
                         fichaRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, orden)
+                                organizacionId, pageable)
                                 .map(
                         ficha -> {
                             List<FichaLinea> lineas =

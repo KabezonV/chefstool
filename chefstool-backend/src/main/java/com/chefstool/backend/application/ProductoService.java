@@ -123,17 +123,26 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<ProductoResponse> listar(int pagina, int tamano, String busqueda) {
+    public Pagina<ProductoResponse> listar(
+            int pagina, int tamano, String busqueda, String orden, String direccion) {
         UUID organizacionId = organizacionService.organizacionActual();
-        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("nombre").ascending(),
+                                "nombre", "categoria", "unidadBase"));
 
         Page<Producto> resultado =
                 busqueda == null || busqueda.isBlank()
                         ? productoRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, orden)
+                                organizacionId, pageable)
                         : productoRepository
                                 .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
-                                        organizacionId, busqueda.trim(), orden);
+                                        organizacionId, busqueda.trim(), pageable);
 
         return Pagina.desde(resultado).map(ProductoResponse::from);
     }

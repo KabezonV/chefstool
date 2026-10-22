@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
-import { api, conParametros, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
+import { api, listarTodo } from '@/lib/api'
+import { useDebounce, useListado } from '@/lib/useListado'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import Paginador, { Buscador } from '@/components/ui/paginador'
+import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 function valoresIniciales(campos) {
   return Object.fromEntries(campos.map((campo) => [campo.name, '']))
@@ -80,70 +82,53 @@ export default function ResourcePage({ recurso }) {
   const { endpoint, titulo, descripcion, columnas, campos, singular, vacio, detalle } = recurso
   const navigate = useNavigate()
 
-  const [datos, setDatos] = useState(() => paginaVacia())
-  const [pagina, setPagina] = useState(0)
-  const [tamano, setTamano] = useState(20)
-  const [busqueda, setBusqueda] = useState('')
-  const [busquedaAplicada, setBusquedaAplicada] = useState('')
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
+  const {
+    items,
+    datos,
+    pagina,
+    tamano,
+    orden,
+    direccion,
+    q: busquedaAplicada,
+    cargando,
+    error,
+    setError,
+    exportando,
+    actualizar,
+    ordenarPor,
+    refrescar,
+    exportar,
+  } = useListado(endpoint)
+
+  const [busqueda, setBusqueda] = useState(busquedaAplicada)
   const [formAbierto, setFormAbierto] = useState(false)
   const [editando, setEditando] = useState(null)
   const [valores, setValores] = useState(() => valoresIniciales(campos))
   const [guardando, setGuardando] = useState(false)
   const [fuentes, setFuentes] = useState({})
-  const [recarga, setRecarga] = useState(0)
-  const temporizadorBusqueda = useRef(null)
-
-  const items = datos.contenido
 
   const camposSelect = useMemo(
     () => campos.filter((campo) => campo.type === 'select'),
     [campos],
   )
 
-  const cargar = useCallback(
-    () =>
-      api
-        .get(conParametros(endpoint, { pagina, tamano, q: busquedaAplicada }))
-        .then((datos) => normalizarPagina(datos, tamano)),
-    [endpoint, pagina, tamano, busquedaAplicada],
+  const aplicarBusqueda = useDebounce(
+    (valor) => actualizar({ q: valor.trim(), pagina: 0 }),
+    300,
   )
-
-  useEffect(() => {
-    let activo = true
-
-    cargar()
-      .then((resultado) => {
-        if (!activo) return
-        setDatos(resultado)
-        setError(null)
-        setCargando(false)
-      })
-      .catch((err) => {
-        if (!activo) return
-        setError(err.message)
-        setCargando(false)
-      })
-
-    return () => {
-      activo = false
-    }
-  }, [cargar, recarga])
-
-  useEffect(() => () => clearTimeout(temporizadorBusqueda.current), [])
 
   function cambiarBusqueda(valor) {
     setBusqueda(valor)
-    setPagina(0)
-    setCargando(true)
-    clearTimeout(temporizadorBusqueda.current)
-    temporizadorBusqueda.current = setTimeout(() => setBusquedaAplicada(valor.trim()), 300)
+    aplicarBusqueda(valor)
   }
 
-  function refrescar() {
-    setCargando(true)
-    setRecarga((valor) => valor + 1)
+  function exportarCsv() {
+    exportar(
+      columnas.map((columna) => ({
+        label: columna.label,
+        valor: (fila) => fila[columna.key],
+      })),
+    )
   }
 
   useEffect(() => {
@@ -227,8 +212,7 @@ export default function ResourcePage({ recurso }) {
       }
       cerrarFormulario()
       if (pagina !== 0) {
-        setPagina(0)
-        setCargando(true)
+        actualizar({ pagina: 0 })
       } else {
         refrescar()
       }
@@ -247,8 +231,7 @@ export default function ResourcePage({ recurso }) {
     try {
       await api.delete(`${endpoint}/${item.id}`)
       if (items.length === 1 && pagina > 0) {
-        setCargando(true)
-        setPagina(pagina - 1)
+        actualizar({ pagina: pagina - 1 })
       } else {
         refrescar()
       }
@@ -313,12 +296,15 @@ export default function ResourcePage({ recurso }) {
       <Card>
         <CardHeader className="flex-wrap">
           <CardTitle>{titulo}</CardTitle>
-          <Buscador
-            valor={busqueda}
-            onChange={cambiarBusqueda}
-            placeholder="Buscar por nombre…"
-          />
-          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} registros`}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Buscador
+              valor={busqueda}
+              onChange={cambiarBusqueda}
+              placeholder="Buscar por nombre…"
+            />
+            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} registros`}</Badge>
+          </div>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {!cargando && items.length === 0 ? (
@@ -331,9 +317,13 @@ export default function ResourcePage({ recurso }) {
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     {columnas.map((columna) => (
-                      <th key={columna.key} className="px-5 py-2 font-medium">
-                        {columna.label}
-                      </th>
+                      <CabeceraOrdenable
+                        key={columna.key}
+                        columna={columna}
+                        orden={orden}
+                        direccion={direccion}
+                        onOrdenar={ordenarPor}
+                      />
                     ))}
                     <th className="w-24 px-5 py-2" />
                   </tr>
@@ -386,11 +376,9 @@ export default function ResourcePage({ recurso }) {
             tamano={tamano}
             totalElementos={datos.totalElementos}
             totalPaginas={datos.totalPaginas}
-            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
-              setCargando(true)
-              setPagina(nuevaPagina)
-              setTamano(nuevoTamano)
-            }}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) =>
+              actualizar({ pagina: nuevaPagina, tamano: nuevoTamano })
+            }
           />
         </CardContent>
       </Card>

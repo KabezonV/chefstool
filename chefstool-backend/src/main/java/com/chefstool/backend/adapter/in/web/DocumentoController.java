@@ -36,8 +36,10 @@ public class DocumentoController {
     @GetMapping
     public Pagina<DocumentoResumen> listar(
             @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamano) {
-        return documentoService.listar(pagina, tamano);
+            @RequestParam(defaultValue = "20") int tamano,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String direccion) {
+        return documentoService.listar(pagina, tamano, orden, direccion);
     }
 
     @GetMapping("/{id}")

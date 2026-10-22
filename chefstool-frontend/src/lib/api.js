@@ -81,14 +81,14 @@ function conParametros(path, parametros) {
 /** Lista completa, pagina a pagina, para alimentar desplegables. */
 export async function listarTodo(path, tamano = 100) {
   const primera = normalizarPagina(
-    await request(conParametros(path, { pagina: 0, tamano })),
+    await api.get(conParametros(path, { pagina: 0, tamano })),
     tamano,
   )
   const items = [...primera.contenido]
 
   for (let pagina = 1; pagina < primera.totalPaginas; pagina += 1) {
     const siguiente = normalizarPagina(
-      await request(conParametros(path, { pagina, tamano })),
+      await api.get(conParametros(path, { pagina, tamano })),
       tamano,
     )
     items.push(...siguiente.contenido)

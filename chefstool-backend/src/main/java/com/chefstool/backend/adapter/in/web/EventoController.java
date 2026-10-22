@@ -32,8 +32,10 @@ public class EventoController {
     public Pagina<EventoResponse> listar(
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamano,
-            @RequestParam(required = false) String q) {
-        return eventoService.listar(pagina, tamano, q);
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String direccion) {
+        return eventoService.listar(pagina, tamano, q, orden, direccion);
     }
 
     @PostMapping

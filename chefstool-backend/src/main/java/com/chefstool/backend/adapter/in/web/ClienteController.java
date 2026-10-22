@@ -32,8 +32,10 @@ public class ClienteController {
     public Pagina<ClienteResponse> listar(
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamano,
-            @RequestParam(required = false) String q) {
-        return clienteService.listar(pagina, tamano, q);
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String direccion) {
+        return clienteService.listar(pagina, tamano, q, orden, direccion);
     }
 
     @PostMapping

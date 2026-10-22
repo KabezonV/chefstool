@@ -12,9 +12,9 @@ export const productos = {
   vacio: 'Todavía no hay productos en el catálogo.',
   detalle: (producto) => `/productos/${producto.id}`,
   columnas: [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'categoria', label: 'Categoría' },
-    { key: 'unidadBase', label: 'Unidad base' },
+    { key: 'nombre', label: 'Nombre', orden: 'nombre' },
+    { key: 'categoria', label: 'Categoría', orden: 'categoria' },
+    { key: 'unidadBase', label: 'Unidad base', orden: 'unidadBase' },
   ],
   campos: [
     { name: 'nombre', label: 'Nombre', required: true, placeholder: 'Tomate pera' },
@@ -30,9 +30,9 @@ export const proveedores = {
   descripcion: 'Quién te vende cada producto y a qué precio.',
   vacio: 'Todavía no hay proveedores.',
   columnas: [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'cif', label: 'CIF' },
-    { key: 'email', label: 'Email' },
+    { key: 'nombre', label: 'Nombre', orden: 'nombre' },
+    { key: 'cif', label: 'CIF', orden: 'cif' },
+    { key: 'email', label: 'Email', orden: 'email' },
     { key: 'telefono', label: 'Teléfono' },
   ],
   campos: [
@@ -51,8 +51,8 @@ export const clientes = {
   descripcion: 'A quién imputas las compras y los eventos.',
   vacio: 'Todavía no hay clientes.',
   columnas: [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'email', label: 'Email' },
+    { key: 'nombre', label: 'Nombre', orden: 'nombre' },
+    { key: 'email', label: 'Email', orden: 'email' },
     { key: 'telefono', label: 'Teléfono' },
   ],
   campos: [
@@ -70,9 +70,9 @@ export const eventos = {
   descripcion: 'Servicios y caterings para calcular su coste real.',
   vacio: 'Todavía no hay eventos.',
   columnas: [
-    { key: 'nombre', label: 'Evento' },
-    { key: 'fecha', label: 'Fecha', format: fecha },
-    { key: 'comensales', label: 'Comensales' },
+    { key: 'nombre', label: 'Evento', orden: 'nombre' },
+    { key: 'fecha', label: 'Fecha', format: fecha, orden: 'fecha' },
+    { key: 'comensales', label: 'Comensales', orden: 'comensales' },
     { key: 'clienteNombre', label: 'Cliente' },
   ],
   campos: [

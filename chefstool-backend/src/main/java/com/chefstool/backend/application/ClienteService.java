@@ -28,17 +28,26 @@ public class ClienteService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<ClienteResponse> listar(int pagina, int tamano, String busqueda) {
+    public Pagina<ClienteResponse> listar(
+            int pagina, int tamano, String busqueda, String orden, String direccion) {
         UUID organizacionId = organizacionService.organizacionActual();
-        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("nombre").ascending(),
+                                "nombre", "email"));
 
         Page<Cliente> resultado =
                 busqueda == null || busqueda.isBlank()
                         ? clienteRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, orden)
+                                organizacionId, pageable)
                         : clienteRepository
                                 .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
-                                        organizacionId, busqueda.trim(), orden);
+                                        organizacionId, busqueda.trim(), pageable);
 
         return Pagina.desde(resultado).map(ClienteResponse::from);
     }

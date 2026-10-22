@@ -76,12 +76,22 @@ public class CompraService {
 
     @Transactional(readOnly = true)
     public Pagina<CompraResumen> listar(
-            UUID proveedorId, LocalDate desde, LocalDate hasta, int pagina, int tamano) {
-        Pageable orden =
+            UUID proveedorId,
+            LocalDate desde,
+            LocalDate hasta,
+            int pagina,
+            int tamano,
+            String orden,
+            String direccion) {
+        Pageable pageable =
                 Pagina.peticion(
                         pagina,
                         tamano,
-                        Sort.by("fecha").descending().and(Sort.by("createdAt").descending()));
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("fecha").descending().and(Sort.by("createdAt").descending()),
+                                "fecha", "importeTotal", "numeroDocumento", "createdAt"));
 
         return Pagina.desde(
                         compraRepository.buscarPaginado(
@@ -89,7 +99,7 @@ public class CompraService {
                                 proveedorId,
                                 desde,
                                 hasta,
-                                orden))
+                                pageable))
                 .map(CompraResumen::from);
     }
 

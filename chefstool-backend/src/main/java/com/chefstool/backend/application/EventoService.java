@@ -34,18 +34,26 @@ public class EventoService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<EventoResponse> listar(int pagina, int tamano, String busqueda) {
+    public Pagina<EventoResponse> listar(
+            int pagina, int tamano, String busqueda, String orden, String direccion) {
         UUID organizacionId = organizacionService.organizacionActual();
-        Pageable orden =
-                Pagina.peticion(pagina, tamano, Sort.by("fecha").descending());
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("fecha").descending(),
+                                "nombre", "fecha", "comensales"));
 
         Page<Evento> resultado =
                 busqueda == null || busqueda.isBlank()
                         ? eventoRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, orden)
+                                organizacionId, pageable)
                         : eventoRepository
                                 .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
-                                        organizacionId, busqueda.trim(), orden);
+                                        organizacionId, busqueda.trim(), pageable);
 
         return Pagina.desde(resultado).map(EventoResponse::from);
     }

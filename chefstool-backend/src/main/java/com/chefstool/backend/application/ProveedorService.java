@@ -28,17 +28,26 @@ public class ProveedorService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<ProveedorResponse> listar(int pagina, int tamano, String busqueda) {
+    public Pagina<ProveedorResponse> listar(
+            int pagina, int tamano, String busqueda, String orden, String direccion) {
         UUID organizacionId = organizacionService.organizacionActual();
-        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("nombre").ascending());
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("nombre").ascending(),
+                                "nombre", "cif", "email"));
 
         Page<Proveedor> resultado =
                 busqueda == null || busqueda.isBlank()
                         ? proveedorRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, orden)
+                                organizacionId, pageable)
                         : proveedorRepository
                                 .findByOrganizacionIdAndDeletedAtIsNullAndNombreContainingIgnoreCase(
-                                        organizacionId, busqueda.trim(), orden);
+                                        organizacionId, busqueda.trim(), pageable);
 
         return Pagina.desde(resultado).map(ProveedorResponse::from);
     }

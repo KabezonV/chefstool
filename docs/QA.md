@@ -3,10 +3,10 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 74 tests (unitarios, integración y seguridad)
+# Backend: 76 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 22 tests (Vitest + Testing Library)
+# Frontend: 24 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -33,8 +33,8 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
 | Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes |
 | Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |
-| Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q` |
-| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación y búsqueda, pantalla de acceso |
+| Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q`, orden asc/desc y orden no permitido |
+| Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación, búsqueda, orden por cabecera y exportación CSV, pantalla de acceso |
 
 ## Pasada de QA en navegador
 

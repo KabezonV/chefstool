@@ -39,13 +39,23 @@ const recurso = {
   ],
 }
 
-function montar() {
+const recursoOrdenable = {
+  ...recurso,
+  columnas: [
+    { key: 'nombre', label: 'Nombre', orden: 'nombre' },
+    { key: 'unidadBase', label: 'Unidad' },
+  ],
+}
+
+function montar(rec = recurso) {
   return render(
     <MemoryRouter>
-      <ResourcePage recurso={recurso} />
+      <ResourcePage recurso={rec} />
     </MemoryRouter>,
   )
 }
+
+
 
 describe('ResourcePage', () => {
   beforeEach(() => {
@@ -159,5 +169,56 @@ describe('ResourcePage', () => {
       },
       { timeout: 2000 },
     )
+  })
+
+  it('ordena por la columna al pulsar la cabecera', async () => {
+    api.get.mockResolvedValue(pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]))
+    const usuario = userEvent.setup()
+
+    montar(recursoOrdenable)
+
+    await screen.findByText('Tomate pera')
+    await usuario.click(screen.getByRole('button', { name: 'Ordenar por Nombre' }))
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenLastCalledWith(
+        '/productos?pagina=0&tamano=20&orden=nombre&direccion=asc',
+      )
+    })
+  })
+
+  it('exporta a CSV todas las paginas', async () => {
+    api.get.mockResolvedValue(pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]))
+    const objetoUrl = vi.fn(() => 'blob:csv')
+    const revocar = vi.fn()
+    URL.createObjectURL = objetoUrl
+    URL.revokeObjectURL = revocar
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => pagina([{ id: '1', nombre: 'Tomate pera', unidadBase: 'kg' }]),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const usuario = userEvent.setup()
+    montar()
+
+    await screen.findByText('Tomate pera')
+    await usuario.click(screen.getByRole('button', { name: /Exportar CSV/ }))
+
+    await waitFor(() => expect(objetoUrl).toHaveBeenCalled())
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/productos?pagina=0&tamano=100',
+      expect.anything(),
+    )
+
+    const csv = await objetoUrl.mock.calls[0][0].text()
+    expect(csv.replace('\uFEFF', '')).toBe('Nombre;Unidad\r\nTomate pera;kg')
+
+    click.mockRestore()
+    delete URL.createObjectURL
+    delete URL.revokeObjectURL
+    vi.unstubAllGlobals()
   })
 })

@@ -1,28 +1,52 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { BellRing, Check, ExternalLink } from 'lucide-react'
-import { api, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
+import { api, listarTodo } from '@/lib/api'
+import { useListado } from '@/lib/useListado'
 import { fechaCorta, moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 import Paginador from '@/components/ui/paginador'
+import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 const tonos = { info: 'neutral', aviso: 'warning', critico: 'danger' }
 
+const columnas = {
+  fecha: { label: 'Fecha', orden: 'fecha' },
+  proveedor: { label: 'Proveedor' },
+  documento: { label: 'Documento', orden: 'numeroDocumento' },
+  total: { label: 'Total', orden: 'importeTotal' },
+}
+
 export default function Compras() {
-  const [datos, setDatos] = useState(() => paginaVacia())
-  const [pagina, setPagina] = useState(0)
-  const [tamano, setTamano] = useState(20)
+  const [parametros] = useSearchParams()
+  const filtros = {
+    proveedorId: parametros.get('proveedorId') ?? '',
+    desde: parametros.get('desde') ?? '',
+    hasta: parametros.get('hasta') ?? '',
+  }
+
+  const {
+    items: compras,
+    datos,
+    pagina,
+    tamano,
+    orden,
+    direccion,
+    cargando,
+    error,
+    setError,
+    exportando,
+    actualizar,
+    ordenarPor,
+    exportar,
+  } = useListado('/compras', filtros)
+
   const [proveedores, setProveedores] = useState([])
   const [alertas, setAlertas] = useState([])
   const [detalle, setDetalle] = useState(null)
-  const [filtros, setFiltros] = useState({ proveedorId: '', desde: '', hasta: '' })
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
-
-  const compras = datos.contenido
 
   useEffect(() => {
     listarTodo('/proveedores')
@@ -30,34 +54,17 @@ export default function Compras() {
       .catch(() => setProveedores([]))
   }, [])
 
-  useEffect(() => {
-    let activo = true
-    const parametros = new URLSearchParams()
-    if (filtros.proveedorId) parametros.set('proveedorId', filtros.proveedorId)
-    if (filtros.desde) parametros.set('desde', filtros.desde)
-    if (filtros.hasta) parametros.set('hasta', filtros.hasta)
-    parametros.set('pagina', pagina)
-    parametros.set('tamano', tamano)
-
-    api
-      .get(`/compras?${parametros.toString()}`)
-      .then((respuesta) => {
-        if (!activo) return
-        setDatos(normalizarPagina(respuesta, tamano))
-        setError(null)
-      })
-      .catch((err) => activo && setError(err.message))
-      .finally(() => activo && setCargando(false))
-
-    return () => {
-      activo = false
-    }
-  }, [filtros, pagina, tamano])
-
   function actualizarFiltro(campo, valor) {
-    setCargando(true)
-    setPagina(0)
-    setFiltros((previos) => ({ ...previos, [campo]: valor }))
+    actualizar({ [campo]: valor, pagina: 0 })
+  }
+
+  function exportarCsv() {
+    exportar([
+      { label: 'Fecha', valor: (compra) => compra.fecha },
+      { label: 'Proveedor', valor: (compra) => compra.proveedorNombre },
+      { label: 'Documento', valor: (compra) => compra.numeroDocumento },
+      { label: 'Total', valor: (compra) => compra.importeTotal },
+    ])
   }
 
   function cargarAlertas() {
@@ -139,7 +146,10 @@ export default function Compras() {
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} compras`}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} compras`}</Badge>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
@@ -188,10 +198,34 @@ export default function Compras() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
-                    <th className="px-3 py-2 font-medium">Fecha</th>
-                    <th className="px-3 py-2 font-medium">Proveedor</th>
-                    <th className="px-3 py-2 font-medium">Documento</th>
-                    <th className="px-3 py-2 text-right font-medium">Total</th>
+                    <CabeceraOrdenable
+                      columna={columnas.fecha}
+                      orden={orden}
+                      direccion={direccion}
+                      onOrdenar={ordenarPor}
+                      className="px-3"
+                    />
+                    <CabeceraOrdenable
+                      columna={columnas.proveedor}
+                      orden={orden}
+                      direccion={direccion}
+                      onOrdenar={ordenarPor}
+                      className="px-3"
+                    />
+                    <CabeceraOrdenable
+                      columna={columnas.documento}
+                      orden={orden}
+                      direccion={direccion}
+                      onOrdenar={ordenarPor}
+                      className="px-3"
+                    />
+                    <CabeceraOrdenable
+                      columna={columnas.total}
+                      orden={orden}
+                      direccion={direccion}
+                      onOrdenar={ordenarPor}
+                      className="px-3 text-right"
+                    />
                     <th className="w-20 px-3 py-2" />
                   </tr>
                 </thead>
@@ -224,11 +258,9 @@ export default function Compras() {
             tamano={tamano}
             totalElementos={datos.totalElementos}
             totalPaginas={datos.totalPaginas}
-            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
-              setCargando(true)
-              setPagina(nuevaPagina)
-              setTamano(nuevoTamano)
-            }}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) =>
+              actualizar({ pagina: nuevaPagina, tamano: nuevoTamano })
+            }
           />
         </CardContent>
       </Card>

@@ -100,12 +100,21 @@ public class DocumentoCompraService {
     }
 
     @Transactional(readOnly = true)
-    public Pagina<DocumentoResumen> listar(int pagina, int tamano) {
-        Pageable orden = Pagina.peticion(pagina, tamano, Sort.by("createdAt").descending());
+    public Pagina<DocumentoResumen> listar(
+            int pagina, int tamano, String orden, String direccion) {
+        Pageable pageable =
+                Pagina.peticion(
+                        pagina,
+                        tamano,
+                        Pagina.orden(
+                                orden,
+                                direccion,
+                                Sort.by("createdAt").descending(),
+                                "createdAt", "nombreOriginal", "estado", "confianzaExtraccion"));
 
         return Pagina.desde(
                         documentoRepository.findByOrganizacionId(
-                                organizacionService.organizacionActual(), orden))
+                                organizacionService.organizacionActual(), pageable))
                 .map(DocumentoResumen::from);
     }
 

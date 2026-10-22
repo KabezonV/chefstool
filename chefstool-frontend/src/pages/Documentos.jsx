@@ -1,46 +1,54 @@
-import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { FileText, Plus } from 'lucide-react'
-import { api, normalizarPagina, paginaVacia } from '@/lib/api'
+import { useListado } from '@/lib/useListado'
 import { estados, fechaCorta } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
+import { BotonExportar, CabeceraOrdenable } from '@/components/ui/tabla'
 
 function confianza(valor) {
   if (valor === null || valor === undefined) return '—'
   return `${Math.round(Number(valor) * 100)} %`
 }
 
+const columnas = {
+  archivo: { label: 'Archivo', orden: 'nombreOriginal' },
+  estado: { label: 'Estado', orden: 'estado' },
+  origen: { label: 'Origen' },
+  confianza: { label: 'Confianza', orden: 'confianzaExtraccion' },
+  subido: { label: 'Subido', orden: 'createdAt' },
+}
+
 export default function Documentos() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [datos, setDatos] = useState(() => paginaVacia())
-  const [pagina, setPagina] = useState(0)
-  const [tamano, setTamano] = useState(20)
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
 
-  const documentos = datos.contenido
+  const {
+    items: documentos,
+    datos,
+    pagina,
+    tamano,
+    orden,
+    direccion,
+    cargando,
+    error,
+    exportando,
+    actualizar,
+    ordenarPor,
+    exportar,
+  } = useListado('/documentos')
 
-  useEffect(() => {
-    let activo = true
-
-    api
-      .get(`/documentos?pagina=${pagina}&tamano=${tamano}`)
-      .then((respuesta) => {
-        if (!activo) return
-        setDatos(normalizarPagina(respuesta, tamano))
-        setError(null)
-      })
-      .catch((err) => activo && setError(err.message))
-      .finally(() => activo && setCargando(false))
-
-    return () => {
-      activo = false
-    }
-  }, [pagina, tamano])
+  function exportarCsv() {
+    exportar([
+      { label: 'Archivo', valor: (documento) => documento.nombreOriginal },
+      { label: 'Estado', valor: (documento) => documento.estado },
+      { label: 'Origen', valor: (documento) => documento.origen },
+      { label: 'Confianza', valor: (documento) => documento.confianzaExtraccion },
+      { label: 'Subido', valor: (documento) => documento.createdAt },
+    ])
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -74,7 +82,10 @@ export default function Documentos() {
       <Card>
         <CardHeader>
           <CardTitle>Bandeja de entrada</CardTitle>
-          <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} documentos`}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <BotonExportar onClick={exportarCsv} exportando={exportando} />
+            <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} documentos`}</Badge>
+          </div>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {!cargando && documentos.length === 0 ? (
@@ -93,11 +104,15 @@ export default function Documentos() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
-                    <th className="px-5 py-2 font-medium">Archivo</th>
-                    <th className="px-5 py-2 font-medium">Estado</th>
-                    <th className="px-5 py-2 font-medium">Origen</th>
-                    <th className="px-5 py-2 font-medium">Confianza</th>
-                    <th className="px-5 py-2 font-medium">Subido</th>
+                    {Object.values(columnas).map((columna) => (
+                      <CabeceraOrdenable
+                        key={columna.label}
+                        columna={columna}
+                        orden={orden}
+                        direccion={direccion}
+                        onOrdenar={ordenarPor}
+                      />
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -136,11 +151,9 @@ export default function Documentos() {
             tamano={tamano}
             totalElementos={datos.totalElementos}
             totalPaginas={datos.totalPaginas}
-            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) => {
-              setCargando(true)
-              setPagina(nuevaPagina)
-              setTamano(nuevoTamano)
-            }}
+            onCambiar={({ pagina: nuevaPagina, tamano: nuevoTamano }) =>
+              actualizar({ pagina: nuevaPagina, tamano: nuevoTamano })
+            }
           />
         </CardContent>
       </Card>

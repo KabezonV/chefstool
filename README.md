@@ -196,10 +196,14 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 | Datos de ejemplo | `/api/demo/datos` (POST) |
 
 Los listados de productos, proveedores, clientes, eventos, documentos, compras y
-fichas están **paginados** (`?pagina=0&tamano=20`) y devuelven
+fichas están **paginados** (`?pagina=0&tamano=20`), se pueden **ordenar**
+(`?orden=fecha&direccion=desc`) y devuelven
 `{contenido, pagina, tamano, totalElementos, totalPaginas}`. Productos, proveedores,
-clientes y eventos admiten además `q` para buscar por nombre desde la barra de
-búsqueda de cada listado.
+clientes y eventos admiten además `q` para buscar por nombre.
+
+En la interfaz, cada listado recuerda página, tamaño, búsqueda y orden en la URL (al
+volver de un detalle sigues donde estabas) y ofrece **Exportar CSV** con todas las
+filas del filtro actual, listo para abrir en Excel.
 
 Los errores se devuelven como `{"error": "mensaje"}` con 400 (datos no válidos o
 duplicados), 401 (credenciales o token), 404 (registro inexistente) o 409
@@ -216,8 +220,8 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 74 tests
-cd chefstool-frontend && npm test                  # 22 tests
+cd chefstool-backend && ./mvnw clean test          # 76 tests
+cd chefstool-frontend && npm test                  # 24 tests
 cd chefstool-frontend && npm run lint && npm run build
 ```
 
