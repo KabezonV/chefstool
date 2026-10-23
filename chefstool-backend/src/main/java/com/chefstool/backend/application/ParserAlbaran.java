@@ -344,12 +344,38 @@ public class ParserAlbaran {
         return ultimo;
     }
 
+    /** Formas juridicas tipicas: la razon social suele estar en la cabecera. */
+    private static final Pattern RAZON_SOCIAL =
+            Pattern.compile("\\b(S\\.?L\\.?U?|S\\.?A\\.?|C\\.?B\\.?|SCOOP|SOCIEDAD)\\b",
+                    Pattern.CASE_INSENSITIVE);
+
     private String nombreProveedorProbable(List<String> lineas) {
+        // 1) Una linea con forma de razon social ("Muebles Salinas Rodriguez, S.L.")
+        for (String linea : lineas) {
+            String limpia = linea.trim();
+            if (RAZON_SOCIAL.matcher(limpia).find() && contieneTexto(limpia)) {
+                return limpia;
+            }
+        }
+        // 2) La primera linea con letras y sin numeros (los importes y fechas no valen)
+        for (String linea : lineas) {
+            String limpia = linea.trim();
+            if (contieneTexto(limpia)
+                    && limpia.chars().noneMatch(Character::isDigit)
+                    && limpia.length() >= 3
+                    && limpia.length() <= 60) {
+                return limpia;
+            }
+        }
         return lineas.stream()
                 .filter(linea -> linea.chars().anyMatch(Character::isLetter))
                 .findFirst()
                 .map(String::trim)
                 .orElse(null);
+    }
+
+    private boolean contieneTexto(String linea) {
+        return linea != null && linea.chars().filter(Character::isLetter).count() >= 3;
     }
 
     private boolean coincidenciaParcial(String texto, String objetivo) {
