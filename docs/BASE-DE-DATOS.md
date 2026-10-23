@@ -1,15 +1,15 @@
-# Salir de Supabase: base de datos PostgreSQL propia o en Amazon
+# Base de datos: PostgreSQL propio o en Amazon
 
-**Fecha:** 22/10/2026 · **Estado:** analizado y **ya probado** en local
+**Fecha:** 22/10/2026 · **Estado:** Supabase eliminado del código y de la configuración
 
 ---
 
 ## 1. Conclusión rápida
 
-**Es factible, y además ya está hecho en local.** Chefstool no depende de Supabase: usa
-**PostgreSQL estándar** por JDBC. Supabase solo aportaba "Postgres alojado", y eso lo
-puede dar Amazon RDS (o cualquier PostgreSQL propio) sin tocar una línea de lógica de
-negocio.
+**Hecho: Chefstool ya no depende de Supabase.** Usa **PostgreSQL estándar** por JDBC y la
+base la pone el `docker-compose` (o Amazon RDS, o cualquier PostgreSQL propio) sin tocar
+una línea de lógica de negocio. Las referencias que quedaban en el código, en la
+configuración y en el almacenamiento de archivos se han eliminado.
 
 Lo he verificado hoy: la aplicación arranca con Docker sobre un **PostgreSQL 17** limpio,
 Flyway crea las **16 tablas** sola y todo funciona (login, albaranes, compras, fichas,
@@ -31,7 +31,7 @@ informes).
 | Plantilla `.env.ejemplo` apuntando a la base local | ✅ hecho | `.env.ejemplo` |
 | Volumen persistente para los datos (`chefstool_datos`) | ✅ hecho | `docker-compose.yml` |
 | Guía de migración de datos actuales | ✅ este documento | — |
-| Almacenamiento de albaranes fuera de Supabase | ⏳ pendiente | ver punto 5 |
+| Almacenamiento de albaranes: adaptador de **S3** en lugar del de Supabase | ✅ hecho | `AlmacenamientoS3` |
 
 **Cerco del cambio:** configuración y despliegue. **Cero cambios** en entidades,
 servicios, controladores, migraciones o frontend.

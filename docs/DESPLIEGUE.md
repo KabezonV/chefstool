@@ -8,8 +8,8 @@ Son dos piezas independientes:
 | --- | --- | --- |
 | `chefstool-backend` | JAR de Spring Boot (Java 25) | Cualquier hosting con JVM: Railway, Fly.io, Render, Azure App Service, un VPS… |
 | `chefstool-frontend` | Sitio estático (HTML/JS/CSS) | Netlify, Vercel, Cloudflare Pages, Nginx… |
-| Base de datos | PostgreSQL (Supabase) | Ya existe |
-| Albaranes | Archivos | Disco del backend (por defecto) o Supabase Storage |
+| Base de datos | PostgreSQL 17 | RDS gestionado, servidor propio o el contenedor del compose |
+| Albaranes | Archivos | Volumen del servidor o bucket S3 |
 
 ## 1. Base de datos
 
@@ -24,7 +24,7 @@ copias automáticas 7 días, security group que solo permita el servidor de la a
 
 - Usa una base de datos **distinta** para producción y para desarrollo.
 - Si la base es nueva, arranca el backend una vez: las migraciones V1–V6 se aplican solas.
-- **Copia de seguridad**: activa los backups automáticos de Supabase y prueba una
+- **Copia de seguridad**: activa las copias automáticas (RDS las trae) y prueba una
   restauración antes de dar acceso a usuarios reales.
 
 > El pool es pequeño a propósito (`DB_POOL_MAX`, 5 por defecto) para no agotar las
@@ -48,10 +48,12 @@ CHEFSTOOL_JWT_SECRET=<cadena aleatoria de 32+ caracteres>
 # Segun el entorno
 CHEFSTOOL_CORS=https://app.tudominio.com      # origenes del frontend, separados por comas
 CHEFSTOOL_ENLACE_DIRECTO=false                # true solo en demostracion
-CHEFSTOOL_ALMACEN=supabase                    # local | supabase
-SUPABASE_URL=https://TU_PROYECTO.supabase.co
-SUPABASE_SERVICE_KEY=...                      # service_role, nunca en el frontend
-SUPABASE_BUCKET=documentos
+CHEFSTOOL_ALMACEN=s3                          # local | s3
+CHEFSTOOL_S3_BUCKET=chefstool-albaranes
+CHEFSTOOL_S3_REGION=eu-south-2
+# Si el servidor tiene rol IAM no hacen falta; si no, usuario con permisos solo a ese bucket
+CHEFSTOOL_S3_ACCESS_KEY=
+CHEFSTOOL_S3_SECRET_KEY=
 CHEFSTOOL_OCR_TESSERACT=tesseract
 CHEFSTOOL_OCR_IDIOMA=spa
 ```
@@ -89,9 +91,9 @@ docker run --rm -p 8080:8080 \
   -e DB_USER=... -e DB_PASSWORD=... \
   -e CHEFSTOOL_JWT_SECRET=$(openssl rand -base64 48) \
   -e CHEFSTOOL_CORS=https://app.tudominio.com \
-  -e CHEFSTOOL_ALMACEN=supabase \
-  -e SUPABASE_URL=https://TU_PROYECTO.supabase.co \
-  -e SUPABASE_SERVICE_KEY=... \
+  -e CHEFSTOOL_ALMACEN=s3 \
+  -e CHEFSTOOL_S3_BUCKET=chefstool-albaranes \
+  -e CHEFSTOOL_S3_REGION=eu-south-2 \
   chefstool-backend
 ```
 
@@ -122,16 +124,17 @@ Dos modos, se eligen con `CHEFSTOOL_ALMACEN`:
 - `local` (por defecto): disco, en `CHEFSTOOL_UPLOADS`. Solo vale si el disco es
   persistente (volumen montado). **En plataformas con disco efímero los albaranes se
   pierden en cada despliegue.**
-- `supabase`: object storage. Pasos en el panel de Supabase:
+- `s3`: bucket privado de S3 (o MinIO). Pasos:
 
-  1. **Storage → New bucket**, nombre `documentos`, privado.
-  2. **Project Settings → API → service_role key** y cópiala en `SUPABASE_SERVICE_KEY`
-     (dato sensible: solo en el backend, nunca en el frontend).
-  3. `SUPABASE_URL=https://TU_PROYECTO.supabase.co`.
+  1. Crear el bucket, por ejemplo `chefstool-albaranes`, **privado**, con cifrado activado.
+  2. Dar al servidor permiso con un rol IAM (recomendado) o un usuario con
+     `s3:PutObject` y `s3:GetObject` limitados a ese bucket.
+  3. `CHEFSTOOL_ALMACEN=s3`, `CHEFSTOOL_S3_BUCKET=...` y, si no hay rol IAM,
+     `CHEFSTOOL_S3_ACCESS_KEY` / `CHEFSTOOL_S3_SECRET_KEY`.
 
-  La ruta en el bucket es `organizacionId/documentoId/nombre`, la misma que se guarda
-  en base de datos. La descarga la sigue sirviendo el backend (con su control de
-  permisos), así que el bucket puede seguir siendo privado.
+  La clave del objeto es `organizacionId/documentoId/nombre`. Las descargas las sirve el
+  backend (valida permisos), así que el bucket sigue privado.
+
 
 ### Recuperación de contraseña
 
@@ -170,7 +173,7 @@ devuelva `index.html` (si no, recargar en `/compras` da 404).
 - [ ] `CHEFSTOOL_CORS` con el dominio real, sin localhost
 - [ ] Base de datos de producción separada y con backups probados
 - [ ] Credenciales del `.env` rotadas (las de desarrollo nunca van a producción)
-- [ ] `CHEFSTOOL_ALMACEN=supabase` con el bucket privado creado
+- [ ] `CHEFSTOOL_ALMACEN=s3` con el bucket privado creado
 - [ ] Tesseract con español dentro de la imagen (`docker run … tesseract --list-langs`)
 - [ ] `CHEFSTOOL_ENLACE_DIRECTO=false`
 - [ ] Revisar el pool de conexiones según el número de instancias

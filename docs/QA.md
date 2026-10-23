@@ -32,7 +32,7 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
 | Recuperación de contraseña | `RecuperacionPasswordServiceTest` | Enlace de un solo uso, caducidad, enlace nuevo anula el anterior, correo desconocido |
 | Fuerza bruta | `AuthControllerTest` | 5 intentos fallidos → 429 incluso con la contraseña correcta |
-| Almacenamiento | `AlmacenamientoSupabaseTest` | Subida al bucket con la ruta y cabeceras correctas, descarga, saneado del nombre, configuración obligatoria |
+| Almacenamiento | `AlmacenamientoS3Test` | Subida al bucket con la clave y el tipo correctos, descarga, objeto inexistente, configuración obligatoria |
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
 | Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes, coste por proveedor (gasto, ticket medio, variación media y orden del ranking) |
 | Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |
@@ -99,8 +99,8 @@ repartidas en 6 meses y mide los listados. Resultado del 22/10/2026:
 | `GET /informes/proveedores` | 0,18 s |
 | Página fuera de rango (`pagina=99`) | 200 con `contenido` vacío y `totalElementos` correcto |
 
-Los tiempos incluyen la latencia hasta Supabase (la base no es local), así que el
-margen de mejora en producción es sobre todo de red.
+Los tiempos de esa medición incluían la latencia hasta una base alojada externa; con el
+PostgreSQL local del `docker-compose` son bastante menores.
 
 ## Pendiente de verificar a mano
 

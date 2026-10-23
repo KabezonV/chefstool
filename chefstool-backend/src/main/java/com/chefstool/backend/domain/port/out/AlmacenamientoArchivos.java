@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.core.io.Resource;
 
-/** Abstraccion del almacen de archivos (local ahora, Supabase Storage u otro despues). */
+/** Abstraccion del almacen de archivos: disco local o un bucket S3. */
 public interface AlmacenamientoArchivos {
 
     /**

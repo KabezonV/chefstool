@@ -8,7 +8,7 @@
 
 Chefstool es la aplicación web para **controlar compras, precios y costes de las recetas** en cocina profesional. Está **terminada y funcionando** en su primera versión completa: se sube (o se fotografía) un albarán, la aplicación lee los datos, los revisa con nosotros y a partir de ahí calcula el coste real de cada plato, avisa cuando un proveedor sube precios y muestra el gasto por proveedor y por mes.
 
-**Estado:** funciona de punta a punta en un ordenador, con base de datos real (Supabase), y está preparada para publicarse. **Todavía no está en internet**: falta decidir dónde alojarla y contratar dos servicios (correo y lectura de albaranes).
+**Estado:** funciona de punta a punta, con base de datos PostgreSQL propia, y está preparada para publicarse. **Todavía no está en internet**: falta decidir dónde alojarla y contratar dos servicios (correo y lectura de albaranes).
 
 **Lo que te pido hoy:** tu visto bueno para **(A)** publicar una demo privada esta semana y **(B)** elegir cómo resolvemos la lectura de albaranes y el envío de correos.
 
@@ -59,7 +59,7 @@ Chefstool convierte el albarán en datos una sola vez y, desde ahí, todo se cal
    ─────────────────────────             ────────                        ─────
    Chefstool (React)  ──────────►  API Chefstool (Java)  ──────►  Base de datos
    · pantallas                     · reglas del negocio           (PostgreSQL
-   · instalable como app           · seguridad y permisos          en Supabase)
+   · instalable como app           · seguridad y permisos          (PostgreSQL propio)
                                    · lectura de albaranes
                                           │
                                           └──►  Almacén de archivos
@@ -67,7 +67,8 @@ Chefstool convierte el albarán en datos una sola vez y, desde ahí, todo se cal
 ```
 
 - **Tecnología actual y con soporte a largo plazo**: Java 25 (última versión LTS), Spring Boot 4, React 19. No son tecnologías "de moda": son las que usan los bancos y las grandes empresas, y tienen soporte y programadores en el mercado.
-- **Los datos son nuestros**: la base de datos es PostgreSQL alojada en Supabase (servidores en la UE), no una caja negra.
+- **Los datos son nuestros**: la base de datos es **PostgreSQL estándar**, en un servidor
+  propio o en Amazon RDS (región de España), sin depender de ningún servicio externo.
 - **Seguridad**: cada usuario entra con su contraseña cifrada y un token; cada cocina solo puede ver sus propios datos; hay tres roles y límite de intentos de acceso; los albaranes se guardan en un almacén privado.
 - **Estructura del código**: separada en capas (pantallas / lógica del negocio / acceso a datos). Esto significa que **cambiar de proveedor de OCR, de correo o de alojamiento no obliga a rehacer la aplicación**: se sustituye una pieza por otra.
 
@@ -123,7 +124,7 @@ Las invitaciones y la recuperación de contraseña **ya funcionan**, pero sin en
 | Base de datos | **PostgreSQL propio o Amazon RDS** | 0 € en el servidor de demo · 15–25 €/mes en RDS `db.t4g.micro` con copias |
 
 **Mi recomendación:** empezar en **Render** (o el servidor que indique informática) con
-**PostgreSQL propio** para la demo y el piloto: la base de datos ya no depende de Supabase
+**PostgreSQL propio** para la demo y el piloto: la base de datos ya no depende de ningún servicio externo
 y se puede alojar en Amazon RDS cuando dirección lo decida, sin tocar código
 (detalle y costes en [MIGRACION-BASE-DE-DATOS.md](MIGRACION-BASE-DE-DATOS.md)).
 
@@ -171,7 +172,7 @@ Para comparar: **una sola subida de precio no detectada del 5 % en una compra me
 | Riesgo | Cómo lo controlamos |
 | --- | --- |
 | La lectura de albaranes falla con algún proveedor | Pantalla de revisión manual siempre disponible: nunca se inventan datos; se puede cambiar de motor sin tocar la app |
-| Se pierden los archivos subidos | Almacenamiento en Supabase (no en el disco del servidor); verificado |
+| Se pierden los archivos subidos | Bucket S3 o volumen persistente (no el disco efímero del servidor); probado con volumen |
 | Alguien accede a datos de otra cocina | Cada consulta filtra por organización; probado con usuarios de distintas cocinas |
 | Se cae el servidor | Contenedor estándar: se puede levantar en otro proveedor en horas |
 | Subidas de precio no detectadas | Alerta automática ≥ 5 % y comparación entre proveedores |

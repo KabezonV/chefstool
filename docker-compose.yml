@@ -42,10 +42,12 @@ services:
       CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:8081}
       CHEFSTOOL_ENLACE_DIRECTO: ${CHEFSTOOL_ENLACE_DIRECTO:-false}
       CHEFSTOOL_ALMACEN: ${CHEFSTOOL_ALMACEN:-local}
-      # Almacen de albaranes en la nube (opcional; por defecto se usa el volumen local)
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-}
-      SUPABASE_BUCKET: ${SUPABASE_BUCKET:-documentos}
+      # Almacen de albaranes en S3 (opcional; por defecto se usa el volumen local)
+      CHEFSTOOL_S3_BUCKET: ${CHEFSTOOL_S3_BUCKET:-}
+      CHEFSTOOL_S3_REGION: ${CHEFSTOOL_S3_REGION:-eu-south-2}
+      CHEFSTOOL_S3_ENDPOINT: ${CHEFSTOOL_S3_ENDPOINT:-}
+      CHEFSTOOL_S3_ACCESS_KEY: ${CHEFSTOOL_S3_ACCESS_KEY:-}
+      CHEFSTOOL_S3_SECRET_KEY: ${CHEFSTOOL_S3_SECRET_KEY:-}
     volumes:
       # Solo se usa si CHEFSTOOL_ALMACEN=local
       - albaranes:/app/uploads

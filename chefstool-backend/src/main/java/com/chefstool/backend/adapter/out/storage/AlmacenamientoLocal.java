@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Guarda los albaranes en disco (por defecto). En despliegues con disco efimero hay que
- * usar object storage: {@code chefstool.almacenamiento.tipo=supabase}.
+ * usar un bucket: {@code chefstool.almacenamiento.tipo=s3}.
  */
 @Component
 @ConditionalOnProperty(

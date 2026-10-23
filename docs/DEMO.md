@@ -19,8 +19,9 @@ Guion, preparación y plan B para enseñar Chefstool desde tu ordenador en unos
    primera petición tras un rato parado tarda unos segundos (la conexión con la base de
    datos se abre al vuelo). Si el cliente ve esa espera, parece que va lento.
 
-3. **Comprueba la conexión** a internet. La base de datos está en Supabase, así que
-   sin red no hay demo. Ten el móvil con datos como red de emergencia.
+3. **No depende de internet**: con `docker compose up` la base de datos es local, así
+   que la demo funciona aunque el wifi del cliente falle. (Si arrancas el backend contra
+   una base remota, entonces sí hace falta red.)
 
 4. **Comprueba el OCR**: `tesseract --version`. Si no está instalado, evita el paso de
    "hacer una foto"; el resto de la demo funciona igual con el albarán de ejemplo.
@@ -58,8 +59,8 @@ y decidir si contratamos el servicio de correo y el de lectura avanzada".
 1. **No carga o va lento** → refrescar. Si sigue, abrir <http://localhost:5180> en otra
    pestaña (a veces el proxy se atasca tras suspender el portátil). Si nada, reiniciar
    el backend y esperar 20 segundos.
-2. **Error de conexión con la base de datos** → el pool de Supabase es limitado (15
-   conexiones). Cierra sesiones de pruebas automáticas y reintenta.
+2. **Error de conexión con la base de datos** → comprueba que `chefstool-db` está
+   *healthy* (`docker compose ps`); si acabas de arrancar, espera 20 segundos.
 3. **El albarán de ejemplo no lee nada** → usar el documento que ya está en
    *Documentos* con estado "pendiente de revisión" y continuar desde ahí.
 4. **Todo se cae** → tener a mano el vídeo o capturas del flujo, y seguir con el

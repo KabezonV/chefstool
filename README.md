@@ -64,7 +64,7 @@ docker compose up --build # PostgreSQL + API + web
 No necesita ningún servicio externo: el `docker-compose` levanta su propio
 **PostgreSQL 17** y Flyway crea las tablas al arrancar. Para usar una base gestionada
 (Amazon RDS) solo cambian `DB_HOST`, `DB_USER`, `DB_PASSWORD` y `DB_SSLMODE=require`;
-ver [docs/MIGRACION-BASE-DE-DATOS.md](docs/MIGRACION-BASE-DE-DATOS.md).
+ver [docs/BASE-DE-DATOS.md](docs/BASE-DE-DATOS.md).
 
 Abre <http://localhost:8081>. La imagen del backend incluye Tesseract con español, así
 que la lectura de fotos de albarán funciona sin instalar nada más.
@@ -206,8 +206,7 @@ Resumen del proyecto y propuesta de puesta en marcha para dirección:
 [docs/INFORME-BERNART.md](docs/INFORME-BERNART.md).
 Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
 Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/ARRANQUE.md).
-Análisis para salir de Supabase (PostgreSQL propio o Amazon RDS):
-[docs/MIGRACION-BASE-DE-DATOS.md](docs/MIGRACION-BASE-DE-DATOS.md).
+Base de datos (PostgreSQL propio, Amazon RDS y migración): [docs/BASE-DE-DATOS.md](docs/BASE-DE-DATOS.md).
 Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 [docs/PLAN-FASE-2.md](docs/PLAN-FASE-2.md).
 
