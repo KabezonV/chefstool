@@ -18,14 +18,17 @@ export default function Restablecer() {
     event.preventDefault()
     setError(null)
 
-    if (password !== repetida) {
+    if (password.trim() !== repetida.trim()) {
       setError('Las dos contraseñas no coinciden')
       return
     }
 
     setCargando(true)
     try {
-      const respuesta = await api.post('/auth/restablecer', { token, password })
+      const respuesta = await api.post('/auth/restablecer', {
+        token: token.trim(),
+        password: password.trim(),
+      })
       navigate('/auth', { replace: true, state: { aviso: respuesta.mensaje } })
     } catch (err) {
       setError(err.message)

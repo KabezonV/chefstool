@@ -37,7 +37,7 @@ export default function Auth() {
 
     try {
       if (modo === 'recuperar') {
-        const respuesta = await api.post('/auth/recuperar', { email: datos.email })
+        const respuesta = await api.post('/auth/recuperar', { email: datos.email.trim() })
         setAviso({
           mensaje: respuesta.mensaje,
           token: respuesta.token,
@@ -46,11 +46,11 @@ export default function Auth() {
       }
 
       if (modo === 'login') {
-        await entrar(datos.email, datos.password)
+        await entrar(datos.email.trim(), datos.password.trim())
       } else {
         await registrar({
-          email: datos.email,
-          password: datos.password,
+          email: datos.email.trim(),
+          password: datos.password.trim(),
           nombre: datos.nombre || null,
           organizacion: datos.organizacion || null,
         })
@@ -159,6 +159,10 @@ export default function Auth() {
                 type="email"
                 required
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="email"
                 placeholder="tu@cocina.es"
                 value={datos.email}
                 onChange={(event) => cambiar('email', event.target.value)}
@@ -173,6 +177,9 @@ export default function Auth() {
                   required
                   minLength={modo === 'registro' ? 8 : undefined}
                   autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Mínimo 8 caracteres"
                   value={datos.password}
                   onChange={(event) => cambiar('password', event.target.value)}

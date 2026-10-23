@@ -172,4 +172,24 @@ class AuthControllerTest {
         assertThat(objectMapper.readTree(usuarios).get(0).get("email").asString())
                 .isEqualTo(email);
     }
+
+    @Test
+    void ignoraLosEspaciosQueAnadeElTeclado() throws Exception {
+        String email = "espacios-" + UUID.randomUUID() + "@chefstool.es";
+
+        mockMvc.perform(
+                        post("/api/auth/registro")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"email\":\"%s\",\"password\":\"secreto123\"}"
+                                        .formatted(email)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"email\":\" %s \",\"password\":\"secreto123 \"}"
+                                        .formatted(email)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+    }
 }

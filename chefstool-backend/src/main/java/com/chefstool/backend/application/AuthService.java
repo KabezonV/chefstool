@@ -68,7 +68,7 @@ public class AuthService {
                 peticion.nombre() == null || peticion.nombre().isBlank()
                         ? email
                         : peticion.nombre().trim());
-        usuario.setPasswordHash(passwordEncoder.encode(peticion.password()));
+        usuario.setPasswordHash(passwordEncoder.encode(clave(peticion.password())));
         usuario = usuarioRepository.save(usuario);
 
         List<Invitacion> invitaciones =
@@ -137,7 +137,7 @@ public class AuthService {
                         .findByEmailIgnoreCase(peticion.email().trim())
                         .orElseThrow(CredencialesInvalidasException::new);
 
-        if (!passwordEncoder.matches(peticion.password(), usuario.getPasswordHash())) {
+        if (!passwordEncoder.matches(clave(peticion.password()), usuario.getPasswordHash())) {
             throw new CredencialesInvalidasException();
         }
 
@@ -180,6 +180,14 @@ public class AuthService {
                                 () -> new RecursoNoEncontradoException("Organizacion no encontrada"));
 
         return sesion(usuario, organizacion, miembro.getRol());
+    }
+
+    /**
+     * Los teclados de movil a veces anaden un espacio al final (autocompletar o dictado);
+     * se ignora para no rechazar una contrasena que el usuario ha escrito bien.
+     */
+    private String clave(String password) {
+        return password == null ? "" : password.trim();
     }
 
     private SesionResponse sesion(Usuario usuario, Organizacion organizacion, String rol) {

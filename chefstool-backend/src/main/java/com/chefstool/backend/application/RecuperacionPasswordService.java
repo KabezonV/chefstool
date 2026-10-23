@@ -110,7 +110,8 @@ public class RecuperacionPasswordService {
                         .orElseThrow(
                                 () -> new IllegalArgumentException("La cuenta ya no existe"));
 
-        usuario.setPasswordHash(passwordEncoder.encode(nuevaPassword));
+        usuario.setPasswordHash(
+                passwordEncoder.encode(nuevaPassword == null ? "" : nuevaPassword.trim()));
         usuarioRepository.save(usuario);
 
         recuperacion.setUsadoAt(OffsetDateTime.now());
