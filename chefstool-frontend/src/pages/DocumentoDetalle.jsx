@@ -191,6 +191,9 @@ export default function DocumentoDetalle() {
   }
 
   const estado = estados[documento.estado] ?? estados.pendiente_revision
+  const confianzaBaja =
+    documento.confianzaExtraccion === null ||
+    Number(documento.confianzaExtraccion) < 0.5
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -244,6 +247,20 @@ export default function DocumentoDetalle() {
           {error}
         </div>
       )}
+
+      {!documento.errorExtraccion &&
+        confianzaBaja &&
+        lineas.length === 0 &&
+        documento.estado === 'pendiente_revision' && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="font-medium">No se han reconocido las líneas del documento</p>
+            <p className="mt-1">
+              Puede ser una foto movida, poco iluminada o un formato poco habitual. Prueba
+              con una foto más recta y con buena luz, o escribe las líneas a mano: el
+              original queda guardado y la compra se puede confirmar igualmente.
+            </p>
+          </div>
+        )}
 
       {documento.errorExtraccion && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
