@@ -208,6 +208,8 @@ Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
 Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/ARRANQUE.md).
 Análisis para salir de Supabase (PostgreSQL propio o Amazon RDS):
 [docs/MIGRACION-BASE-DE-DATOS.md](docs/MIGRACION-BASE-DE-DATOS.md).
+Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
+[docs/PLAN-FASE-2.md](docs/PLAN-FASE-2.md).
 
 | Recurso | Ruta |
 | --- | --- |
