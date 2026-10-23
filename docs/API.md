@@ -95,6 +95,7 @@ curl http://localhost:8080/api/auth/yo -H "Authorization: Bearer $TOKEN"
 | PUT | `/productos/{id}` | Edición |
 | DELETE | `/productos/{id}` | Borrado lógico (204) |
 | GET | `/productos/{id}/precios` | Histórico y comparativa por proveedor |
+| POST | `/productos/importar` | Alta masiva desde CSV (multipart `archivo`) |
 
 ```bash
 curl -X POST http://localhost:8080/api/productos \
@@ -122,6 +123,19 @@ curl -X POST http://localhost:8080/api/productos \
   ]
 }
 ```
+
+### Importar catálogo desde CSV
+
+`POST /productos/importar` con `multipart/form-data` y el campo `archivo`. Formato:
+`nombre;categoria;unidadBase` (la cabecera es opcional; acepta también coma como
+separador, comillas y el BOM de Excel). Devuelve:
+
+```json
+{"creados": 4, "omitidos": 1, "errores": ["Pimentón dulce: Ya existe un producto llamado Pimentón dulce"]}
+```
+
+Cada fila se guarda por separado: un duplicado no invalida el resto de la importación.
+Límite de 1.000 filas por archivo.
 
 ## Proveedores
 

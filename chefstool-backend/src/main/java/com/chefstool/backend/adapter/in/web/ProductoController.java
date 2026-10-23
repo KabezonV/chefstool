@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.application.ImportacionProductosService;
 import com.chefstool.backend.application.ProductoService;
 import com.chefstool.backend.adapter.in.web.dto.HistoricoPrecios;
 import com.chefstool.backend.adapter.in.web.dto.ProductoRequest;
@@ -18,15 +19,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestPart;
 
 @RestController
 @RequestMapping("/api/productos")
 public class ProductoController {
 
     private final ProductoService productoService;
+    private final ImportacionProductosService importacionService;
 
-    public ProductoController(ProductoService productoService) {
+    public ProductoController(
+            ProductoService productoService,
+            ImportacionProductosService importacionService) {
         this.productoService = productoService;
+        this.importacionService = importacionService;
+    }
+
+    /** Alta masiva desde el CSV que exporta Excel. */
+    @PostMapping(value = "/importar", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ImportacionProductosService.Resumen importar(
+            @RequestPart("archivo") MultipartFile archivo) {
+        return importacionService.importar(archivo);
     }
 
     @GetMapping

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Pencil, Plus, Trash2, Upload, X } from 'lucide-react'
 import { api, listarTodo } from '@/lib/api'
 import { useDebounce, useListado } from '@/lib/useListado'
 import { cn } from '@/lib/utils'
@@ -105,6 +105,8 @@ export default function ResourcePage({ recurso }) {
   const [editando, setEditando] = useState(null)
   const [valores, setValores] = useState(() => valoresIniciales(campos))
   const [guardando, setGuardando] = useState(false)
+  const [importando, setImportando] = useState(false)
+  const [importacion, setImportacion] = useState(null)
   const [fuentes, setFuentes] = useState({})
 
   const camposSelect = useMemo(
@@ -120,6 +122,25 @@ export default function ResourcePage({ recurso }) {
   function cambiarBusqueda(valor) {
     setBusqueda(valor)
     aplicarBusqueda(valor)
+  }
+
+  async function importar(event) {
+    const archivo = event.target.files?.[0]
+    if (!archivo) return
+    setImportando(true)
+    setImportacion(null)
+    try {
+      const datos = new FormData()
+      datos.append('archivo', archivo)
+      const resumen = await api.subir(recurso.importar.endpoint, datos)
+      setImportacion(resumen)
+      refrescar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setImportando(false)
+      event.target.value = ''
+    }
   }
 
   const columnasExport = columnas.map((columna) => ({
@@ -243,11 +264,50 @@ export default function ResourcePage({ recurso }) {
           <h1 className="text-xl font-semibold tracking-tight">{titulo}</h1>
           {descripcion && <p className="mt-1 text-sm text-muted">{descripcion}</p>}
         </div>
-        <Button onClick={abrirNuevo} variant="accent">
-          <Plus className="size-4" />
-          Nuevo {singular}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {recurso.importar && (
+            <label
+              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm hover:bg-black/[0.03]"
+              title={recurso.importar.ayuda}
+            >
+              <Upload className="size-4" />
+              {importando ? 'Importando…' : 'Importar CSV'}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={importar}
+                disabled={importando}
+              />
+            </label>
+          )}
+          <Button onClick={abrirNuevo} variant="accent">
+            <Plus className="size-4" />
+            Nuevo {singular}
+          </Button>
+        </div>
       </div>
+
+      {importacion && (
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-success">
+          <div>
+            <p className="font-medium">
+              Importación terminada: {importacion.creados} creados
+              {importacion.omitidos > 0 && `, ${importacion.omitidos} omitidos`}
+            </p>
+            {importacion.errores?.length > 0 && (
+              <ul className="mt-1 list-disc pl-5 text-xs">
+                {importacion.errores.slice(0, 5).map((mensaje) => (
+                  <li key={mensaje}>{mensaje}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button type="button" onClick={() => setImportacion(null)} aria-label="Cerrar aviso">
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-start justify-between gap-3 rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">

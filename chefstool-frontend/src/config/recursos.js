@@ -6,6 +6,10 @@ function fecha(valor) {
 
 export const productos = {
   endpoint: '/productos',
+  importar: {
+    endpoint: '/productos/importar',
+    ayuda: 'CSV con columnas nombre;categoria;unidadBase (la cabecera es opcional)',
+  },
   titulo: 'Productos',
   singular: 'producto',
   descripcion: 'Catálogo normalizado de ingredientes y materias primas.',

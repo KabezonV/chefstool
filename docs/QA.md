@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 104 tests (unitarios, integración y seguridad)
+# Backend: 109 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 25 tests (Vitest + Testing Library)
@@ -39,6 +39,7 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Autenticación | `AuthControllerTest` | Registro, duplicados, login, 401 sin token |
 | Panel | `InformePanelTest` | Agregados, ahorro potencial, documentos pendientes, coste por proveedor (gasto, ticket medio, variación media y orden del ranking) |
 | Datos de ejemplo | `DatosEjemploControllerTest` | Siembra completa, no duplica, exige autenticación |
+| Importación CSV | `ImportacionProductosServiceTest` | Cabecera opcional, separador `;` o `,`, comillas, BOM, duplicados sin cortar la importación |
 | Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q`, orden asc/desc y orden no permitido |
 | Frontend | `formato`, `utils`, `barras`, `ResourcePage`, `Auth` | Formateo, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido), pantalla de acceso |
 

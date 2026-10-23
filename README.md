@@ -219,7 +219,7 @@ Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 | Recurso | Ruta |
 | --- | --- |
 | Autenticación | `/api/auth/registro`, `/api/auth/login`, `/api/auth/yo`, `/api/auth/recuperar`, `/api/auth/restablecer` |
-| Productos | `/api/productos` (+ `/api/productos/{id}/precios`) |
+| Productos | `/api/productos` (+ `/api/productos/{id}/precios`, `/api/productos/importar`) |
 | Proveedores | `/api/proveedores` |
 | Clientes | `/api/clientes` |
 | Eventos | `/api/eventos` |
@@ -261,7 +261,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 104 tests
+cd chefstool-backend && ./mvnw clean test          # 109 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
