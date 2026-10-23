@@ -5,11 +5,10 @@ import com.chefstool.backend.application.ParserAlbaran;
 import com.chefstool.backend.domain.model.ResultadoExtraccion;
 import com.chefstool.backend.domain.port.out.ExtractorDocumento;
 import java.util.UUID;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 /**
- * Extractor principal: lee el texto real del documento y lo interpreta.
+ * Lector local: extrae el texto del documento (PDF o imagen) y lo interpreta con reglas.
  *
  * <ul>
  *   <li>PDF digital: se extrae el texto embebido (sin OCR, maxima precision).
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
  * </ul>
  */
 @Service
-@Primary
 public class ExtractorTexto implements ExtractorDocumento {
 
     /** Un albaran tiene una o dos paginas; no merece la pena procesar mas. */

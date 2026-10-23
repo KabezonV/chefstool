@@ -106,6 +106,12 @@ que la lectura de fotos de albarán funciona sin instalar nada más.
   (`application-test.properties`), salvo en los tests de autenticación y equipo,
   que la ejercitan de verdad.
 
+### Lectura de albaranes con IA (opcional)
+
+Si se define `CHEFSTOOL_OCR_VISION_CLAVE` (Google AI Studio: gratis y sin tarjeta), los
+documentos se leen con un modelo de visión —incluidas fotos torcidas y tablas— y Tesseract
+queda como respaldo automático si falla, no hay clave o se agota la cuota.
+
 ### Recuperar la contraseña
 
 En la pantalla de acceso, *¿Has olvidado la contraseña?* genera un enlace de un solo
@@ -255,7 +261,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 94 tests
+cd chefstool-backend && ./mvnw clean test          # 104 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
