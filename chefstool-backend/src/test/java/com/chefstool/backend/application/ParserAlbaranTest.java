@@ -156,4 +156,25 @@ class ParserAlbaranTest {
         when(productoRepository.findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(ORG))
                 .thenReturn(List.of(productos));
     }
+
+    @Test
+    void noConfundeLaPalabraNumeroConElNumeroDelDocumento() {
+        String texto =
+                """
+                FRUTAS GARCIA SL
+                Albaran numero A-2026-0451
+                Fecha: 21/10/2026
+                Tomate pera —10kg 2,10 21,00
+                Cebolla 8 kg 1,10 8,80
+                TOTAL: 32,78
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+
+        assertThat(resultado.extraccion().numeroDocumento()).isEqualTo("A-2026-0451");
+        assertThat(resultado.extraccion().lineas()).hasSize(2);
+        assertThat(resultado.extraccion().lineas().getFirst().descripcion()).isEqualTo("Tomate pera");
+        assertThat(resultado.extraccion().lineas().getFirst().cantidad())
+                .isEqualByComparingTo("10");
+    }
 }

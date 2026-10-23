@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 88 tests (unitarios, integración y seguridad)
+# Backend: 94 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 25 tests (Vitest + Testing Library)
@@ -27,6 +27,7 @@ transaccionales: cada test hace *rollback*. Los de frontend no salen a red
 | Productos | `ProductoServiceTest`, `ProductoControllerTest` | Alta, duplicados, borrado lógico, reciclado de nombres |
 | Parser de albaranes | `ParserAlbaranTest` | Proveedor, fecha, número, líneas, importes con coma y miles, líneas que no cuadran |
 | Extracción real | `DocumentoControllerTest` | Sube un PDF y comprueba los datos extraídos; imagen sin OCR no inventa datos |
+| PDF escaneado | `LectorPdfTest` | Detecta que no hay texto y rasteriza las páginas (máx. 3) para pasarlas por OCR; aviso claro si el OCR no está disponible |
 | Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral |
 | Fichas | `FichaServiceTest`, `FichaControllerTest` | Coste con el mejor precio, productos sin precio, margen (incluido negativo) |
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |

@@ -37,7 +37,8 @@ public class ParserAlbaran {
 
     private static final Pattern NUMERO_DOCUMENTO =
             Pattern.compile(
-                    "(?:N[º°o]?\\.?|NUM(?:ERO)?|FACTURA|ALBAR[AÁ]N)\\s*[:.]?\\s*([A-Z0-9][A-Z0-9\\-/]{2,})",
+                    "(?:N[º°o]?\\.?|NUM(?:ERO)?|FACTURA|ALBAR[AÁ]N)\\s*[:.]?\\s*"
+                            + "((?=[A-Z0-9\\-/]*\\d)[A-Z0-9][A-Z0-9\\-/]{2,})",
                     Pattern.CASE_INSENSITIVE);
 
     private static final Pattern LINEA_CON_UNIDAD =
@@ -238,6 +239,12 @@ public class ParserAlbaran {
         return null;
     }
 
+    /** El OCR a veces pega la cantidad al nombre: "Tomate pera —10kg". */
+    private static final Pattern CANTIDAD_PEGADA =
+            Pattern.compile(
+                    "\\s*[—–-]?\\s*\\d{1,4}(?:[.,]\\d{1,3})?\\s*(kg|g|l|ml|ud|uds|un|doc|caja|bolsa)\\b\\s*$",
+                    Pattern.CASE_INSENSITIVE);
+
     private LineaExtraccion construir(
             String descripcion,
             BigDecimal cantidad,
@@ -245,7 +252,16 @@ public class ParserAlbaran {
             BigDecimal precio,
             BigDecimal importe,
             List<Producto> catalogo) {
-        String texto = descripcion.trim();
+        String original = descripcion.trim();
+        String unidadFinal = unidad;
+        Matcher pegado = CANTIDAD_PEGADA.matcher(original);
+        String texto = original;
+        if (pegado.find()) {
+            texto = original.substring(0, pegado.start()).trim();
+            if (unidadFinal == null || unidadFinal.isBlank()) {
+                unidadFinal = pegado.group(1);
+            }
+        }
         if (texto.length() < 3 || texto.chars().noneMatch(Character::isLetter)) {
             return null;
         }
@@ -254,7 +270,7 @@ public class ParserAlbaran {
         return new LineaExtraccion(
                 texto,
                 cantidad,
-                unidad == null ? null : unidad.toLowerCase(Locale.ROOT),
+                unidadFinal == null ? null : unidadFinal.toLowerCase(Locale.ROOT),
                 precio,
                 importe,
                 producto != null ? producto.getId() : null,

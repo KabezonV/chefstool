@@ -255,7 +255,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 88 tests
+cd chefstool-backend && ./mvnw clean test          # 94 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
