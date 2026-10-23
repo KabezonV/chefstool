@@ -39,7 +39,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_SSLMODE: ${DB_SSLMODE:-prefer}
       CHEFSTOOL_JWT_SECRET: ${CHEFSTOOL_JWT_SECRET}
-      CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:8081}
+      CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,http://172.16.*:*}
       CHEFSTOOL_ENLACE_DIRECTO: ${CHEFSTOOL_ENLACE_DIRECTO:-false}
       CHEFSTOOL_ALMACEN: ${CHEFSTOOL_ALMACEN:-local}
       # Almacen de albaranes en S3 (opcional; por defecto se usa el volumen local)

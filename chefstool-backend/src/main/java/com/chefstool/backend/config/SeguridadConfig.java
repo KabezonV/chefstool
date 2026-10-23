@@ -59,11 +59,12 @@ public class SeguridadConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
             @Value(
-                            "${chefstool.cors.origenes:http://localhost:5173,http://localhost:5180,"
-                                    + "http://192.168.1.153:5180}")
+                            "${chefstool.cors.origenes:http://localhost:*,http://127.0.0.1:*,"
+                                    + "http://192.168.*:*,http://10.*:*,http://172.16.*:*}")
                     List<String> origenes) {
         CorsConfiguration configuracion = new CorsConfiguration();
-        configuracion.setAllowedOrigins(origenes);
+        // Patrones: permiten comodines para las IP privadas de la red local
+        configuracion.setAllowedOriginPatterns(origenes);
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuracion.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuracion.setMaxAge(3600L);
