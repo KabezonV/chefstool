@@ -43,6 +43,21 @@ procesadas. Con OpenAI, **mil albaranes cuestan 53 céntimos**; con el Invoice P
 **92 euros**. La diferencia entre OpenAI y la opción más barata del mercado es de **13
 céntimos por cada mil albaranes**.
 
+### Nota sobre Azure
+
+**Azure no es un ahorro: cobra exactamente lo mismo que AWS** por el mismo producto (1,38 €
+por cada 1.000 albaranes en modo texto; 9,20 € en modo factura, igual que Textract). Frente a
+OpenAI es **2,6 veces más caro** en el modo barato y **17 veces** en el de facturas.
+
+La única ventaja real de Azure es su capa gratuita de **500 páginas al mes**, pensada para
+probar: para una cocina de 500 albaranes al mes la lectura saldría a 0 €, es decir **3,17 €
+menos al año** que con OpenAI — a cambio de dar de alta un proveedor nuevo, integrarlo y
+quedarse con una cuota gratuita que no está pensada para producción. No compensa.
+
+Resumen: **Azure solo tiene sentido si la empresa decide que su nube es Azure**, y en ese caso
+el coste de lectura sería el mismo que con AWS (8,28 €/año con 500 albaranes al mes), no un
+ahorro.
+
 ---
 
 ## 3. De tantos a tantos albaranes: coste mensual (€/mes, sin IVA)
