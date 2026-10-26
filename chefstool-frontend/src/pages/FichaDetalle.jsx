@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, FileDown, Loader2, Plus, Trash2 } from 'lucide-react'
 import { api, listarTodo } from '@/lib/api'
 import { moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
@@ -31,6 +31,7 @@ export default function FichaDetalle() {
   const [precios, setPrecios] = useState({})
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  const [descargandoPdf, setDescargandoPdf] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -89,6 +90,28 @@ export default function FichaDetalle() {
   const precioVenta = Number(cabecera.precioVenta || 0)
   const margen =
     precioVenta > 0 ? ((precioVenta - costePorRacion) / precioVenta) * 100 : null
+
+  async function descargarPdf() {
+    setDescargandoPdf(true)
+    try {
+      const blob = await api.descargar(`/fichas/${id}/pdf`)
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `ficha-${(ficha?.nombre ?? 'escandallo')
+        .replace(/[^\p{L}\p{N}]+/gu, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase()}.pdf`
+      document.body.appendChild(enlace)
+      enlace.click()
+      enlace.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDescargandoPdf(false)
+    }
+  }
 
   function cambiarCabecera(campo, valor) {
     setCabecera((previos) => ({ ...previos, [campo]: valor }))
@@ -185,7 +208,13 @@ export default function FichaDetalle() {
           <ArrowLeft className="size-4" />
           Fichas técnicas
         </Link>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight">{ficha.nombre}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="mt-2 text-xl font-semibold tracking-tight">{ficha.nombre}</h1>
+          <Button variant="outline" size="sm" onClick={descargarPdf} disabled={descargandoPdf}>
+            <FileDown className="size-4" />
+            {descargandoPdf ? 'Generando…' : 'PDF'}
+          </Button>
+        </div>
       </div>
 
       {error && (

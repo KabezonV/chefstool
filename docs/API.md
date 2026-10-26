@@ -231,6 +231,7 @@ desde la pantalla de revisión.
 | POST | `/fichas` | Alta con líneas |
 | PUT | `/fichas/{id}` | Edición (recalcula costes) |
 | DELETE | `/fichas/{id}` | Borrado lógico |
+| GET | `/fichas/{id}/pdf` | Escandallo en PDF A4 (`application/pdf`) |
 
 ```json
 {

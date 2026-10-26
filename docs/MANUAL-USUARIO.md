@@ -90,6 +90,10 @@ Desde aquí puedes exportar el catálogo a **Excel**.
 
 Si mañana sube el precio de un ingrediente, la ficha se actualiza sin tocar nada.
 
+El botón **PDF** de la ficha descarga el escandallo en una hoja A4 (cabecera con el
+restaurante, coste por ración, margen y tabla de ingredientes), lista para imprimir
+o archivar.
+
 ## 7. Informes
 
 **Informes** muestra:

@@ -50,7 +50,21 @@ function request(path, options = {}) {
   )
 }
 
+async function requestBlob(path) {
+  const headers = {}
+  const token = tokenGuardado()
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  const respuesta = await fetch(`${BASE_URL}${path}`, { headers })
+  if (!respuesta.ok) {
+    throw new Error(`Error ${respuesta.status} al descargar ${path}`)
+  }
+  return respuesta.blob()
+}
+
 export const api = {
+  descargar: (path) => requestBlob(path),
   get: (path) => request(path),
   post: (path, body) =>
     request(path, { method: 'POST', body: JSON.stringify(body) }),

@@ -14,7 +14,7 @@ obtén costes reales, márgenes y comparativas de proveedores.
 | Compras | Histórico de compras con filtros y detalle de líneas |
 | Productos | Catálogo normalizado con histórico de precios y comparativa por proveedor |
 | Proveedores / Clientes / Eventos | Imputación de compras y costes por servicio |
-| Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta |
+| Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta, exportables a PDF A4 |
 | Alertas | Aviso automático cuando un proveedor sube el precio ≥5 % |
 | Dashboard e informes | Gasto mensual, coste histórico por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
@@ -262,7 +262,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 110 tests
+cd chefstool-backend && ./mvnw clean test          # 111 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
