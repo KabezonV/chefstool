@@ -147,6 +147,22 @@ Resumen: Azure solo tiene sentido si la empresa decide que su nube es Azure, y e
 coste de lectura sería el mismo que con AWS (8,28 euros al año con 500 albaranes al mes), no
 un ahorro.
 
+Tambien conviene mirar a Google, que es el unico de los grandes que sale mas barato que OpenAI:
+
+- Gemini 2.5 Flash-Lite: 0,40 euros cada 1.000 albaranes (frente a 0,53 de OpenAI). Ahorra 13
+  centimos cada mil, es decir 1,3 centimos cada 100. Con tu regla del medio centimo no compensa
+  cambiar: es un 20 % mas barato, no el triple.
+- Gemini 2.5 Flash (el que ya probamos con 98 % de acierto): 2,22 euros cada 1.000. Seria el
+  relevo si la calidad de OpenAI no llega.
+- Document AI, su producto de documentos: 1,38 euros cada 1.000 en modo texto y 92 euros en
+  modo factura. Es mas caro que su propio modelo de vision, asi que conviene usar Gemini.
+- Su capa gratuita sirve para probar, pero puede usar los datos para mejorar sus productos: no
+  vale para produccion. Para produccion con datos en la UE esta Vertex AI, al mismo precio.
+
+En resumen: Google es el plan B natural. Si OpenAI no convence en la prueba de calidad, el
+cambio seria a Gemini, y hay medio dia de trabajo porque ya esta el adaptador escrito.
+
+
 
 6. LO QUE NO SALE EN EL PRECIO
 
