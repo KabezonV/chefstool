@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
 import { api, listarTodo } from '@/lib/api'
+import { avisosDeImportes } from '@/lib/importes'
 import { estados, fechaCorta, moneda } from '@/lib/formato'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -191,6 +192,10 @@ export default function DocumentoDetalle() {
   }
 
   const estado = estados[documento.estado] ?? estados.pendiente_revision
+  const avisosImportes = avisosDeImportes(
+    { importeNeto: documento.importeNeto, importeIva: documento.importeIva, importeTotal: documento.importeTotal },
+    lineas,
+  )
   const confianzaBaja =
     documento.confianzaExtraccion === null ||
     Number(documento.confianzaExtraccion) < 0.5
@@ -245,6 +250,20 @@ export default function DocumentoDetalle() {
       {error && (
         <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
           {error}
+        </div>
+      )}
+
+      {avisosImportes.length > 0 && documento.estado === 'pendiente_revision' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-medium">Los importes no cuadran</p>
+          <ul className="mt-1 list-disc pl-5">
+            {avisosImportes.map((aviso) => (
+              <li key={aviso}>{aviso}</li>
+            ))}
+          </ul>
+          <p className="mt-1">
+            Puede ser una línea que no se ha leído. Revísalo antes de confirmar la compra.
+          </p>
         </div>
       )}
 
