@@ -1,5 +1,7 @@
 # Despliegue
 
+> Qué servidor contratar y cuánto cuesta para 20 cocinas: [INFORME-AWS-DIMENSIONAMIENTO.md](INFORME-AWS-DIMENSIONAMIENTO.md).
+
 ## Resumen
 
 Son dos piezas independientes:
