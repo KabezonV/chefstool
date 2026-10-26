@@ -93,6 +93,9 @@ No es una maqueta. Tiene pruebas automáticas y se ha usado de forma realista:
 
 ## 6. Lo que falta y las decisiones que necesito
 
+> Detalle completo con precios verificados, coste por volumen y puntos de cruce entre
+> proveedores: **[COMPARATIVA-COSTES-IA.md](COMPARATIVA-COSTES-IA.md)**.
+
 ### Decisión 1 — Lectura de albaranes (OCR)
 
 Hoy la aplicación lee **PDFs con texto** ella sola y, para **fotos**, usa un motor gratuito instalado en el servidor. Funciona, pero con fotos torcidas o albaranes escritos a mano la precisión baja.
