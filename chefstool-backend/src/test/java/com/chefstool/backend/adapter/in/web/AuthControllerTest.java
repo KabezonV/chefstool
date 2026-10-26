@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 /** Este test corre con la seguridad ACTIVA (sin perfil "test"). */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class AuthControllerTest {
+class AuthControllerTest extends IntegracionBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;

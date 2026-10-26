@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,10 +21,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /** Corre con la seguridad ACTIVA: comprueba invitaciones y permisos por rol. */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class EquipoControllerTest {
+class EquipoControllerTest extends IntegracionBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;

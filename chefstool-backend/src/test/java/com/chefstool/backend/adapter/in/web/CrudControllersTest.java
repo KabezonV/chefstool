@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,11 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-@SpringBootTest
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
-@Transactional
-class CrudControllersTest {
+class CrudControllersTest extends IntegracionBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;

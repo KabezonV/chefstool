@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,10 +17,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /** Con la seguridad ACTIVA: el catalogo solo lo borran propietario y admin. */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class PermisosCatalogoTest {
+class PermisosCatalogoTest extends IntegracionBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;

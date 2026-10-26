@@ -11,9 +11,13 @@ cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
 
-Los tests del backend usan la base de datos configurada en `.env`, pero son
-transaccionales: cada test hace *rollback*. Los de frontend no salen a red
-(`fetch` y el cliente de API van mockeados).
+Los tests de backend que arrancan la aplicación levantan **su propio PostgreSQL con
+Testcontainers** (`postgres:17-alpine`), así que solo necesitan **Docker** en marcha: no
+hacen falta ni la base de datos local ni el archivo `.env` (ni variables `DB_*`). El
+contenedor se crea una vez por ejecución y los tests son transaccionales: cada uno hace
+*rollback*. La primera ejecución tarda algo más porque descarga la imagen.
+
+Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados).
 
 > Si `npm install` falla con `EACCES` en `~/.npm/_cacache`, es un problema de
 > permisos de la caché global, no del proyecto. Solución sin tocar permisos:

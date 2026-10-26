@@ -1,13 +1,9 @@
 package com.chefstool.backend;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class ChefstoolBackendApplicationTests {
+class ChefstoolBackendApplicationTests extends IntegracionBase {
 
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    void contextoCarga() {}
 }

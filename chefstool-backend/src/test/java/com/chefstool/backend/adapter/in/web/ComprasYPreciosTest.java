@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,11 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-@SpringBootTest
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
-@Transactional
-class ComprasYPreciosTest {
+class ComprasYPreciosTest extends IntegracionBase {
 
     private static final UUID ORG = UUID.fromString("00000000-0000-0000-0000-000000000001");
 

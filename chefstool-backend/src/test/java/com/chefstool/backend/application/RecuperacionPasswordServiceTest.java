@@ -1,5 +1,6 @@
 package com.chefstool.backend.application;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -18,10 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @ActiveProfiles("test")
-@Transactional
-class RecuperacionPasswordServiceTest {
+class RecuperacionPasswordServiceTest extends IntegracionBase {
 
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private RecuperacionPasswordRepository recuperacionRepository;

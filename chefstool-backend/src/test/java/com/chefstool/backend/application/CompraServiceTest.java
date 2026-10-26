@@ -1,5 +1,6 @@
 package com.chefstool.backend.application;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.chefstool.backend.domain.model.AlertaPrecio;
@@ -23,10 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 @ActiveProfiles("test")
-@Transactional
-class CompraServiceTest {
+class CompraServiceTest extends IntegracionBase {
 
     private static final UUID ORG = UUID.fromString("00000000-0000-0000-0000-000000000001");
 

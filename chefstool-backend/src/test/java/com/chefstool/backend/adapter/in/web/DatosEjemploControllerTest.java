@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.IntegracionBase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -17,10 +18,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /** Corre con la seguridad ACTIVA: la siembra exige rol propietario o admin. */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class DatosEjemploControllerTest {
+class DatosEjemploControllerTest extends IntegracionBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
