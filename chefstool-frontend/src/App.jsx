@@ -1,41 +1,26 @@
+// Vendors
 import { Navigate, Route, Routes } from 'react-router-dom'
-import AppShell from '@/components/layout/AppShell'
+
+// Enumerations
 import { navItems } from '@/config/navigation'
+import { PAGINAS } from '@/config/paginas'
+
+// Hooks
 import { AuthProvider } from '@/lib/auth'
 import { useAuth } from '@/lib/auth-context'
+
+// Components
+import AppShell from '@/components/layout/AppShell'
 import Auth from '@/pages/Auth'
-import Restablecer from '@/pages/Restablecer'
-import Clientes from '@/pages/Clientes'
-import Compras from '@/pages/Compras'
-import Configuracion from '@/pages/Configuracion'
 import Dashboard from '@/pages/Dashboard'
 import DocumentoDetalle from '@/pages/DocumentoDetalle'
 import DocumentoNuevo from '@/pages/DocumentoNuevo'
-import Documentos from '@/pages/Documentos'
-import Eventos from '@/pages/Eventos'
 import FichaDetalle from '@/pages/FichaDetalle'
 import FichaNuevo from '@/pages/FichaNuevo'
-import Fichas from '@/pages/Fichas'
-import Informes from '@/pages/Informes'
 import Placeholder from '@/pages/Placeholder'
 import Privacidad from '@/pages/Privacidad'
 import ProductoDetalle from '@/pages/ProductoDetalle'
-import Productos from '@/pages/Productos'
-import Proveedores from '@/pages/Proveedores'
-import Usuarios from '@/pages/Usuarios'
-
-const paginas = {
-  '/productos': <Productos />,
-  '/proveedores': <Proveedores />,
-  '/clientes': <Clientes />,
-  '/eventos': <Eventos />,
-  '/documentos': <Documentos />,
-  '/compras': <Compras />,
-  '/fichas': <Fichas />,
-  '/informes': <Informes />,
-  '/usuarios': <Usuarios />,
-  '/configuracion': <Configuracion />,
-}
+import Restablecer from '@/pages/Restablecer'
 
 function RutaPrivada() {
   const { sesion } = useAuth()
@@ -60,7 +45,7 @@ export default function App() {
               <Route
                 key={to}
                 path={to}
-                element={paginas[to] ?? <Placeholder title={label} />}
+                element={PAGINAS[to] ?? <Placeholder title={label} />}
               />
             ))}
 

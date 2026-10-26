@@ -1,34 +1,25 @@
+// Vendors
+import { Pencil, Plus, Trash2, Upload, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Plus, Trash2, Upload, X } from 'lucide-react'
-import { api, listarTodo } from '@/lib/api'
-import { useDebounce, useListado } from '@/lib/useListado'
+
+// Utils
 import { cn } from '@/lib/utils'
+
+// Handlers
+import { api, listarTodo } from '@/lib/api'
+
+// Hooks
+import { useDebounce, useListado } from '@/lib/useListado'
+
+// Components
+import { construirPayload, valoresIniciales } from '@/components/crud/utils/formulario'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import Paginador, { Buscador } from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
-
-function valoresIniciales(campos) {
-  return Object.fromEntries(campos.map((campo) => [campo.name, '']))
-}
-
-function construirPayload(campos, valores) {
-  const payload = {}
-  for (const campo of campos) {
-    const bruto = (valores[campo.name] ?? '').toString().trim()
-    if (bruto === '') {
-      payload[campo.name] = null
-    } else if (campo.type === 'number') {
-      payload[campo.name] = Number(bruto)
-    } else {
-      payload[campo.name] = bruto
-    }
-  }
-  return payload
-}
 
 function Campo({ campo, valor, onChange, opciones }) {
   const id = `campo-${campo.name}`

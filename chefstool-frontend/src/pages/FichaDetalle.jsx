@@ -1,19 +1,20 @@
+// Vendors
+import { ArrowLeft, FileDown, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileDown, Loader2, Plus, Trash2 } from 'lucide-react'
-import { api, listarTodo } from '@/lib/api'
+
+// Utils
 import { moneda } from '@/lib/formato'
+import { tonoMargen } from '@/lib/tonos'
+
+// Handlers
+import { api, listarTodo } from '@/lib/api'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
-
-function tonoMargen(margen) {
-  if (margen === null) return 'neutral'
-  if (margen >= 65) return 'success'
-  if (margen >= 40) return 'warning'
-  return 'danger'
-}
 
 export default function FichaDetalle() {
   const { id } = useParams()

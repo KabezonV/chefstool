@@ -216,6 +216,8 @@ Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/
 Base de datos (PostgreSQL propio, Amazon RDS y migración): [docs/BASE-DE-DATOS.md](docs/BASE-DE-DATOS.md).
 Manual de usuario para cocina: [docs/MANUAL-USUARIO.md](docs/MANUAL-USUARIO.md).
 Cumplimiento y pendientes RGPD: [docs/RGPD.md](docs/RGPD.md).
+Estructura del frontend y convenciones de código (constantes, utils, orden de imports):
+[docs/FRONTEND-ESTRUCTURA.md](docs/FRONTEND-ESTRUCTURA.md).
 Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 [docs/PLAN-FASE-2.md](docs/PLAN-FASE-2.md).
 

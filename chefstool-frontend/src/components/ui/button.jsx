@@ -1,30 +1,11 @@
+// Vendors
 import { Slot } from '@radix-ui/react-slot'
-import { cva } from 'class-variance-authority'
+
+// Utils
 import { cn } from '@/lib/utils'
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        accent: 'bg-accent text-accent-foreground hover:bg-accent/90',
-        outline: 'border border-border bg-card hover:bg-black/[0.03]',
-        ghost: 'hover:bg-black/[0.04]',
-      },
-      size: {
-        default: 'h-9 px-4',
-        sm: 'h-8 px-3 text-xs',
-        lg: 'h-11 px-6',
-        icon: 'size-9',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  },
-)
+// Components
+import { variantesBoton } from '@/components/ui/utils/button'
 
 export function Button({
   className,
@@ -36,7 +17,7 @@ export function Button({
   const Comp = asChild ? Slot : 'button'
   return (
     <Comp
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(variantesBoton({ variant, size }), className)}
       {...props}
     />
   )

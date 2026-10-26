@@ -1,37 +1,21 @@
+// Vendors
+import { ArrowDownRight, ArrowUpRight, BellRing, FileText, PiggyBank } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight, BellRing, FileText, PiggyBank } from 'lucide-react'
-import { api } from '@/lib/api'
+
+// Utils
 import { fechaCorta, moneda } from '@/lib/formato'
+
+// Handlers
+import { api } from '@/lib/api'
+
+// Components
+import Kpi from '@/components/dashboard/Kpi'
+import DatosEjemplo from '@/components/DatosEjemplo'
 import { Badge } from '@/components/ui/badge'
+import Barras from '@/components/ui/barras'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Barras from '@/components/ui/barras'
-import DatosEjemplo from '@/components/DatosEjemplo'
-
-function Kpi({ etiqueta, valor, detalle, tono }) {
-  return (
-    <Card>
-      <CardContent className="pt-5">
-        <p className="text-xs font-medium text-muted">{etiqueta}</p>
-        <p className="mt-1 text-2xl font-semibold tracking-tight">{valor}</p>
-        {detalle && (
-          <p
-            className={
-              tono === 'danger'
-                ? 'mt-1 flex items-center gap-1 text-xs text-danger'
-                : tono === 'success'
-                  ? 'mt-1 flex items-center gap-1 text-xs text-success'
-                  : 'mt-1 text-xs text-muted'
-            }
-          >
-            {detalle}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
 
 export default function Dashboard() {
   const [panel, setPanel] = useState(null)

@@ -1,29 +1,22 @@
-import { useEffect, useState } from 'react'
+// Vendors
 import { TrendingUp } from 'lucide-react'
-import { api } from '@/lib/api'
-import { fechaCorta, moneda } from '@/lib/formato'
+import { useEffect, useState } from 'react'
+
+// Utils
 import { descargarCsv, fechaArchivo } from '@/lib/csv'
+import { fechaCorta, moneda } from '@/lib/formato'
+import { tonoVariacion } from '@/lib/tonos'
 import { descargarXlsx } from '@/lib/xlsx'
+import { COLUMNAS_PROVEEDORES } from './utils/columnas'
+
+// Handlers
+import { api } from '@/lib/api'
+
+// Components
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Barras from '@/components/ui/barras'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BotonesExportar } from '@/components/ui/tabla'
-
-const columnasProveedores = [
-  { label: 'Proveedor', valor: (fila) => fila.nombre },
-  { label: 'Compras', valor: (fila) => fila.compras },
-  { label: 'Gasto total', valor: (fila) => fila.gastoTotal },
-  { label: 'Ticket medio', valor: (fila) => fila.ticketMedio },
-  { label: '% del gasto', valor: (fila) => fila.porcentajeGasto },
-  { label: 'Variación media (%)', valor: (fila) => fila.variacionMediaPct },
-  { label: 'Productos', valor: (fila) => fila.productos },
-  { label: 'Última compra', valor: (fila) => fila.ultimaCompra },
-]
-
-function tonoVariacion(valor) {
-  if (valor === null || valor === undefined) return 'neutral'
-  return Number(valor) >= 10 ? 'danger' : Number(valor) > 0 ? 'warning' : 'success'
-}
 
 export default function Informes() {
   const [panel, setPanel] = useState(null)
@@ -133,11 +126,11 @@ export default function Informes() {
           <CardTitle>Coste histórico por proveedor</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <BotonesExportar
-              onCsv={() => descargarCsv(`proveedores-${fechaArchivo()}`, columnasProveedores, proveedores)}
+              onCsv={() => descargarCsv(`proveedores-${fechaArchivo()}`, COLUMNAS_PROVEEDORES, proveedores)}
               onExcel={() =>
                 descargarXlsx(`proveedores-${fechaArchivo()}`, {
                   hoja: 'Proveedores',
-                  columnas: columnasProveedores,
+                  columnas: COLUMNAS_PROVEEDORES,
                   filas: proveedores,
                 })
               }

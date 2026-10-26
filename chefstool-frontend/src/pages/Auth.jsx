@@ -1,8 +1,15 @@
+// Vendors
+import { ChefHat, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ChefHat, Loader2 } from 'lucide-react'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Hooks
 import { useAuth } from '@/lib/auth-context'
+
+// Components
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/input'
 

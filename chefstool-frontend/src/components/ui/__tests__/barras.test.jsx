@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
+// Vendors
 import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+// Components
 import Barras from '@/components/ui/barras'
 
 describe('Barras', () => {

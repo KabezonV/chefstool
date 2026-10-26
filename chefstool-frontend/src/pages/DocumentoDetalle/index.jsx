@@ -1,29 +1,24 @@
+// Vendors
+import { ArrowLeft, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
-import { api, listarTodo } from '@/lib/api'
+
+// Utils
+import { fechaCorta, moneda } from '@/lib/formato'
 import { avisosDeImportes } from '@/lib/importes'
-import { estados, fechaCorta, moneda } from '@/lib/formato'
+import { importeLinea, lineaVacia } from './utils/lineas'
+
+// Enumerations
+import { ESTADOS_DOCUMENTO } from '@/constants/documentos'
+
+// Handlers
+import { api, listarTodo } from '@/lib/api'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
-
-function lineaVacia() {
-  return {
-    descripcion: '',
-    cantidad: '1',
-    unidad: '',
-    precioUnitario: '0',
-    productoId: '',
-  }
-}
-
-function importeLinea(linea) {
-  const cantidad = Number(linea.cantidad || 0)
-  const precio = Number(linea.precioUnitario || 0)
-  return Math.round(cantidad * precio * 100) / 100
-}
 
 export default function DocumentoDetalle() {
   const { id } = useParams()
@@ -191,7 +186,8 @@ export default function DocumentoDetalle() {
     )
   }
 
-  const estado = estados[documento.estado] ?? estados.pendiente_revision
+  const estado =
+    ESTADOS_DOCUMENTO[documento.estado] ?? ESTADOS_DOCUMENTO.pendiente_revision
   const avisosImportes = avisosDeImportes(
     { importeNeto: documento.importeNeto, importeIva: documento.importeIva, importeTotal: documento.importeTotal },
     lineas,

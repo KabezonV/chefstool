@@ -1,6 +1,11 @@
+// Vendors
 import { ChevronDown, ChevronUp, ChevronsUpDown, Download, FileSpreadsheet } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+
+// Utils
 import { cn } from '@/lib/utils'
+
+// Components
+import { Button } from '@/components/ui/button'
 
 /**
  * Cabecera de tabla opcionalmente ordenable. `campo` es el nombre que entiende la API

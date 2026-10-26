@@ -1,5 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card'
+// Components
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default function Placeholder({ title, description }) {
   return (

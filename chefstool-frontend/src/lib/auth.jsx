@@ -1,8 +1,14 @@
+// Vendors
 import { useCallback, useMemo, useState } from 'react'
-import { api, borrarToken, guardarToken } from '@/lib/api'
-import { AuthContext } from '@/lib/auth-context'
 
-const CLAVE_SESION = 'chefstool.sesion'
+// Enumerations
+import { CLAVE_SESION } from '@/constants/claves'
+
+// Handlers
+import { api, borrarToken, guardarToken } from '@/lib/api'
+
+// Hooks
+import { AuthContext } from '@/lib/auth-context'
 
 function leerSesion() {
   try {

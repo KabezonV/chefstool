@@ -1,30 +1,17 @@
+// Vendors
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Loader2, Sparkles, Upload } from 'lucide-react'
+
+// Utils
+import { OPCIONES_ALTA } from './utils/opciones'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-
-const opciones = [
-  {
-    clave: 'camara',
-    icono: Camera,
-    titulo: 'Hacer foto',
-    texto: 'Abre la cámara del móvil o la tablet y captura el albarán.',
-  },
-  {
-    clave: 'archivo',
-    icono: Upload,
-    titulo: 'Subir archivo',
-    texto: 'Fotos o PDF ya guardados. Puedes seleccionar varios a la vez.',
-  },
-  {
-    clave: 'demo',
-    icono: Sparkles,
-    titulo: 'Probar con un ejemplo',
-    texto: 'Genera un albarán de demostración con tu catálogo actual.',
-  },
-]
 
 export default function DocumentoNuevo() {
   const navigate = useNavigate()
@@ -111,7 +98,7 @@ export default function DocumentoNuevo() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        {opciones.map(({ clave, icono: Icono, titulo, texto }) => (
+        {OPCIONES_ALTA.map(({ clave, icono: Icono, titulo, texto }) => (
           <Card key={clave} className="flex flex-col">
             <CardContent className="flex flex-1 flex-col gap-3 pt-5">
               <span className="grid size-10 place-items-center rounded-lg bg-black/[0.05]">

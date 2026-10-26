@@ -1,10 +1,19 @@
+// Vendors
+import { ChefHat, LogOut, Menu, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { ChefHat, LogOut, Menu, Plus, X } from 'lucide-react'
-import { navItems } from '@/config/navigation'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/lib/auth-context'
+
+// Utils
 import { cn } from '@/lib/utils'
+
+// Enumerations
+import { navItems } from '@/config/navigation'
+
+// Hooks
+import { useAuth } from '@/lib/auth-context'
+
+// Components
+import { Button } from '@/components/ui/button'
 
 export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)

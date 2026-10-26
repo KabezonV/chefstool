@@ -1,3 +1,4 @@
+// Utils
 import { moneda } from '@/lib/formato'
 
 const formatoMes = new Intl.DateTimeFormat('es-ES', { month: 'short', year: 'numeric' })

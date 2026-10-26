@@ -1,24 +1,28 @@
+// Vendors
+import { BellRing, Check, ExternalLink } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { BellRing, Check, ExternalLink } from 'lucide-react'
-import { api, listarTodo } from '@/lib/api'
-import { useListado } from '@/lib/useListado'
+
+// Utils
 import { fechaCorta, moneda } from '@/lib/formato'
+import { COLUMNAS_COMPRAS } from './utils/columnas'
+
+// Enumerations
+import { TONO_ALERTA } from '@/constants/tonos'
+
+// Handlers
+import { api, listarTodo } from '@/lib/api'
+
+// Hooks
+import { useListado } from '@/lib/useListado'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 import Paginador from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
-
-const tonos = { info: 'neutral', aviso: 'warning', critico: 'danger' }
-
-const columnas = {
-  fecha: { label: 'Fecha', orden: 'fecha' },
-  proveedor: { label: 'Proveedor' },
-  documento: { label: 'Documento', orden: 'numeroDocumento' },
-  total: { label: 'Total', orden: 'importeTotal' },
-}
 
 export default function Compras() {
   const [parametros] = useSearchParams()
@@ -124,7 +128,7 @@ export default function Compras() {
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black/[0.02] px-3 py-2 text-sm"
               >
                 <div className="flex items-center gap-2">
-                  <Badge tone={tonos[alerta.severidad] ?? 'neutral'}>
+                  <Badge tone={TONO_ALERTA[alerta.severidad] ?? 'neutral'}>
                     {alerta.severidad}
                   </Badge>
                   <span>{alerta.mensaje}</span>
@@ -203,28 +207,28 @@ export default function Compras() {
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <CabeceraOrdenable
-                      columna={columnas.fecha}
+                      columna={COLUMNAS_COMPRAS.fecha}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                       className="px-3"
                     />
                     <CabeceraOrdenable
-                      columna={columnas.proveedor}
+                      columna={COLUMNAS_COMPRAS.proveedor}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                       className="px-3"
                     />
                     <CabeceraOrdenable
-                      columna={columnas.documento}
+                      columna={COLUMNAS_COMPRAS.documento}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                       className="px-3"
                     />
                     <CabeceraOrdenable
-                      columna={columnas.total}
+                      columna={COLUMNAS_COMPRAS.total}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}

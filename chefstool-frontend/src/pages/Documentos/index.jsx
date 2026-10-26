@@ -1,25 +1,24 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+// Vendors
 import { FileText, Plus } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+
+// Utils
+import { fechaCorta } from '@/lib/formato'
+import { COLUMNAS_DOCUMENTOS } from './utils/columnas'
+import { formatearConfianza } from './utils/confianza'
+
+// Enumerations
+import { ESTADOS_DOCUMENTO } from '@/constants/documentos'
+
+// Hooks
 import { useListado } from '@/lib/useListado'
-import { estados, fechaCorta } from '@/lib/formato'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
-
-function confianza(valor) {
-  if (valor === null || valor === undefined) return '—'
-  return `${Math.round(Number(valor) * 100)} %`
-}
-
-const columnas = {
-  archivo: { label: 'Archivo', orden: 'nombreOriginal' },
-  estado: { label: 'Estado', orden: 'estado' },
-  origen: { label: 'Origen' },
-  confianza: { label: 'Confianza', orden: 'confianzaExtraccion' },
-  subido: { label: 'Subido', orden: 'createdAt' },
-}
 
 export default function Documentos() {
   const navigate = useNavigate()
@@ -112,7 +111,7 @@ export default function Documentos() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
-                    {Object.values(columnas).map((columna) => (
+                    {Object.values(COLUMNAS_DOCUMENTOS).map((columna) => (
                       <CabeceraOrdenable
                         key={columna.label}
                         columna={columna}
@@ -125,7 +124,7 @@ export default function Documentos() {
                 </thead>
                 <tbody>
                   {documentos.map((documento) => {
-                    const estado = estados[documento.estado] ?? estados.pendiente_revision
+                    const estado = ESTADOS_DOCUMENTO[documento.estado] ?? ESTADOS_DOCUMENTO.pendiente_revision
                     return (
                       <tr
                         key={documento.id}
@@ -142,7 +141,7 @@ export default function Documentos() {
                           {documento.origen}
                         </td>
                         <td className="px-5 py-3 text-muted">
-                          {confianza(documento.confianzaExtraccion)}
+                          {formatearConfianza(documento.confianzaExtraccion)}
                         </td>
                         <td className="px-5 py-3 text-muted">
                           {fechaCorta(documento.createdAt)}

@@ -1,6 +1,11 @@
-import { useState } from 'react'
+// Vendors
 import { Sparkles } from 'lucide-react'
+import { useState } from 'react'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 

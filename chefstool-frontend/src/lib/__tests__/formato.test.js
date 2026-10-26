@@ -1,5 +1,8 @@
+// Vendors
 import { describe, expect, it } from 'vitest'
-import { estados, fechaCorta, moneda } from '@/lib/formato'
+
+// Utils
+import { fechaCorta, moneda } from '@/lib/formato'
 
 describe('formato', () => {
   it('formatea importes en euros', () => {
@@ -18,11 +21,5 @@ describe('formato', () => {
 
   it('devuelve un guion si no hay fecha', () => {
     expect(fechaCorta(null)).toBe('—')
-  })
-
-  it('traduce los estados de documento', () => {
-    expect(estados.pendiente_revision.texto).toBe('Por revisar')
-    expect(estados.confirmado.texto).toBe('Confirmado')
-    expect(estados.descartado.texto).toBe('Descartado')
   })
 })

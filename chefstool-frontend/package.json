@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "oxlint",
+    "lint": "oxlint && npm run imports:check",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "imports": "node scripts/orden-imports.mjs src",
+    "imports:check": "node scripts/orden-imports.mjs src --check"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.5.0",

@@ -1,9 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+// Vendors
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Hooks
 import { AuthProvider } from '@/lib/auth'
+
+// Components
 import Auth from '@/pages/Auth'
 
 vi.mock('@/lib/api', async () => {

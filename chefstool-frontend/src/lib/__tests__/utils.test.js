@@ -1,4 +1,7 @@
+// Vendors
 import { describe, expect, it } from 'vitest'
+
+// Utils
 import { cn } from '@/lib/utils'
 
 describe('cn', () => {

@@ -1,8 +1,16 @@
+// Vendors
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api, conParametros, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
+
+// Utils
 import { descargarCsv, fechaArchivo } from '@/lib/csv'
 import { descargarXlsx } from '@/lib/xlsx'
+
+// Enumerations
+import { PAGINA_INICIAL, TAMANO_PAGINA } from '@/constants/paginacion'
+
+// Handlers
+import { api, conParametros, listarTodo, normalizarPagina, paginaVacia } from '@/lib/api'
 
 /**
  * Estado de un listado paginado guardado en la URL (pagina, tamano, orden, direccion y q),
@@ -10,8 +18,11 @@ import { descargarXlsx } from '@/lib/xlsx'
  */
 export function useListado(endpoint, filtros = {}) {
   const [parametros, setParametros] = useSearchParams()
-  const pagina = Math.max(Number(parametros.get('pagina') ?? 0) || 0, 0)
-  const tamano = Number(parametros.get('tamano') ?? 20) || 20
+  const pagina = Math.max(
+    Number(parametros.get('pagina') ?? PAGINA_INICIAL) || PAGINA_INICIAL,
+    PAGINA_INICIAL,
+  )
+  const tamano = Number(parametros.get('tamano') ?? TAMANO_PAGINA) || TAMANO_PAGINA
   const orden = parametros.get('orden') ?? ''
   const direccion = parametros.get('direccion') ?? 'asc'
   const q = parametros.get('q') ?? ''

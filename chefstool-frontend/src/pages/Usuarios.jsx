@@ -1,22 +1,29 @@
-import { useEffect, useState } from 'react'
+// Vendors
 import { Check, Loader2, MailPlus, X } from 'lucide-react'
-import { api } from '@/lib/api'
-import { useAuth } from '@/lib/auth-context'
+import { useEffect, useState } from 'react'
+
+// Utils
 import { fechaCorta } from '@/lib/formato'
+import { esGestor } from '@/lib/permisos'
+
+// Enumerations
+import { ROLES } from '@/constants/roles'
+
+// Handlers
+import { api } from '@/lib/api'
+
+// Hooks
+import { useAuth } from '@/lib/auth-context'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 
-const roles = [
-  { valor: 'propietario', texto: 'Propietario' },
-  { valor: 'admin', texto: 'Administrador' },
-  { valor: 'miembro', texto: 'Miembro' },
-]
-
 export default function Usuarios() {
   const { sesion } = useAuth()
-  const puedeGestionar = sesion?.rol === 'propietario' || sesion?.rol === 'admin'
+  const puedeGestionar = esGestor(sesion?.rol)
 
   const [miembros, setMiembros] = useState([])
   const [invitaciones, setInvitaciones] = useState([])
@@ -154,7 +161,7 @@ export default function Usuarios() {
                       setInvitacion((previos) => ({ ...previos, rol: event.target.value }))
                     }
                   >
-                    {roles.map((rol) => (
+                    {ROLES.map((rol) => (
                       <option key={rol.valor} value={rol.valor}>
                         {rol.texto}
                       </option>
@@ -201,7 +208,7 @@ export default function Usuarios() {
                           value={miembro.rol}
                           onChange={(event) => cambiarRol(miembro.id, event.target.value)}
                         >
-                          {roles.map((rol) => (
+                          {ROLES.map((rol) => (
                             <option key={rol.valor} value={rol.valor}>
                               {rol.texto}
                             </option>

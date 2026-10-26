@@ -1,8 +1,15 @@
+// Vendors
+import { ArrowLeft, TrendingDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, TrendingDown } from 'lucide-react'
-import { api } from '@/lib/api'
+
+// Utils
 import { fechaCorta, moneda } from '@/lib/formato'
+
+// Handlers
+import { api } from '@/lib/api'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

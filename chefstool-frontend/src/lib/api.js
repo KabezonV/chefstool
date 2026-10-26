@@ -1,5 +1,8 @@
+// Enumerations
+import { CLAVE_SESION, CLAVE_TOKEN } from '@/constants/claves'
+import { TAMANO_PAGINA, TAMANO_PETICION_MAXIMA } from '@/constants/paginacion'
+
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
-const CLAVE_TOKEN = 'chefstool.token'
 
 export function tokenGuardado() {
   return localStorage.getItem(CLAVE_TOKEN)
@@ -16,7 +19,7 @@ export function borrarToken() {
 async function manejar(respuesta, path) {
   if (respuesta.status === 401) {
     borrarToken()
-    localStorage.removeItem('chefstool.sesion')
+    localStorage.removeItem(CLAVE_SESION)
     if (window.location.pathname !== '/auth') {
       window.location.href = '/auth'
     }
@@ -79,11 +82,11 @@ export const api = {
 }
 
 /** Envoltorio de paginacion que devuelve el backend. */
-export function paginaVacia(tamano = 20) {
+export function paginaVacia(tamano = TAMANO_PAGINA) {
   return { contenido: [], pagina: 0, tamano, totalElementos: 0, totalPaginas: 0 }
 }
 
-export function normalizarPagina(datos, tamano = 20) {
+export function normalizarPagina(datos, tamano = TAMANO_PAGINA) {
   return Array.isArray(datos) ? { ...paginaVacia(tamano), contenido: datos, totalElementos: datos.length, totalPaginas: datos.length > 0 ? 1 : 0 } : datos
 }
 
@@ -97,7 +100,7 @@ function conParametros(path, parametros) {
 }
 
 /** Lista completa, pagina a pagina, para alimentar desplegables. */
-export async function listarTodo(path, tamano = 100) {
+export async function listarTodo(path, tamano = TAMANO_PETICION_MAXIMA) {
   const primera = normalizarPagina(
     await api.get(conParametros(path, { pagina: 0, tamano })),
     tamano,

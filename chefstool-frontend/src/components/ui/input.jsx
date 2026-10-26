@@ -1,19 +1,20 @@
+// Utils
 import { cn } from '@/lib/utils'
 
-const base =
-  'w-full rounded-lg border border-border bg-card px-3 text-sm outline-none transition-colors placeholder:text-muted/60 focus-visible:ring-2 focus-visible:ring-foreground/20'
+// Components
+import { CLASE_BASE_CAMPO } from '@/components/ui/utils/input'
 
 export function Input({ className, ...props }) {
-  return <input className={cn(base, 'h-9', className)} {...props} />
+  return <input className={cn(CLASE_BASE_CAMPO, 'h-9', className)} {...props} />
 }
 
 export function Textarea({ className, ...props }) {
-  return <textarea className={cn(base, 'min-h-20 py-2', className)} {...props} />
+  return <textarea className={cn(CLASE_BASE_CAMPO, 'min-h-20 py-2', className)} {...props} />
 }
 
 export function Select({ className, children, ...props }) {
   return (
-    <select className={cn(base, 'h-9', className)} {...props}>
+    <select className={cn(CLASE_BASE_CAMPO, 'h-9', className)} {...props}>
       {children}
     </select>
   )

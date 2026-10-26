@@ -1,8 +1,18 @@
+// Vendors
+import { Check, Loader2, ShieldCheck, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Loader2, ShieldCheck, Trash2 } from 'lucide-react'
+
+// Utils
+import { esGestor } from '@/lib/permisos'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Hooks
 import { useAuth } from '@/lib/auth-context'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +21,7 @@ import { Field, Input } from '@/components/ui/input'
 export default function Configuracion() {
   const { sesion, salir } = useAuth()
   const navigate = useNavigate()
-  const puedeEditar = sesion?.rol === 'propietario' || sesion?.rol === 'admin'
+  const puedeEditar = esGestor(sesion?.rol)
   const [organizacion, setOrganizacion] = useState(null)
   const [nombre, setNombre] = useState('')
   const [guardando, setGuardando] = useState(false)

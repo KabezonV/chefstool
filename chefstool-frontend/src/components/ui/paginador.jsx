@@ -1,8 +1,12 @@
+// Vendors
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+// Enumerations
+import { TAMANOS_PAGINA } from '@/constants/paginacion'
+
+// Components
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/input'
-
-const TAMANOS = [10, 20, 50, 100]
 
 export function Buscador({ valor, onChange, placeholder = 'Buscar…' }) {
   return (
@@ -37,7 +41,7 @@ export default function Paginador({ pagina, tamano, totalElementos, totalPaginas
           onChange={(event) => onCambiar({ pagina: 0, tamano: Number(event.target.value) })}
           className="h-8 w-20"
         >
-          {TAMANOS.map((valor) => (
+          {TAMANOS_PAGINA.map((valor) => (
             <option key={valor} value={valor}>
               {valor}
             </option>

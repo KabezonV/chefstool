@@ -18,8 +18,3 @@ export function fechaCorta(valor) {
   return fecha.format(new Date(valor))
 }
 
-export const estados = {
-  pendiente_revision: { texto: 'Por revisar', tono: 'warning' },
-  confirmado: { texto: 'Confirmado', tono: 'success' },
-  descartado: { texto: 'Descartado', tono: 'neutral' },
-}

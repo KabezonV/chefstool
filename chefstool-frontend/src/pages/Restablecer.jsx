@@ -1,7 +1,12 @@
+// Vendors
+import { ChefHat, KeyRound, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChefHat, KeyRound, Loader2 } from 'lucide-react'
+
+// Handlers
 import { api } from '@/lib/api'
+
+// Components
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/input'
 

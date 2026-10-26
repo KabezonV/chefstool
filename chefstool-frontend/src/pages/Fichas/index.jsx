@@ -1,27 +1,21 @@
-import { Link, useNavigate } from 'react-router-dom'
+// Vendors
 import { Plus } from 'lucide-react'
-import { useListado } from '@/lib/useListado'
+import { Link, useNavigate } from 'react-router-dom'
+
+// Utils
 import { moneda } from '@/lib/formato'
+import { tonoMargen } from '@/lib/tonos'
+import { COLUMNAS_FICHAS } from './utils/columnas'
+
+// Hooks
+import { useListado } from '@/lib/useListado'
+
+// Components
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
-
-function tonoMargen(margen) {
-  if (margen === null || margen === undefined) return 'neutral'
-  if (margen >= 65) return 'success'
-  if (margen >= 40) return 'warning'
-  return 'danger'
-}
-
-const columnas = {
-  nombre: { label: 'Ficha', orden: 'nombre' },
-  raciones: { label: 'Raciones', orden: 'raciones' },
-  coste: { label: 'Coste/ración' },
-  precioVenta: { label: 'Precio venta', orden: 'precioVenta' },
-  margen: { label: 'Margen' },
-}
 
 export default function Fichas() {
   const navigate = useNavigate()
@@ -95,34 +89,34 @@ export default function Fichas() {
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <CabeceraOrdenable
-                      columna={columnas.nombre}
+                      columna={COLUMNAS_FICHAS.nombre}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                     />
                     <CabeceraOrdenable
-                      columna={columnas.raciones}
-                      orden={orden}
-                      direccion={direccion}
-                      onOrdenar={ordenarPor}
-                      className="px-3 text-right"
-                    />
-                    <CabeceraOrdenable
-                      columna={columnas.coste}
+                      columna={COLUMNAS_FICHAS.raciones}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                       className="px-3 text-right"
                     />
                     <CabeceraOrdenable
-                      columna={columnas.precioVenta}
+                      columna={COLUMNAS_FICHAS.coste}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}
                       className="px-3 text-right"
                     />
                     <CabeceraOrdenable
-                      columna={columnas.margen}
+                      columna={COLUMNAS_FICHAS.precioVenta}
+                      orden={orden}
+                      direccion={direccion}
+                      onOrdenar={ordenarPor}
+                      className="px-3 text-right"
+                    />
+                    <CabeceraOrdenable
+                      columna={COLUMNAS_FICHAS.margen}
                       orden={orden}
                       direccion={direccion}
                       onOrdenar={ordenarPor}

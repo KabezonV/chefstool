@@ -1,4 +1,7 @@
+// Vendors
 import { describe, expect, it } from 'vitest'
+
+// Utils
 import { avisosDeImportes } from '@/lib/importes'
 
 const lineas = (...importes) => importes.map((importe) => ({ importe }))

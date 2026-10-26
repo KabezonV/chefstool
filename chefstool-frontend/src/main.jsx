@@ -1,7 +1,12 @@
+// Vendors
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+
+// Utils
 import App from './App.jsx'
+
+// Styles
 import './index.css'
 
 if ('serviceWorker' in navigator) {
