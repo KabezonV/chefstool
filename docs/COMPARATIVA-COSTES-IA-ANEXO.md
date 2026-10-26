@@ -101,6 +101,39 @@ contratar.
 Los modelos "grandes" (Gemini 3.1 Pro a 2 $/12 $, gpt-6-astra a 10 $/50 $) cuestan 5–50 veces
 más y **no aportan nada** para leer un albarán: con los pequeños ya sacamos 98 % de confianza.
 
+### 4.3 Otros proveedores baratos: DeepSeek, Qwen, Gemma y los modos "lote"
+
+Sí existen opciones más baratas en el mercado. Lo importante es que, en un albarán, **manda el
+precio de salida** (el JSON con las 20 líneas), no el de entrada:
+
+| Modelo | Entrada / Salida (por 1 M tokens) | € por 1.000 albaranes | Frente a OpenAI |
+| --- | --- | ---: | --- |
+| Gemma 3 4B (modelo abierto) | 0,04 $ / 0,05 $ | 0,09 € | −0,44 € |
+| Nex N2.5 mini | 0,025 $ / 0,10 $ | 0,11 € | −0,42 € |
+| Qwen 3.7 Flash (Alibaba) | 0,03 $ / 0,13 $ | 0,14 € | −0,39 € |
+| **DeepSeek v4.1 Flash, modo lote** | 0,05 $ / 0,15 $ | 0,19 € | −0,34 € |
+| GPT-5 nano, modo lote | 0,025 $ / 0,20 $ | 0,19 € | −0,34 € |
+| **DeepSeek v4.1 Flash** (normal) | **0,02 $ / 1,00 $** | **0,81 €** | **+0,28 €** |
+| OpenAI gpt-6-luna (referencia) | 0,10 $ / 0,50 $ | 0,53 € | — |
+
+Tres conclusiones:
+
+1. **DeepSeek sí lee imágenes** (su modelo v4.1 Flash acepta texto + imagen), pero tiene la
+   entrada 5 veces más barata y la **salida 2 veces más cara**. Como en un albarán pesa más la
+   salida, **sale un 50 % más caro que OpenAI** en uso normal. Solo en modo lote (asíncrono, la
+   respuesta llega minutos u horas después) baja a 0,19 €/1.000.
+2. **Lo más barato son modelos pequeños y abiertos** (Gemma 3 4B, Qwen Flash, Nex mini): 0,09–0,14 €
+   por 1.000 albaranes. El ahorro máximo frente a OpenAI es de **0,44 € cada 1.000 albaranes**
+   (0,044 céntimos por albarán), once veces por debajo del umbral del medio céntimo.
+3. **Ninguna resuelve los dos problemas de fondo**: son proveedores nuevos (DeepSeek, Alibaba y
+   Nex son chinos: transferencia internacional de datos; los modos lote no sirven para "hago la
+   foto y veo el resultado") y los modelos pequeños suelen recortar la resolución de la imagen,
+   justo lo que peor llevan los albaranes con muchas líneas o letra a mano. Antes de plantearlos
+   habría que medir su calidad con albaranes reales, y el ahorro no paga esa prueba.
+
+> Precios tomados del catálogo público de OpenRouter el 26/10/2026 (incluye el margen del
+> agregador; el precio directo de cada proveedor es igual o algo menor).
+
 ---
 
 ## 5. Coste según el volumen (€/mes, sin IVA)

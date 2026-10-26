@@ -43,6 +43,17 @@ Cómo leerlo: con OpenAI, mil albaranes cuestan 53 céntimos; con el Invoice Par
 92 euros. La diferencia entre OpenAI y la opción más barata del mercado es de 13 céntimos por
 cada mil albaranes.
 
+También se han mirado los proveedores de bajo coste (DeepSeek, Qwen, Gemma, los modos "lote"):
+
+- DeepSeek sí lee imágenes, pero tiene la entrada barata y la salida cara: sale a 0,81 euros
+  cada 1.000 albaranes, un 50 % más caro que OpenAI en uso normal.
+- Lo más barato de todo son modelos pequeños y abiertos (Gemma, Qwen): entre 0,09 y 0,14 euros
+  cada 1.000 albaranes. El ahorro máximo frente a OpenAI es de 0,44 euros cada 1.000
+  albaranes, es decir 0,044 céntimos por albarán: once veces por debajo de tu umbral.
+- Además son proveedores nuevos (DeepSeek y Alibaba son chinos, con transferencia
+  internacional de datos) y los modelos pequeños recortan la resolución de la imagen, que es
+  justo lo que peor llevan los albaranes con muchas líneas. No compensa.
+
 
 3. DE TANTOS A TANTOS ALBARANES: COSTE MENSUAL
 
