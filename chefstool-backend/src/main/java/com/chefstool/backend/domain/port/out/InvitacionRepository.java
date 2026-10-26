@@ -14,4 +14,6 @@ public interface InvitacionRepository extends JpaRepository<Invitacion, UUID> {
 
     boolean existsByOrganizacionIdAndEmailIgnoreCaseAndAceptadaAtIsNull(
             UUID organizacionId, String email);
+
+    List<Invitacion> findByInvitadoPor(UUID usuarioId);
 }

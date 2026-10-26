@@ -15,6 +15,7 @@ obtén costes reales, márgenes y comparativas de proveedores.
 | Productos | Catálogo normalizado con histórico de precios y comparativa por proveedor |
 | Proveedores / Clientes / Eventos | Imputación de compras y costes por servicio |
 | Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta, exportables a PDF A4 |
+| RGPD | Aviso de privacidad, descarga de datos personales y baja de cuenta con borrado en cascada |
 | Alertas | Aviso automático cuando un proveedor sube el precio ≥5 % |
 | Dashboard e informes | Gasto mensual, coste histórico por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
@@ -214,6 +215,7 @@ Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
 Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/ARRANQUE.md).
 Base de datos (PostgreSQL propio, Amazon RDS y migración): [docs/BASE-DE-DATOS.md](docs/BASE-DE-DATOS.md).
 Manual de usuario para cocina: [docs/MANUAL-USUARIO.md](docs/MANUAL-USUARIO.md).
+Cumplimiento y pendientes RGPD: [docs/RGPD.md](docs/RGPD.md).
 Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 [docs/PLAN-FASE-2.md](docs/PLAN-FASE-2.md).
 
@@ -262,7 +264,7 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 111 tests
+cd chefstool-backend && ./mvnw clean test          # 116 tests
 cd chefstool-frontend && npm test                  # 25 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)

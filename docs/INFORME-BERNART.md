@@ -130,11 +130,21 @@ y se puede alojar en Amazon RDS cuando dirección lo decida, sin tocar código
 
 ### Decisión 4 — Protección de datos (RGPD)
 
-La aplicación guarda nombres de proveedores, precios y usuarios. Antes de usarla con datos reales de la empresa hay que:
+La aplicación guarda nombres de proveedores, precios y usuarios. **La parte de software ya está resuelta**:
 
-- Publicar un **aviso de privacidad** y una política de conservación.
-- Definir **quién es el responsable** del tratamiento (la empresa) y quién el encargado (nosotros).
-- Poder **borrar una cuenta y sus datos** cuando se pida (hoy hay borrado lógico de datos de negocio; falta el borrado de cuenta).
+- ✅ **Aviso de privacidad** publicado dentro de la aplicación (`/privacidad`).
+- ✅ **Descargar mis datos** en JSON desde *Configuración* (derecho de portabilidad).
+- ✅ **Darme de baja**: borra la cuenta y, si era el único miembro, todos los datos de la organización. Si hay más gente, obliga a nombrar antes otro propietario.
+- ✅ Contraseñas cifradas, sesiones firmadas y cada organización aislada de las demás.
+
+Lo que queda **no es código**, son decisiones y papeleo de la empresa:
+
+- Firmar el **contrato de encargado del tratamiento** con el proveedor de alojamiento (y con el de OCR con IA, si se activa).
+- Rellenar el **registro de actividades** de tratamiento y el **plazo de conservación** (fiscal: 4 años de facturas).
+- Datos reales de la empresa en el aviso (NIF y correo de contacto) y revisión legal.
+- Procedimiento interno de aviso de brechas (72 h a la AEPD).
+
+El checklist completo está en `docs/RGPD.md`.
 
 **Coste:** interno si lo asume alguien de la empresa; si se quiere revisar con un asesor, es un gasto puntual.
 

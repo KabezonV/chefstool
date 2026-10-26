@@ -15,5 +15,7 @@ public interface MiembroOrganizacionRepository extends JpaRepository<MiembroOrga
 
     Optional<MiembroOrganizacion> findFirstByUsuarioIdOrderByCreatedAtAsc(UUID usuarioId);
 
+    List<MiembroOrganizacion> findByUsuarioId(UUID usuarioId);
+
     long countByOrganizacionIdAndRol(UUID organizacionId, String rol);
 }

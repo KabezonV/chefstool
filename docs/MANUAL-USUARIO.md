@@ -159,6 +159,13 @@ aplicación no hay pantalla de "cambiar contraseña".
 Solo las personas de tu organización. Cada cocina está aislada: nadie de otra
 organización puede ver tus compras ni tus precios.
 
+**¿Puedo descargar mis datos o darme de baja?**
+Sí. En **Configuración → Tus datos y privacidad** tienes *Descargar mis datos (JSON)* y
+*Quiero darme de baja*. La baja pide tu contraseña y no se puede deshacer: elimina tu
+cuenta y, si eras el único miembro, todos los datos de la organización. Si hay más
+personas, antes hay que nombrar otro propietario. El aviso legal completo está en
+`/privacidad`.
+
 ---
 
 *Si algo no cuadra, apunta la pantalla y el mensaje exacto: con eso se puede reproducir

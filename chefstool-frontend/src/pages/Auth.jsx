@@ -225,7 +225,10 @@ export default function Auth() {
         </div>
 
         <p className="text-center text-xs text-muted">
-          Al crear una cuenta se crea también tu organización y quedas como propietario.
+          Al crear una cuenta se crea también tu organización y quedas como propietario.{' '}
+          <Link to="/privacidad" className="font-medium hover:text-foreground hover:underline">
+            Aviso de privacidad
+          </Link>
         </p>
       </div>
     </div>

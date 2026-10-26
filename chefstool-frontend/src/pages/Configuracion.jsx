@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Check, Loader2, ShieldCheck, Trash2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
 import { Badge } from '@/components/ui/badge'
@@ -8,13 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input } from '@/components/ui/input'
 
 export default function Configuracion() {
-  const { sesion } = useAuth()
+  const { sesion, salir } = useAuth()
+  const navigate = useNavigate()
   const puedeEditar = sesion?.rol === 'propietario' || sesion?.rol === 'admin'
   const [organizacion, setOrganizacion] = useState(null)
   const [nombre, setNombre] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [guardado, setGuardado] = useState(false)
   const [error, setError] = useState(null)
+  const [passwordBaja, setPasswordBaja] = useState('')
+  const [bajaAbierta, setBajaAbierta] = useState(false)
+  const [dandoBaja, setDandoBaja] = useState(false)
 
   useEffect(() => {
     let activo = true
@@ -47,6 +52,38 @@ export default function Configuracion() {
       setError(err.message)
     } finally {
       setGuardando(false)
+    }
+  }
+
+  async function descargarDatos() {
+    setError(null)
+    try {
+      const datos = await api.get('/auth/datos')
+      const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = 'chefstool-mis-datos.json'
+      document.body.appendChild(enlace)
+      enlace.click()
+      enlace.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function darseDeBaja(event) {
+    event.preventDefault()
+    setError(null)
+    setDandoBaja(true)
+    try {
+      await api.delete('/auth/cuenta', { password: passwordBaja.trim() })
+      salir()
+      navigate('/auth', { replace: true, state: { aviso: 'Tu cuenta se ha eliminado' } })
+    } catch (err) {
+      setError(err.message)
+      setDandoBaja(false)
     }
   }
 
@@ -118,6 +155,80 @@ export default function Configuracion() {
           <div className="flex items-center justify-between">
             <span className="text-muted">Rol</span>
             <Badge>{sesion?.rol ?? '—'}</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck className="size-4" />
+              Tus datos y privacidad
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={descargarDatos}>
+              Descargar mis datos (JSON)
+            </Button>
+            <span className="text-xs text-muted">
+              Incluye tu cuenta y las organizaciones a las que perteneces. El resto de datos
+              operativos se exportan desde cada listado (Excel o CSV).
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-danger/30 bg-red-50/60 p-4">
+            <p className="font-medium text-danger">Darte de baja</p>
+            <p className="mt-1 text-xs text-danger/80">
+              Se elimina tu cuenta y tu acceso. Si eres el único miembro de la organización se
+              borran también sus proveedores, productos, compras, albaranes y fichas. Esta acción
+              no se puede deshacer. Si hay más personas, nombra antes otro propietario.
+            </p>
+
+            {!bajaAbierta ? (
+              <Button
+                variant="outline"
+                className="mt-3 border-danger/40 text-danger hover:bg-red-100"
+                onClick={() => setBajaAbierta(true)}
+              >
+                <Trash2 className="size-4" />
+                Quiero darme de baja
+              </Button>
+            ) : (
+              <form onSubmit={darseDeBaja} className="mt-3 space-y-3">
+                <Field label="Confirma tu contraseña" htmlFor="baja-password">
+                  <Input
+                    id="baja-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={passwordBaja}
+                    onChange={(event) => setPasswordBaja(event.target.value)}
+                  />
+                </Field>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="submit"
+                    className="bg-danger text-white hover:bg-danger/90"
+                    disabled={dandoBaja || !passwordBaja.trim()}
+                  >
+                    {dandoBaja ? <Loader2 className="size-4 animate-spin" /> : null}
+                    Eliminar mi cuenta
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setBajaAbierta(false)
+                      setPasswordBaja('')
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </CardContent>
       </Card>

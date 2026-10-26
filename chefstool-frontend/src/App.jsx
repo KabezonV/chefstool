@@ -18,6 +18,7 @@ import FichaNuevo from '@/pages/FichaNuevo'
 import Fichas from '@/pages/Fichas'
 import Informes from '@/pages/Informes'
 import Placeholder from '@/pages/Placeholder'
+import Privacidad from '@/pages/Privacidad'
 import ProductoDetalle from '@/pages/ProductoDetalle'
 import Productos from '@/pages/Productos'
 import Proveedores from '@/pages/Proveedores'
@@ -47,6 +48,7 @@ export default function App() {
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/restablecer" element={<Restablecer />} />
+        <Route path="/privacidad" element={<Privacidad />} />
 
         <Route element={<RutaPrivada />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
