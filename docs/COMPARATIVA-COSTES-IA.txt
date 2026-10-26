@@ -1,0 +1,191 @@
+COSTE DE DIGITALIZAR ALBARANES: OPENAI Y AWS FRENTE AL RESTO
+Para: Bernart · 26/10/2026
+Precios consultados hoy en la web de cada proveedor. Importes en euros y sin IVA.
+
+
+1. RESPUESTA CORTA
+
+- Con tu regla, nos quedamos con OpenAI. De todas las opciones del mercado, la única más
+  barata que OpenAI ahorra 1,3 céntimos por cada 100 albaranes. Eso es 38 veces menos que tu
+  umbral del medio céntimo por albarán: no compensa dar de alta un proveedor nuevo.
+
+- AWS es más caro que OpenAI para esto: el OCR de texto de Textract cuesta 2,6 veces más y la
+  lectura de facturas, 17 veces más. Solo tiene sentido si por política interna hay que ir
+  por AWS.
+
+- Lo que importa no es el precio, son 0,5 céntimos de diferencia: es la calidad de lectura.
+  Hay que probar OpenAI con 5 albaranes reales antes de cerrar el modelo definitivo. Incluso
+  en el peor caso (tener que usar el modelo grande de OpenAI, 20 veces más caro), con 500
+  albaranes al mes son 63 euros al año.
+
+- Azure no es un ahorro: cobra exactamente lo mismo que AWS.
+
+
+2. LO QUE CUESTA CADA 1.000 ALBARANES
+
+De más barato a más caro. La referencia es OpenAI, que ya es proveedor de la casa.
+
+- Tesseract local (nuestro servidor): 0 euros. Gratis, pero flojo con fotos torcidas.
+- Gemini 2.5 Flash-Lite: 0,40 euros. La más barata del mercado: ahorra 0,13 euros cada 1.000
+  albaranes (1,3 céntimos por cada 100).
+- OpenAI gpt-6-luna: 0,53 euros. Proveedor ya integrado. Opción de referencia.
+- Mistral OCR: 0,92 euros. 1,7 veces OpenAI.
+- AWS Textract, solo texto: 1,38 euros. 2,6 veces OpenAI. Proveedor ya integrado.
+- Azure Document Intelligence, solo texto: 1,38 euros. 2,6 veces OpenAI.
+- Google Document AI, solo texto: 1,38 euros. 2,6 veces OpenAI.
+- Gemini 2.5 Flash: 2,22 euros. 4,2 veces OpenAI.
+- AWS Textract AnalyzeExpense (facturas): 9,20 euros. 17,4 veces OpenAI.
+- Azure Prebuilt Invoice: 9,20 euros. 17,4 veces OpenAI.
+- OpenAI gpt-6.1-sol (modelo grande): 10,58 euros. 20 veces OpenAI.
+- Google Invoice Parser: 92,00 euros. 174 veces OpenAI.
+
+Cómo leerlo: con OpenAI, mil albaranes cuestan 53 céntimos; con el Invoice Parser de Google,
+92 euros. La diferencia entre OpenAI y la opción más barata del mercado es de 13 céntimos por
+cada mil albaranes.
+
+
+3. DE TANTOS A TANTOS ALBARANES: COSTE MENSUAL
+
+100 albaranes al mes
+- OpenAI: 0,05 euros/mes (0,61 al año)
+- La más barata (Gemini Flash-Lite): 0,04 euros/mes
+- AWS Textract texto: 0,14 euros/mes
+- AWS AnalyzeExpense: 0,92 euros/mes
+- Google Invoice Parser: 9,20 euros/mes
+
+500 albaranes al mes (el caso que comentabas)
+- OpenAI: 0,26 euros/mes (3,17 al año)
+- La más barata (Gemini Flash-Lite): 0,20 euros/mes (2,41 al año)
+- AWS Textract texto: 0,69 euros/mes (8,28 al año)
+- AWS AnalyzeExpense: 4,60 euros/mes (55,20 al año)
+- Google Invoice Parser: 46 euros/mes (552 al año)
+
+1.000 albaranes al mes
+- OpenAI: 0,53 euros/mes
+- La más barata: 0,40 euros/mes
+- AWS Textract texto: 1,38 euros/mes
+- AWS AnalyzeExpense: 9,20 euros/mes
+- Google Invoice Parser: 92 euros/mes
+
+5.000 albaranes al mes
+- OpenAI: 2,65 euros/mes
+- La más barata: 2,01 euros/mes
+- AWS Textract texto: 6,90 euros/mes
+- AWS AnalyzeExpense: 46 euros/mes
+- Google Invoice Parser: 460 euros/mes
+
+10.000 albaranes al mes
+- OpenAI: 5,29 euros/mes (63,48 al año)
+- La más barata: 4,01 euros/mes (48,13 al año)
+- AWS Textract texto: 13,80 euros/mes (165,60 al año)
+- AWS AnalyzeExpense: 92 euros/mes (1.104 al año)
+- Google Invoice Parser: 920 euros/mes (11.040 al año)
+
+25.000 albaranes al mes
+- OpenAI: 13,23 euros/mes
+- La más barata: 10,03 euros/mes
+- AWS Textract texto: 34,50 euros/mes
+- AWS AnalyzeExpense: 230 euros/mes
+- Google Invoice Parser: 2.300 euros/mes
+
+50.000 albaranes al mes
+- OpenAI: 26,45 euros/mes (317,40 al año)
+- La más barata: 20,06 euros/mes (240,67 al año)
+- AWS Textract texto: 69 euros/mes (828 al año)
+- AWS AnalyzeExpense: 460 euros/mes (5.520 al año)
+- Google Invoice Parser: 4.600 euros/mes (55.200 al año)
+
+100.000 albaranes al mes
+- OpenAI: 52,90 euros/mes
+- La más barata: 40,11 euros/mes
+- AWS Textract texto: 138 euros/mes
+- AWS AnalyzeExpense: 920 euros/mes
+- Google Invoice Parser: 9.200 euros/mes
+
+
+4. A PARTIR DE CUANTOS ALBARANES LA DIFERENCIA YA IMPORTA
+
+Poniendo el listón en 500 euros al año de diferencia (el punto en que merece la pena cambiar
+de proveedor aunque sea solo por dinero), habría que llegar a estas cifras:
+
+- Gemini 2.5 Flash-Lite: nunca. Es más barata, pero la diferencia no llega a 500 euros al año.
+- Mistral OCR: 106.564 albaranes al mes. Fuera de escala.
+- AWS, Azure o Google (texto): 48.962 albaranes al mes. Unas 160 cocinas.
+- Gemini 2.5 Flash: 24.640 albaranes al mes. Unas 80 cocinas.
+- AWS Textract AnalyzeExpense: 4.805 albaranes al mes. Unas 16 cocinas.
+- OpenAI gpt-6.1-sol: 4.145 albaranes al mes. Unas 14 cocinas.
+- Google Invoice Parser: 455 albaranes al mes. Ya duele con una sola cocina.
+
+Es decir: con una cocina, ninguna decisión de proveedor de lectura mueve la aguja. Solo a
+partir de 15 o 20 cocinas la elección empieza a notarse en la factura, y solo contra las
+opciones caras (AnalyzeExpense, Invoice Parser).
+
+
+5. NOTA SOBRE AZURE
+
+Azure no es un ahorro: cobra exactamente lo mismo que AWS por el mismo producto (1,38 euros
+por cada 1.000 albaranes en modo texto; 9,20 euros en modo factura, igual que Textract).
+Frente a OpenAI es 2,6 veces más caro en el modo barato y 17 veces en el de facturas.
+
+La única ventaja real de Azure es su capa gratuita de 500 páginas al mes, pensada para probar:
+para una cocina de 500 albaranes al mes la lectura saldría a 0 euros, es decir 3,17 euros
+menos al año que con OpenAI. A cambio habría que dar de alta un proveedor nuevo, integrarlo y
+quedarse con una cuota gratuita que no está pensada para producción. No compensa.
+
+Resumen: Azure solo tiene sentido si la empresa decide que su nube es Azure, y en ese caso el
+coste de lectura sería el mismo que con AWS (8,28 euros al año con 500 albaranes al mes), no
+un ahorro.
+
+
+6. LO QUE NO SALE EN EL PRECIO
+
+- Proveedor ya integrado: OpenAI sí, AWS sí, Azure/Google/Mistral no (habría que darlos de
+  alta, que es justo lo que querías evitar).
+- Calidad con nuestros albaranes: medida con Gemini (98 % de confianza en una foto torcida);
+  con OpenAI y AWS está todavía por medir.
+- Devuelve las líneas ya montadas: OpenAI sí (JSON directo). AWS Textract en modo texto no:
+  devuelve texto y hay que mantener nuestro parser.
+- Fotos torcidas: bien en OpenAI, AWS y Gemini.
+- Datos en la UE: AWS tiene regiones europeas; OpenAI tiene residencia en la UE con un 10 %
+  de recargo; Mistral es empresa europea. La capa gratuita de Gemini puede usar los datos
+  para mejorar sus productos, así que solo vale para demos.
+- Esfuerzo de integración: OpenAI medio día (es una API REST, como lo ya hecho), AWS un día
+  (el SDK ya está instalado), el resto entre medio día y dos días más el alta del proveedor.
+- Coste de cambiar más adelante: entre medio día y dos días, porque todo va detrás de la
+  misma interfaz en el código. No hay dependencia de ningún proveedor.
+
+
+7. CONCLUSIÓN Y PROPUESTA
+
+1. Leer con OpenAI (gpt-6-luna): es proveedor integrado, el más barato de los grandes y no
+   exige alta nueva. 3,17 euros al año con 500 albaranes al mes.
+2. Descartar el cambio a Google, Azure o Mistral: la única que ahorra algo lo hace en
+   céntimos, y las demás cuestan entre 2,6 y 174 veces más.
+3. AWS queda como plan B: si por política hay que ir por AWS, la opción razonable es Textract
+   en modo texto (8,28 euros al año) manteniendo nuestro parser, y no AnalyzeExpense (55,20
+   euros al año) salvo que queramos dejar de mantener el parser.
+4. Prueba pendiente, un día de trabajo: leer 5 albaranes reales con OpenAI y comparar con lo
+   ya medido con Gemini. Si la calidad de gpt-6-luna no llega, el siguiente escalón es el
+   modelo grande de la misma casa (63 euros al año con 500 albaranes), no cambiar de
+   proveedor.
+5. Coste total de la plataforma con esta decisión: servidor propio (5,99 euros al mes) más
+   lectura (0,26 euros al mes), unos 6,25 euros al mes por cocina.
+
+
+8. METODOLOGÍA Y FUENTES
+
+- Un albarán equivale a una página (foto o PDF de una hoja) con unas 20 líneas de producto.
+- Los modelos de visión cobran por tokens: 560 tokens por imagen, 400 de instrucciones y unos
+  850 de respuesta. Aunque la imagen costara el triple de tokens, seguiría por debajo de un
+  céntimo por albarán.
+- Cambio aplicado: 1 dólar = 0,92 euros. Precios sin IVA (en España, 21 %).
+- Precios consultados el 26/10/2026 en:
+  AWS Textract: https://aws.amazon.com/textract/pricing/
+  Azure Document Intelligence: https://prices.azure.com/api/retail/prices (API oficial, West Europe)
+  Google Document AI: https://cloud.google.com/document-ai/pricing
+  Gemini API: https://ai.google.dev/gemini-api/docs/pricing
+  OpenAI: https://platform.openai.com/docs/pricing
+  Mistral: https://mistral.ai/pricing
+  Servidores (Hetzner): https://www.hetzner.com/cloud/
+- El detalle técnico completo (calidad, RGPD por proveedor, puntos de cruce por número de
+  líneas y comparativa de servidores) está en COMPARATIVA-COSTES-IA-ANEXO.md.
