@@ -1,0 +1,69 @@
+Asunto: Chefstool - costes de digitalizacion y servidor en AWS (documentos adjuntos)
+
+Hola Bernart:
+
+Te paso los dos documentos que me pediste, con los precios consultados hoy en las webs
+oficiales de cada proveedor.
+
+1. COSTE DE DIGITALIZAR LOS ALBARANES
+   (adjunto: "Chefstool - Costes de digitalizacion de albaranes.pdf")
+
+- OpenAI: 0,53 euros por cada 1.000 albaranes. Con 20 cocinas a 300 albaranes al mes son
+  3,17 euros al mes en total, no por cocina.
+- La unica alternativa mas barata (Gemini Flash-Lite, 0,40 euros) ahorra 13 centimos por cada
+  1.000 albaranes: con tu regla del medio centimo, no compensa dar de alta un proveedor nuevo.
+- AWS Textract es mas caro: 2,6 veces en modo texto (1,38 euros) y 17 veces en modo facturas
+  (9,20 euros). Azure cobra exactamente lo mismo que AWS. Google es un 20 % mas barato, no el
+  triple.
+- He mirado tambien los mas baratos del mercado (DeepSeek, Qwen, Gemma). El ahorro maximo es de
+  0,044 centimos por albaran, y son proveedores nuevos con los datos fuera de la UE: no
+  compensa.
+- Mi propuesta: seguir con OpenAI y dejar Gemini como plan B. Solo falta probar la calidad con
+  5 albaranes reales, que es medio dia de trabajo.
+
+2. SERVIDOR EN AWS PARA 20 COCINAS
+   (adjunto: "Chefstool - Informe AWS 20 cocinas.pdf")
+
+Con 20 cocinas serian unos 6.000 albaranes al mes (273 al dia, 40 en la hora punta). Eso es un
+17 % de un nucleo de CPU, asi que no hace falta ni balanceador ni cluster.
+
+Mi recomendacion: una instancia EC2 t4g.medium (2 vCPU, 4 GB) + PostgreSQL gestionado
+db.t4g.micro + las fotos en S3:
+
+- 54,6 dolares/mes, unos 50 euros/mes, para las 20 cocinas: 2,50 euros por cocina.
+- Sumando la lectura con OpenAI, la plataforma completa sale a unos 53 euros/mes (2,65 euros
+  por cocina).
+- En el documento tienes las alternativas: la economica (27 dolares/mes, sin base gestionada),
+  la de alta disponibilidad (117 dolares) y contenedores gestionados (77 dolares), con el
+  desglose de precios.
+- Tambien esta cuando hay que crecer: a partir de unas 50 cocinas se sube de instancia y a
+  partir de unas 100 se pone un segundo servidor con balanceador. El coste por cocina se
+  mantiene en torno a 2 euros.
+
+Sobre lo que me comentas en el audio:
+
+- Albaranes en S3: ya esta hecho asi. Las fotos y los PDF se guardan en un bucket privado
+  (nunca en el disco del servidor) y se sirven con enlaces firmados que caducan en 5 minutos.
+  El coste de S3 es de 4,14 dolares/mes al final del primer ano.
+- Token de OpenAI: en cuanto me lo pases activo la digitalizacion con OpenAI. El trabajo ya
+  esta preparado, es medio dia.
+- Cuenta de AWS: cuando este, me encargo yo del despliegue. He dejado el plan en 8 pasos (1 o 2
+  dias) y se reutiliza lo que ya tenemos probado: el docker-compose, la imagen con OCR y las
+  migraciones automaticas de base de datos.
+
+Lo que necesito para arrancar:
+
+1. El token de OpenAI (o que me confirmen que puedo generarlo con la cuenta de la empresa).
+2. La cuenta de AWS con un rol para mi (EC2, RDS, S3, Route 53, CloudWatch y SSM).
+3. Dominio: usamos uno nuevo tipo app.chefstool.es o uno que ya tengais.
+4. Region: por defecto Irlanda (eu-west-1); si preferis que los datos esten en Espana, Aragon
+   (eu-south-2).
+5. 5 albaranes reales de proveedores para medir la calidad antes de cerrar la decision.
+6. Confirmar si empezamos con la opcion economica (27 dolares/mes) y pasamos a la recomendada
+   cuando haya clientes, o vamos directamente a la recomendada.
+
+Cualquier duda de los numeros la vemos en cinco minutos: llevo el detalle de cada precio y la
+fuente en los documentos.
+
+Un saludo,
+Victor
