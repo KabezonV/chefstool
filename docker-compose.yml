@@ -1,5 +1,5 @@
 # Chefstool completo en un comando:  docker compose up --build
-# Antes: copia .env.ejemplo a .env y rellena las credenciales de Supabase.
+# Antes: copia .env.ejemplo a .env (los valores de PostgreSQL local ya vienen puestos).
 services:
   # PostgreSQL propio: la aplicacion no necesita ningun servicio de base de datos de pago.
   # En produccion se apunta DB_HOST a la instancia gestionada (por ejemplo RDS) y este

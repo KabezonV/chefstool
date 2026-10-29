@@ -27,7 +27,7 @@ obtén costes reales, márgenes y comparativas de proveedores.
 
 - JDK 25 (`java -version` debe mostrar 25.x)
 - Node.js 20 o superior
-- Una base de datos PostgreSQL (el proyecto usa Supabase)
+- Una base de datos PostgreSQL (el `docker-compose` la levanta; no hay que contratar nada)
 
 ### Backend
 
@@ -158,7 +158,7 @@ com.chefstool.backend
 ```
 
 Las dependencias apuntan siempre hacia dentro: `adapter → application → domain`.
-Cambiar el motor de OCR, sustituir el disco por Supabase Storage o migrar de base
+Cambiar el motor de OCR, sustituir el disco por S3 o migrar de base
 de datos no obliga a tocar los casos de uso.
 
 Dos compromisos conscientes para no añadir indirección innecesaria a este tamaño:
@@ -184,7 +184,12 @@ contratar ningún servicio**:
 | --- | --- |
 | PDF digital | Se extrae el texto embebido con PDFBox (máxima precisión, sin OCR) |
 | Imagen o PDF escaneado | OCR con **Tesseract** si está instalado en el servidor |
+| Imagen o PDF escaneado, con IA | `ExtractorVision`: modelo de visión por API (apagado si no hay clave) |
 | Sin archivo (`origen=demo`) | `ExtractorDemo` genera un ejemplo con tu catálogo |
+
+`ExtractorHibrido` intenta primero el modelo de visión —si hay clave configurada— y
+si falla (sin cuota, sin red, respuesta rara) cae al lector local: el albarán se lee
+siempre, con más o menos precisión.
 
 El texto se interpreta con un parser heurístico (`ParserAlbaran`): proveedor,
 fecha, número de documento, líneas (cantidad, unidad, precio, importe), IVA y
@@ -200,10 +205,18 @@ brew install tesseract tesseract-lang   # macOS
 apt install tesseract-ocr tesseract-ocr-spa   # Debian/Ubuntu
 ```
 
-Para contratar un proveedor en la nube (Mindee, Google Vision, un modelo de
-visión…) basta con añadir otra implementación de `ExtractorDocumento`, marcarla
-como `@Primary` y añadir su clave como variable de entorno. Ni los casos de uso ni
-la interfaz cambian.
+Para activar la lectura con IA basta con poner la clave de un modelo compatible con
+la API `generateContent` (por ejemplo Google AI Studio, con plan gratuito):
+
+```bash
+CHEFSTOOL_OCR_VISION_CLAVE=<clave>
+CHEFSTOOL_OCR_VISION_MODELO=gemini-3.5-flash
+```
+
+Para otro proveedor (OpenAI, Mindee, Amazon Textract…) se añade otra implementación
+de `ExtractorDocumento` y se elige en `ExtractorHibrido`. Ni los casos de uso ni la
+interfaz cambian. Lo que falta para activarlo y lo que cuesta está en
+[docs/PENDIENTES-BERNART.md](docs/PENDIENTES-BERNART.md).
 
 ## API
 
@@ -211,6 +224,7 @@ Referencia completa con ejemplos en [docs/API.md](docs/API.md).
 
 Resumen del proyecto y propuesta de puesta en marcha para dirección:
 [docs/INFORME-BERNART.md](docs/INFORME-BERNART.md).
+**Lo que falta para seguir (OCR y servidor): [docs/PENDIENTES-BERNART.md](docs/PENDIENTES-BERNART.md).**
 Guion y preparación para enseñar la aplicación: [docs/DEMO.md](docs/DEMO.md).
 Arranque paso a paso (para compartir con otra persona): [docs/ARRANQUE.md](docs/ARRANQUE.md).
 Base de datos (PostgreSQL propio, Amazon RDS y migración): [docs/BASE-DE-DATOS.md](docs/BASE-DE-DATOS.md).

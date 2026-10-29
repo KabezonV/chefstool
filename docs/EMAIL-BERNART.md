@@ -42,8 +42,10 @@ Mi recomendación: **una instancia EC2 `t4g.medium` (2 vCPU, 4 GB) + PostgreSQL 
 - **Albaranes en S3:** ya está hecho así. Las fotos y los PDF se guardan en un bucket privado
   (nunca en el disco del servidor) y se sirven con enlaces firmados que caducan en 5 minutos.
   El coste de S3 es de 4,14 $/mes al final del primer año.
-- **Token de OpenAI:** en cuanto me lo pases activo la digitalización con OpenAI. El trabajo ya
-  está preparado, es medio día.
+- **Token de OpenAI:** en cuanto me lo pases activo la digitalización con OpenAI. El lector con
+  IA ya está programado y probado: con OpenAI solo falta adaptar la llamada (medio día). Si
+  prefieres verlo funcionando antes de decidir, con una clave **gratuita de Google AI Studio**
+  (no pide tarjeta) la lectura con IA se activa el mismo día.
 - **Cuenta de AWS:** cuando esté, me encargo yo del despliegue. He dejado el plan en 8 pasos
   (1–2 días) y se reutiliza lo que ya tenemos probado: el `docker-compose`, la imagen con OCR y
   las migraciones automáticas de base de datos.
@@ -58,6 +60,10 @@ Mi recomendación: **una instancia EC2 `t4g.medium` (2 vCPU, 4 GB) + PostgreSQL 
 5. **5 albaranes reales de proveedores** para medir la calidad antes de cerrar la decisión.
 6. Confirmar si empezamos con la opción económica (27 $/mes) y pasamos a la recomendada cuando
    haya clientes, o vamos directamente a la recomendada.
+
+El detalle de todo lo que falta para seguir, por orden de prioridad y con lo que cuesta cada
+pieza, está en el documento **«Lo que falta para seguir»**
+(`docs/PENDIENTES-BERNART.md` en el repositorio).
 
 Cualquier duda de los números la vemos en cinco minutos: llevo el detalle de cada precio y la
 fuente en los documentos.
