@@ -10,7 +10,7 @@ funcionando en local; quedan **dos decisiones que no dependen de mí** para pode
 | # | Bloqueante | Qué es | Qué necesito | Tiempo de trabajo después | Coste |
 | --- | --- | --- | --- | --- | --- |
 | 1 | **Servicio de OCR con IA** | El lector de albaranes con modelo de visión **ya está programado**, pero está apagado porque no tiene clave | La **clave de API** del proveedor que elijamos (+ 5 albaranes reales) | Medio día (si es OpenAI) · 0 si es Gemini | 0 – 3,17 €/mes |
-| 2 | **Servidor** | El despliegue está preparado y probado en local | **Cuenta de AWS** (o Render) con un rol para mí, **dominio** y **región** | 1 – 2 días | 27 – 50 €/mes |
+| 2 | **Servidor** | El despliegue está preparado y probado en local | **Cuenta de AWS** (o Render) con un rol para mí, **dominio** y **región** | 1 – 2 días | 6 €/mes (VPS) · 27 – 50 €/mes si es AWS |
 
 Todo lo demás (correo, contratos, copias de seguridad) **no bloquea la demo**, pero hay que
 cerrarlo antes de meter datos reales de compras. Está en el punto 4.
@@ -91,6 +91,20 @@ Con OpenAI hace falta un adaptador nuevo (`ExtractorOpenAi`) que implemente el m
 5. **Aprobación del gasto**: **50 €/mes** para las 20 cocinas (opción recomendada) o **27 €/mes**
    empezando por la económica.
 
+### Las cuatro opciones de AWS (precios verificados el 26/10, Irlanda)
+
+| Opción | Qué incluye | Coste/mes |
+| --- | --- | ---: |
+| **A. Recomendada** | EC2 `t4g.medium` + RDS `db.t4g.micro` 20 GB + S3 | **54,6 $ (≈50 €)** |
+| B. Económica | EC2 `t4g.small` + PostgreSQL en el contenedor + S3 | **27,1 $ (≈25 €)** |
+| C. Alta disponibilidad | 2 × `t4g.medium` + balanceador + RDS Multi-AZ | **117 $** |
+| D. Contenedores gestionados | ECS Fargate + balanceador + RDS | **77 $** |
+
+> **Matiz importante:** la comparativa general dice que, **si la empresa no obliga a ir a AWS**,
+> un **VPS de 6 €/mes** (Hetzner, centro de datos en Alemania o Finlandia) sobra para las 20
+> cocinas: el mismo `docker-compose` que ya está probado. Los 50 €/mes son el precio de tener
+> facturación, soporte y base gestionada de AWS, no de una necesidad técnica.
+
 ### Si AWS tarda
 
 Para la demo privada **no hace falta AWS**: con el `render.yaml` la aplicación se publica en
@@ -158,7 +172,8 @@ Con los puntos 1 y 2 puedo tener la lectura de albaranes con IA funcionando **el
 > RDS, S3, Route 53, CloudWatch y SSM; el **dominio** (uno nuevo tipo `app.chefstool.es` o un
 > subdominio de la web corporativa) y la **región** (Irlanda por defecto; Aragón si queréis los
 > datos en España). El coste es de **50 €/mes** para las 20 cocinas, o **27 €/mes** si empezamos
-> por la opción económica. Si AWS tarda, publico la demo privada en Render en una tarde y no
-> perdemos tiempo.
+> por la opción económica. Si la política de la empresa no exige AWS, con un **VPS de 6 €/mes**
+> sobra técnicamente: es el mismo despliegue que ya está probado. Si AWS tarda, publico la demo
+> privada en Render en una tarde y no perdemos tiempo.
 >
 > Y cuando puedas: ¿contratamos ya el correo (0–15 €/mes) y qué cocina hacemos piloto?
