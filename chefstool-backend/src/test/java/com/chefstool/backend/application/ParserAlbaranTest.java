@@ -132,6 +132,47 @@ class ParserAlbaranTest {
         assertThat(ParserAlbaran.numero("12")).isEqualByComparingTo("12");
     }
 
+    @Test
+    void noDescartaUnaLineaDeAceiteDeOlivaPorContenerIva() {
+        stubProveedores(proveedor("Aceites del Sur"));
+        stubCatalogo(producto("Aceite de oliva virgen"));
+
+        String texto =
+                """
+                ACEITES DEL SUR S.L.
+                ALBARAN: ALB-77
+
+                ACEITE DE OLIVA VIRGEN 5L 2,000 ud 38,900 77,80
+                TOTAL 77,80
+                """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.lineas()).hasSize(1);
+        assertThat(extraccion.lineas().get(0).descripcion())
+                .isEqualTo("ACEITE DE OLIVA VIRGEN");
+        assertThat(extraccion.lineas().get(0).importe()).isEqualByComparingTo("77.80");
+    }
+
+    @Test
+    void noAsignaUnProveedorDelCatalogoQueSoloComparteUnaPalabraGenerica() {
+        stubProveedores(proveedor("Distribuciones Levante"));
+        stubCatalogo();
+
+        String texto =
+                """
+                DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.
+                ALBARAN: A-2026/0453
+                TOMATE 10 2,50 25,00
+                """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.proveedorId()).isNull();
+        assertThat(extraccion.proveedorNombre())
+                .isEqualTo("DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.");
+    }
+
     private Proveedor proveedor(String nombre) {
         Proveedor proveedor = new Proveedor();
         proveedor.setId(UUID.randomUUID());

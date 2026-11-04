@@ -57,6 +57,10 @@ public class ParserAlbaran {
     private static final Set<String> PALABRAS_IGNORADAS =
             Set.of("caja", "cajas", "bolsa", "bolsas", "pack", "bandeja", "de", "del", "la", "el");
 
+    /** Formas juridicas que no identifican a un proveedor concreto. */
+    private static final Set<String> FORMAS_JURIDICAS =
+            Set.of("sl", "slu", "sau", "sa", "cb", "scoop", "sociedad", "slne", "scp", "coop");
+
     private final ProductoRepository productoRepository;
     private final ProveedorRepository proveedorRepository;
 
@@ -153,14 +157,34 @@ public class ParserAlbaran {
         return proveedores.stream()
                 .filter(proveedor -> primerasLineas.contains(normalizar(proveedor.getNombre())))
                 .findFirst()
-                .or(() ->
-                        proveedores.stream()
-                                .filter(
-                                        proveedor ->
-                                                coincidenciaParcial(
-                                                        primerasLineas,
-                                                        normalizar(proveedor.getNombre())))
-                                .findFirst());
+                .or(
+                        () ->
+                                proveedores.stream()
+                                        .filter(
+                                                proveedor ->
+                                                        mencionaNombreCompleto(
+                                                                primerasLineas,
+                                                                normalizar(proveedor.getNombre())))
+                                        .findFirst());
+    }
+
+    /**
+     * Exige todas las palabras significativas del nombre. Antes bastaba con compartir la mitad,
+     * y un albaran de "DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO" se asignaba a cualquier proveedor
+     * del catalogo que se llamara "Distribuciones ...".
+     */
+    private boolean mencionaNombreCompleto(String texto, String objetivo) {
+        List<String> palabrasTexto = Arrays.asList(texto.split("\\s+"));
+        List<String> palabras = palabrasSignificativas(objetivo);
+        return !palabras.isEmpty() && palabrasTexto.containsAll(palabras);
+    }
+
+    private static List<String> palabrasSignificativas(String nombre) {
+        return Arrays.stream(nombre.split("\\s+"))
+                .filter(palabra -> palabra.length() >= 3)
+                .filter(palabra -> !PALABRAS_IGNORADAS.contains(palabra))
+                .filter(palabra -> !FORMAS_JURIDICAS.contains(palabra))
+                .toList();
     }
 
     private Optional<LocalDate> buscarFecha(String texto) {
@@ -296,19 +320,18 @@ public class ParserAlbaran {
                 .orElse(null);
     }
 
+    /**
+     * Etiquetas de cabecera y pie que no son lineas de articulo. Se busca la palabra completa:
+     * "IVA" suelto descarta la linea, pero "aceite de oliva" no.
+     */
+    private static final Pattern RUIDO =
+            Pattern.compile(
+                    "\\b(total|subtotal|iva|cif|factura|albaran|fecha|telefono)\\b"
+                            + "|base imponible|descripcion cantidad");
+
     private boolean esRuido(String linea) {
         String normalizada = normalizar(linea);
-        return normalizada.length() < 6
-                || normalizada.contains("total")
-                || normalizada.contains("base imponible")
-                || normalizada.contains("subtotal")
-                || normalizada.contains("iva")
-                || normalizada.contains("cif")
-                || normalizada.contains("telefono")
-                || normalizada.contains("factura")
-                || normalizada.contains("albaran")
-                || normalizada.contains("fecha")
-                || normalizada.contains("descripcion cantidad");
+        return normalizada.length() < 6 || RUIDO.matcher(normalizada).find();
     }
 
     private boolean cuadra(BigDecimal cantidad, BigDecimal precio, BigDecimal importe) {
