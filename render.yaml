@@ -38,6 +38,10 @@ services:
         sync: false
       - key: CHEFSTOOL_S3_SECRET_KEY
         sync: false
+      # OCR con IA (opcional). Sin valor, la app usa solo Tesseract, que va incluido en la
+      # imagen y no cuesta nada. Para activarlo, pega aqui la clave de Google AI Studio.
+      - key: CHEFSTOOL_OCR_VISION_CLAVE
+        sync: false
 
   - type: web
     name: chefstool-web

@@ -1,7 +1,8 @@
 # Lo que falta para seguir — bloqueantes del proyecto
 
-**Fecha:** 29/10/2026 · **Para:** Bernart · **Estado:** la aplicación está terminada y
-funcionando en local; quedan **dos decisiones que no dependen de mí** para poder avanzar.
+**Fecha:** 29/10/2026 · **Actualizado:** 03/11/2026 · **Para:** Bernart · **Estado:** la
+aplicación está terminada y funcionando en local. **El OCR ya no es un bloqueante**: con
+Tesseract funciona hoy y a coste cero. Queda **una sola decisión** (el servidor) para avanzar.
 
 ---
 
@@ -9,7 +10,7 @@ funcionando en local; quedan **dos decisiones que no dependen de mí** para pode
 
 | # | Bloqueante | Qué es | Qué necesito | Tiempo de trabajo después | Coste |
 | --- | --- | --- | --- | --- | --- |
-| 1 | **Servicio de OCR con IA** | El lector de albaranes con modelo de visión **ya está programado**, pero está apagado porque no tiene clave | La **clave de API** del proveedor que elijamos (+ 5 albaranes reales) | Medio día (si es OpenAI) · 0 si es Gemini | 0 – 3,17 €/mes |
+| 1 | ~~Servicio de OCR~~ **Resuelto** | Se lee con **Tesseract**, que va dentro de la imagen y no cuesta nada. Probado con un albarán real el 03/11 | Nada. Solo **5 albaranes reales** para afinar las reglas | 0 | **0 €** |
 | 2 | **Servidor** | El despliegue está preparado y probado en local | **Cuenta de AWS** (o Render) con un rol para mí, **dominio** y **región** | 1 – 2 días | 6 €/mes (VPS) · 27 – 50 €/mes si es AWS |
 
 Todo lo demás (correo, contratos, copias de seguridad) **no bloquea la demo**, pero hay que
@@ -17,52 +18,63 @@ cerrarlo antes de meter datos reales de compras. Está en el punto 4.
 
 ---
 
-## 2. Bloqueante 1 — El servicio de OCR
+## 2. Bloqueante 1 — El servicio de OCR (resuelto sin coste)
 
 ### Qué hay hecho ya
 
 | Entrada | Cómo se lee hoy | Coste | Estado |
 | --- | --- | --- | --- |
 | PDF digital | Se extrae el texto embebido (PDFBox), sin OCR | 0 € | ✅ Funcionando |
-| Foto o escaneo | Tesseract en el servidor, con diccionario español | 0 € | ✅ Funcionando (precisión media) |
-| Foto o escaneo (con IA) | `ExtractorVision`: modelo de visión por API | Según proveedor | ✅ **Programado y probado**, apagado por falta de clave |
+| Foto o escaneo | Tesseract en el servidor, con diccionario español | 0 € | ✅ **Probado el 03/11 con un albarán real** |
+| Foto o escaneo (con IA) | `ExtractorVision`: modelo de visión por API | Según proveedor | ✅ Programado y probado; **opcional**, se activa con una clave |
 | Demostración | Datos de ejemplo generados con el catálogo | 0 € | ✅ Funcionando |
 
-El lector con IA entra **antes** que Tesseract y, si falla (sin cuota, sin red, respuesta
-rara), la aplicación **cae sola** al lector local: nunca se queda sin leer el albarán
-(`ExtractorHibrido`).
+**Decisión tomada: Tesseract.** Es gratuito, va dentro de la imagen Docker y no envía nada
+fuera del servidor, así que no necesita contrato de encargado ni transferencia internacional.
+
+Prueba del 03/11 con la aplicación en marcha, subiendo el mismo albarán por la API:
+
+| | Gemini Flash | Tesseract |
+| --- | --- | --- |
+| Líneas detectadas | 5 de 5 | 4 de 5 |
+| Suma de líneas = base imponible | Sí | No (error detectado y corregido: ver abajo) |
+| Coste | céntimos/mes | 0 € |
+
+El lector con IA sigue disponible **por si algún día se quiere comparar**: entra antes que
+Tesseract y, si falla (sin cuota, sin red, respuesta rara), la aplicación **cae sola** al
+lector local (`ExtractorHibrido`). Ponerlo o quitarlo es una variable de entorno, no un
+cambio de código.
 
 ### Qué falta exactamente
 
-1. **La clave de API** (o que me autoricéis a generarla con la cuenta de la empresa).
-2. **Decidir proveedor** con la comparativa de costes que ya tienes.
-3. **5 albaranes reales** de proveedores distintos para medir la calidad antes de cerrar la
-   decisión. Es medio día de trabajo y no cuesta nada.
+1. **5 albaranes reales** de proveedores distintos para afinar las reglas de lectura. Es medio
+   día de trabajo y no cuesta nada. Sin ellos, la precisión en fotos de móvil está sin medir.
+2. **Nada más.** No hace falta clave ni contratar ningún servicio de OCR.
 
-### Opciones
+### Opciones (solo si algún día se quiere mejorar la precisión)
 
 | Opción | Precisión en fotos | Coste con 20 cocinas | Trabajo para activarlo |
 | --- | --- | --- | --- |
-| **Tesseract** (lo de ahora) | Media | 0 € | Ninguno |
-| **Gemini** (Google AI Studio) | Buena | 2,40 €/mes (Flash-Lite) · 16,74 €/mes (Gemini 3 Flash) | **Ninguno**: ya está integrado, solo poner la clave |
-| **OpenAI** (recomendado en la comparativa de costes) | Buena | 3,17 €/mes | Medio día para el adaptador + token |
+| **Tesseract** (la elegida) | Media | 0 € | Ninguno |
+| **Gemini** (Google AI Studio) | Buena | 2,40 €/mes (Flash-Lite) · 16,74 €/mes (Gemini 3 Flash) | **Ninguno**: ya está integrado, solo poner la clave. La capa gratuita puede usar los datos para mejorar sus productos; la de pago no |
+| **OpenAI** | Buena | 3,17 €/mes | Medio día para el adaptador + token |
 | **AWS Textract** | Buena en facturas | 8,30 €/mes en modo texto · 55 €/mes en modo facturas | 2 días |
 
 > ⚠️ **Ojo con un documento antiguo:** en `PLAN-FASE-2.md` (23/10) propuse Amazon Textract
 > porque daba por hecho que había que ir a AWS de todas formas. El análisis de costes del
 > 26/10 lo descarta por precio: **Textract cuesta 2,6 veces más que OpenAI** en modo texto y
-> 17 veces más en modo facturas. **La recomendación vigente es OpenAI**, y Gemini como
-> alternativa gratuita para empezar.
+> 17 veces más en modo facturas.
 
 ### Cómo se activa (para que no haya dudas de esfuerzo)
 
 ```bash
-# Opción gratuita, hoy mismo, sin tocar código:
+# Opcional: asi se añadiria la lectura con IA, sin tocar codigo.
+# Sin estas lineas, la aplicacion usa Tesseract y no gasta nada.
 CHEFSTOOL_OCR_VISION_CLAVE=<clave de Google AI Studio>
 CHEFSTOOL_OCR_VISION_MODELO=gemini-3.5-flash
 ```
 
-Con OpenAI hace falta un adaptador nuevo (`ExtractorOpenAi`) que implemente el mismo puerto
+Con OpenAI haría falta un adaptador nuevo (`ExtractorOpenAi`) que implemente el mismo puerto
 `ExtractorDocumento`: no cambia ni una pantalla ni un caso de uso. Medio día.
 
 ---
@@ -135,7 +147,7 @@ Lo que no haría es meter datos reales de compras ahí.
 - Fichas técnicas con coste por ración, margen y exportación a PDF A4.
 - Panel, informes de coste por proveedor, variaciones de precio, alertas y exportación a Excel.
 - RGPD: aviso de privacidad, descarga de datos y baja de cuenta con borrado en cascada.
-- **116 pruebas de backend** (con su propio PostgreSQL en Testcontainers) y **25 de frontend**,
+- **118 pruebas de backend** (con su propio PostgreSQL en Testcontainers) y **30 de frontend**,
   todas en verde.
 - Documentación completa en `docs/` (ver índice en el `README.md`).
 
@@ -144,15 +156,15 @@ Lo que no haría es meter datos reales de compras ahí.
 ## 6. Lo que necesito de ti, por orden
 
 1. **OK a la demo privada** y, si quieres, tres personas para probarla.
-2. **Clave de OCR**: o la de OpenAI (con token), o me autorizas a generar una gratuita de Google
-   AI Studio para empezar hoy mismo.
-3. **5 albaranes reales** de proveedores distintos.
-4. **Cuenta de AWS** (o Render) + rol IAM + dominio + región. Si AWS se alarga, publicamos la
+2. **5 albaranes reales** de proveedores distintos. Es lo único que falta para medir la
+   precisión de la lectura en fotos de verdad.
+3. **Cuenta de AWS** (o Render) + rol IAM + dominio + región. Si AWS se alarga, publicamos la
    demo en Render y seguimos.
-5. **Correo**: ¿contratamos ya un proveedor (0–15 €/mes) o lo dejamos para el piloto?
-6. **Una cocina piloto** con su jefe de cocina.
+4. **Correo**: ¿contratamos ya un proveedor (0–15 €/mes) o lo dejamos para el piloto?
+5. **Una cocina piloto** con su jefe de cocina.
 
-Con los puntos 1 y 2 puedo tener la lectura de albaranes con IA funcionando **el mismo día**.
+Con el punto 1 publico la demo privada; con los albaranes reales afino la lectura. **El OCR ya
+no depende de vosotros: funciona y es gratis.**
 
 ---
 
@@ -160,13 +172,13 @@ Con los puntos 1 y 2 puedo tener la lectura de albaranes con IA funcionando **el
 
 > Hola Bernart:
 >
-> Estoy parado en dos cosas que dependen de vosotros; el resto está terminado.
+> Estoy parado en una cosa que depende de vosotros; el resto está terminado.
 >
-> **1. Lectura de albaranes (OCR).** El lector con IA ya está programado y probado, solo le falta
-> la clave. Necesito el **token de OpenAI** (o que me confirméis que puedo generarlo con la cuenta
-> de la empresa). Si prefieres verlo antes de decidir, dime y activo una clave **gratuita de Google
-> AI Studio** —no pide tarjeta— y lo tienes funcionando hoy. Con cualquiera de las dos, mándame
-> también **5 albaranes reales** de proveedores distintos para medir la calidad.
+> **1. Lectura de albaranes (OCR).** **Resuelto y a coste cero**: se lee con Tesseract, que va
+> dentro de la imagen del servidor y no envía nada a terceros. Lo he probado con un albarán y
+> funciona. Ya no necesito ninguna clave ni contratar nada. Solo te pido **5 albaranes reales**
+> de proveedores distintos para afinar las reglas de lectura; es medio día de trabajo y no
+> cuesta nada.
 >
 > **2. Servidor.** Necesito la **cuenta de AWS** y un usuario o rol para mí con permisos de EC2,
 > RDS, S3, Route 53, CloudWatch y SSM; el **dominio** (uno nuevo tipo `app.chefstool.es` o un
