@@ -6,6 +6,25 @@ obtén costes reales, márgenes y comparativas de proveedores.
 - `chefstool-backend`: Java 25 (LTS) + Spring Boot 4 + Maven + JPA/PostgreSQL + Flyway.
 - `chefstool-frontend`: React 19 + Vite + Tailwind CSS 4 + React Router (PWA instalable).
 
+## Descargar y arrancar en 3 pasos
+
+Solo hace falta [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado
+y arrancado (Docker Compose v2). No hay que instalar Java, Node ni PostgreSQL.
+
+```bash
+git clone https://github.com/KabezonV/chefstool.git
+cd chefstool
+cp .env.ejemplo .env
+docker compose up --build
+```
+
+Cuando termine de construir, abre <http://localhost:8081>, pulsa **Crear cuenta** y dentro
+del panel usa **Cargar datos de ejemplo** para tener productos, compras y fichas con los que
+probar. La primera vez tarda unos minutos porque compila el backend y el frontend.
+
+> Para desarrollo con recarga en caliente (sin Docker), salta al apartado
+> [Arranque en local](#arranque-en-local).
+
 ## Qué hace
 
 | Módulo | Para qué sirve |
@@ -87,7 +106,7 @@ que la lectura de fotos de albarán funciona sin instalar nada más.
 
 | Variable | Dónde | Para qué |
 | --- | --- | --- |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `chefstool-backend/.env` | Conexión a PostgreSQL |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `.env` (raíz, con Docker) o `chefstool-backend/.env` (backend a mano) | Conexión a PostgreSQL |
 | `CHEFSTOOL_JWT_SECRET` | entorno del backend | Clave HMAC para firmar los JWT (mínimo 32 caracteres) |
 | `CHEFSTOOL_SEGURIDAD` | entorno del backend | `false` desactiva la autenticación (solo para pruebas) |
 | `CHEFSTOOL_UPLOADS` | entorno del backend | Carpeta donde se guardan los albaranes (por defecto `./uploads`) |
