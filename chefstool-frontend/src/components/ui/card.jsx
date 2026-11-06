@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 export function Card({ className, ...props }) {
   return (
     <div
-      className={cn('rounded-xl border border-border bg-card', className)}
+      className={cn('min-w-0 rounded-xl border border-border bg-card', className)}
       {...props}
     />
   )
@@ -13,7 +13,7 @@ export function Card({ className, ...props }) {
 export function CardHeader({ className, ...props }) {
   return (
     <div
-      className={cn('flex items-center justify-between gap-3 px-5 py-4', className)}
+      className={cn('flex flex-wrap items-center justify-between gap-3 px-5 py-4', className)}
       {...props}
     />
   )

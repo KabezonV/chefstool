@@ -16,7 +16,7 @@ import { api } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import Barras from '@/components/ui/barras'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BotonesExportar } from '@/components/ui/tabla'
+import { BotonesExportar, Celda, Tabla } from '@/components/ui/tabla'
 
 export default function Informes() {
   const [panel, setPanel] = useState(null)
@@ -41,7 +41,7 @@ export default function Informes() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+      <div className="mx-auto max-w-6xl rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
         {error}
       </div>
     )
@@ -145,7 +145,7 @@ export default function Informes() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <th className="px-5 py-2 font-medium">Proveedor</th>
@@ -163,17 +163,33 @@ export default function Informes() {
                       key={proveedor.proveedorId}
                       className="border-b border-border/60 last:border-0"
                     >
-                      <td className="px-5 py-2 font-medium">{proveedor.nombre}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{proveedor.compras}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <Celda
+                        etiqueta="Proveedor"
+                        className="px-4 py-2 font-medium sm:px-5 sm:py-2"
+                      >
+                        {proveedor.nombre}
+                      </Celda>
+                      <Celda
+                        etiqueta="Compras"
+                        className="px-4 py-2 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
+                        {proveedor.compras}
+                      </Celda>
+                      <Celda
+                        etiqueta="Gasto total"
+                        className="px-4 py-2 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
                         {moneda(proveedor.gastoTotal)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Ticket medio"
+                        className="px-4 py-2 text-right tabular-nums text-muted sm:px-3 sm:py-2"
+                      >
                         {moneda(proveedor.ticketMedio)}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-black/5">
+                      </Celda>
+                      <Celda etiqueta="Peso" className="px-4 py-2 sm:px-3 sm:py-2">
+                        <div className="flex items-center justify-end gap-2 sm:justify-start">
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-track">
                             <div
                               className="h-full rounded-full bg-foreground"
                               style={{ width: `${Math.min(Number(proveedor.porcentajeGasto), 100)}%` }}
@@ -183,8 +199,11 @@ export default function Informes() {
                             {Number(proveedor.porcentajeGasto).toFixed(1)} %
                           </span>
                         </div>
-                      </td>
-                      <td className="px-3 py-2 text-right">
+                      </Celda>
+                      <Celda
+                        etiqueta="Var. precios"
+                        className="px-4 py-2 text-right sm:px-3 sm:py-2"
+                      >
                         {proveedor.variacionMediaPct === null ? (
                           <span className="text-xs text-muted">—</span>
                         ) : (
@@ -193,14 +212,17 @@ export default function Informes() {
                             {Number(proveedor.variacionMediaPct).toFixed(1)} %
                           </Badge>
                         )}
-                      </td>
-                      <td className="px-3 py-2 text-right text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Última compra"
+                        className="px-4 py-2 text-right text-muted sm:px-3 sm:py-2"
+                      >
                         {proveedor.ultimaCompra ? fechaCorta(proveedor.ultimaCompra) : '—'}
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
         </CardContent>
@@ -220,7 +242,7 @@ export default function Informes() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <th className="px-5 py-2 font-medium">Producto</th>
@@ -236,25 +258,41 @@ export default function Informes() {
                       key={variacion.producto + '-' + indice}
                       className="border-b border-border/60 last:border-0"
                     >
-                      <td className="px-5 py-2 font-medium">{variacion.producto}</td>
-                      <td className="px-3 py-2 text-muted">{variacion.proveedor}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted">
+                      <Celda
+                        etiqueta="Producto"
+                        className="px-4 py-2 font-medium sm:px-5 sm:py-2"
+                      >
+                        {variacion.producto}
+                      </Celda>
+                      <Celda etiqueta="Proveedor" className="px-4 py-2 text-muted sm:px-3 sm:py-2">
+                        {variacion.proveedor}
+                      </Celda>
+                      <Celda
+                        etiqueta="Antes"
+                        className="px-4 py-2 text-right tabular-nums text-muted sm:px-3 sm:py-2"
+                      >
                         {moneda(variacion.precioAnterior)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      </Celda>
+                      <Celda
+                        etiqueta="Ahora"
+                        className="px-4 py-2 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
                         {moneda(variacion.precioNuevo)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
+                      </Celda>
+                      <Celda
+                        etiqueta="Variación"
+                        className="px-4 py-2 text-right sm:px-3 sm:py-2"
+                      >
                         <Badge
                           tone={Number(variacion.porcentaje) >= 20 ? 'danger' : 'warning'}
                         >
                           +{Number(variacion.porcentaje).toFixed(1)} %
                         </Badge>
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
         </CardContent>

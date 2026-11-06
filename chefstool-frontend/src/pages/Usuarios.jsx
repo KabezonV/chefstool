@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
+import { Celda, TablaFormulario } from '@/components/ui/tabla'
 
 export default function Usuarios() {
   const { sesion } = useAuth()
@@ -111,13 +112,13 @@ export default function Usuarios() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {aviso && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-success">
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-success-border bg-success-soft px-4 py-3 text-sm text-success">
           <span className="flex items-center gap-2">
             <Check className="size-4" />
             {aviso}
@@ -189,7 +190,7 @@ export default function Usuarios() {
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <TablaFormulario>
               <thead>
                 <tr className="border-y border-border text-left text-xs text-muted">
                   <th className="px-5 py-2 font-medium">Nombre</th>
@@ -200,9 +201,16 @@ export default function Usuarios() {
               <tbody>
                 {miembros.map((miembro) => (
                   <tr key={miembro.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2 font-medium">{miembro.nombre ?? '—'}</td>
-                    <td className="px-3 py-2 text-muted">{miembro.email}</td>
-                    <td className="px-3 py-2">
+                    <Celda
+                      etiqueta="Nombre"
+                      className="px-4 py-2 font-medium sm:px-5 sm:py-2"
+                    >
+                      {miembro.nombre ?? '—'}
+                    </Celda>
+                    <Celda etiqueta="Correo" className="px-4 py-2 text-muted sm:px-3 sm:py-2">
+                      {miembro.email}
+                    </Celda>
+                    <Celda etiqueta="Rol" className="px-4 py-2 sm:px-3 sm:py-2">
                       {puedeGestionar ? (
                         <Select
                           value={miembro.rol}
@@ -217,11 +225,11 @@ export default function Usuarios() {
                       ) : (
                         <Badge>{miembro.rol}</Badge>
                       )}
-                    </td>
+                    </Celda>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </TablaFormulario>
           </div>
         </CardContent>
       </Card>
@@ -236,7 +244,7 @@ export default function Usuarios() {
             {invitaciones.map((pendiente) => (
               <div
                 key={pendiente.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black/[0.02] px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-hover px-3 py-2 text-sm"
               >
                 <div>
                   <p className="font-medium">{pendiente.email}</p>

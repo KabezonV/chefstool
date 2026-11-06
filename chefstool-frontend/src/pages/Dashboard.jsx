@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+      <div className="mx-auto max-w-6xl rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
         {error}
       </div>
     )
@@ -169,7 +169,7 @@ export default function Dashboard() {
                       to={'/documentos/' + documento.id}
                       className="flex items-center justify-between gap-2 hover:underline"
                     >
-                      <span className="truncate">{documento.nombreOriginal}</span>
+                      <span className="min-w-0 truncate">{documento.nombreOriginal}</span>
                       <span className="shrink-0 text-xs text-muted">
                         {fechaCorta(documento.createdAt)}
                       </span>

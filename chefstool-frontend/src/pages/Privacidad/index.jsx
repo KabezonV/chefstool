@@ -7,7 +7,7 @@ import { SECCIONES_PRIVACIDAD } from './utils/secciones'
 
 export default function Privacidad() {
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <div className="min-h-dvh bg-background px-4 py-10">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-2">
           <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">

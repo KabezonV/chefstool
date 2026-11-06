@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 import Paginador from '@/components/ui/paginador'
-import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
 export default function Compras() {
   const [parametros] = useSearchParams()
@@ -107,7 +107,7 @@ export default function Compras() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -125,7 +125,7 @@ export default function Compras() {
             {alertas.map((alerta) => (
               <div
                 key={alerta.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black/[0.02] px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-hover px-3 py-2 text-sm"
               >
                 <div className="flex items-center gap-2">
                   <Badge tone={TONO_ALERTA[alerta.severidad] ?? 'neutral'}>
@@ -203,7 +203,7 @@ export default function Compras() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <CabeceraOrdenable
@@ -240,25 +240,33 @@ export default function Compras() {
                 <tbody>
                   {compras.map((compra) => (
                     <tr key={compra.id} className="border-b border-border/60 last:border-0">
-                      <td className="px-3 py-2">{fechaCorta(compra.fecha)}</td>
-                      <td className="px-3 py-2">
+                      <Celda etiqueta="Fecha" className="px-4 py-2.5 sm:px-3 sm:py-2">
+                        {fechaCorta(compra.fecha)}
+                      </Celda>
+                      <Celda etiqueta="Proveedor" className="px-4 py-2.5 sm:px-3 sm:py-2">
                         {compra.proveedorNombre ?? 'Sin proveedor'}
-                      </td>
-                      <td className="px-3 py-2 text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Documento"
+                        className="px-4 py-2.5 text-muted sm:px-3 sm:py-2"
+                      >
                         {compra.numeroDocumento ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      </Celda>
+                      <Celda
+                        etiqueta="Total"
+                        className="px-4 py-2.5 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
                         {moneda(compra.importeTotal)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
+                      </Celda>
+                      <Celda className="px-4 py-2.5 text-right sm:px-3 sm:py-2">
                         <Button variant="ghost" size="sm" onClick={() => verDetalle(compra.id)}>
                           Ver
                         </Button>
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
           <Paginador
@@ -297,7 +305,7 @@ export default function Compras() {
           </CardHeader>
           <CardContent className="px-0 pb-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <th className="px-5 py-2 font-medium">Producto</th>
@@ -309,20 +317,28 @@ export default function Compras() {
                 <tbody>
                   {detalle.lineas.map((linea) => (
                     <tr key={linea.id} className="border-b border-border/60 last:border-0">
-                      <td className="px-5 py-2">
+                      <Celda
+                        etiqueta="Producto"
+                        className="px-4 py-2 font-medium sm:px-5 sm:py-2"
+                      >
                         {linea.productoNombre ?? linea.descripcion ?? '—'}
-                      </td>
-                      <td className="px-3 py-2">
+                      </Celda>
+                      <Celda etiqueta="Cantidad" className="px-4 py-2 sm:px-3 sm:py-2">
                         {linea.cantidad} {linea.unidad ?? ''}
-                      </td>
-                      <td className="px-3 py-2 tabular-nums">{moneda(linea.precioUnitario)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      </Celda>
+                      <Celda etiqueta="Precio" className="px-4 py-2 tabular-nums sm:px-3 sm:py-2">
+                        {moneda(linea.precioUnitario)}
+                      </Celda>
+                      <Celda
+                        etiqueta="Importe"
+                        className="px-4 py-2 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
                         {moneda(linea.importe)}
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
             <div className="ml-auto grid w-64 grid-cols-2 gap-y-1 px-5 py-4 text-sm">
               <span className="text-muted">Base imponible</span>

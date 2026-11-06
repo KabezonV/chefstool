@@ -9,6 +9,7 @@ import { api } from '@/lib/api'
 
 // Hooks
 import { AuthProvider } from '@/lib/auth'
+import { TemaProvider } from '@/lib/tema'
 
 // Components
 import Auth from '@/pages/Auth'
@@ -34,9 +35,11 @@ const sesion = {
 function montar() {
   return render(
     <MemoryRouter>
-      <AuthProvider>
-        <Auth />
-      </AuthProvider>
+      <TemaProvider>
+        <AuthProvider>
+          <Auth />
+        </AuthProvider>
+      </TemaProvider>
     </MemoryRouter>,
   )
 }
@@ -100,5 +103,32 @@ describe('Pantalla de acceso', () => {
         organizacion: 'La Sal',
       })
     })
+  })
+
+  it('deja ver la contraseña escrita', async () => {
+    const usuario = userEvent.setup()
+    montar()
+
+    const campo = screen.getByLabelText('Contraseña')
+    await usuario.type(campo, 'secreto123')
+    expect(campo).toHaveAttribute('type', 'password')
+
+    await usuario.click(screen.getByRole('button', { name: 'Mostrar contraseña' }))
+
+    expect(campo).toHaveAttribute('type', 'text')
+    expect(campo).toHaveValue('secreto123')
+    expect(screen.getByRole('button', { name: 'Ocultar contraseña' })).toBeInTheDocument()
+  })
+
+  it('cambia entre tema claro y oscuro', async () => {
+    const usuario = userEvent.setup()
+    montar()
+
+    expect(document.documentElement).not.toHaveClass('dark')
+
+    await usuario.click(screen.getByRole('button', { name: 'Cambiar a tema oscuro' }))
+
+    expect(document.documentElement).toHaveClass('dark')
+    expect(localStorage.getItem('chefstool.tema')).toBe('oscuro')
   })
 })

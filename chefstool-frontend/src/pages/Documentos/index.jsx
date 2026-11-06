@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
-import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
 export default function Documentos() {
   const navigate = useNavigate()
@@ -71,13 +71,13 @@ export default function Documentos() {
       </div>
 
       {state?.aviso && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-success">
+        <div className="rounded-xl border border-success-border bg-success-soft px-4 py-3 text-sm text-success">
           {state.aviso}
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -108,7 +108,7 @@ export default function Documentos() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     {Object.values(COLUMNAS_DOCUMENTOS).map((columna) => (
@@ -129,28 +129,34 @@ export default function Documentos() {
                       <tr
                         key={documento.id}
                         onClick={() => navigate(`/documentos/${documento.id}`)}
-                        className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-black/[0.02]"
+                        className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-hover"
                       >
-                        <td className="px-5 py-3 font-medium">
+                        <Celda
+                          etiqueta="Archivo"
+                          className="px-4 py-2.5 font-medium sm:px-5 sm:py-3"
+                        >
                           {documento.nombreOriginal}
-                        </td>
-                        <td className="px-5 py-3">
+                        </Celda>
+                        <Celda etiqueta="Estado" className="px-4 py-2.5 sm:px-5 sm:py-3">
                           <Badge tone={estado.tono}>{estado.texto}</Badge>
-                        </td>
-                        <td className="px-5 py-3 capitalize text-muted">
+                        </Celda>
+                        <Celda
+                          etiqueta="Origen"
+                          className="px-4 py-2.5 capitalize text-muted sm:px-5 sm:py-3"
+                        >
                           {documento.origen}
-                        </td>
-                        <td className="px-5 py-3 text-muted">
+                        </Celda>
+                        <Celda etiqueta="Confianza" className="px-4 py-2.5 text-muted sm:px-5 sm:py-3">
                           {formatearConfianza(documento.confianzaExtraccion)}
-                        </td>
-                        <td className="px-5 py-3 text-muted">
+                        </Celda>
+                        <Celda etiqueta="Subido" className="px-4 py-2.5 text-muted sm:px-5 sm:py-3">
                           {fechaCorta(documento.createdAt)}
-                        </td>
+                        </Celda>
                       </tr>
                     )
                   })}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
           <Paginador

@@ -13,6 +13,7 @@ import { api } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Celda, Tabla } from '@/components/ui/tabla'
 
 export default function ProductoDetalle() {
   const { id } = useParams()
@@ -64,7 +65,7 @@ export default function ProductoDetalle() {
           Productos
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{datos.nombre}</h1>
+          <h1 className="min-w-0 break-words text-xl font-semibold tracking-tight">{datos.nombre}</h1>
           <Badge>unidad base: {datos.unidadBase}</Badge>
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function ProductoDetalle() {
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
             <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-success">
+              <span className="grid size-10 place-items-center rounded-lg bg-success-soft text-success">
                 <TrendingDown className="size-5" />
               </span>
               <div>
@@ -107,7 +108,7 @@ export default function ProductoDetalle() {
             <p className="px-5 pb-5 text-sm text-muted">Sin datos todavía.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <th className="px-5 py-2 font-medium">Proveedor</th>
@@ -123,25 +124,40 @@ export default function ProductoDetalle() {
                       key={proveedor.proveedorId}
                       className="border-b border-border/60 last:border-0"
                     >
-                      <td className="px-5 py-2 font-medium">
+                      <Celda
+                        etiqueta="Proveedor"
+                        className="px-4 py-2 font-medium sm:px-5 sm:py-2"
+                      >
                         {proveedor.proveedorNombre}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      </Celda>
+                      <Celda
+                        etiqueta="Precio actual"
+                        className="px-4 py-2 text-right tabular-nums sm:px-3 sm:py-2"
+                      >
                         {moneda(proveedor.precioActual)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Mínimo"
+                        className="px-4 py-2 text-right tabular-nums text-muted sm:px-3 sm:py-2"
+                      >
                         {moneda(proveedor.precioMinimo)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Máximo"
+                        className="px-4 py-2 text-right tabular-nums text-muted sm:px-3 sm:py-2"
+                      >
                         {moneda(proveedor.precioMaximo)}
-                      </td>
-                      <td className="px-3 py-2 text-muted">
+                      </Celda>
+                      <Celda
+                        etiqueta="Última compra"
+                        className="px-4 py-2 text-muted sm:px-3 sm:py-2"
+                      >
                         {fechaCorta(proveedor.ultimaCompra)}
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
         </CardContent>

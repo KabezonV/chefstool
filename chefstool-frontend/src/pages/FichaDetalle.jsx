@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
+import { Celda, TablaFormulario } from '@/components/ui/tabla'
 
 export default function FichaDetalle() {
   const { id } = useParams()
@@ -210,7 +211,7 @@ export default function FichaDetalle() {
           Fichas técnicas
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="mt-2 text-xl font-semibold tracking-tight">{ficha.nombre}</h1>
+          <h1 className="mt-2 min-w-0 break-words text-xl font-semibold tracking-tight">{ficha.nombre}</h1>
           <Button variant="outline" size="sm" onClick={descargarPdf} disabled={descargandoPdf}>
             <FileDown className="size-4" />
             {descargandoPdf ? 'Generando…' : 'PDF'}
@@ -219,13 +220,13 @@ export default function FichaDetalle() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {ficha.productosSinPrecio > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
           {ficha.productosSinPrecio} producto(s) no tienen precio de compra, así que su
           coste no se cuenta todavía. Registra una compra para completar el escandallo.
         </div>
@@ -310,7 +311,7 @@ export default function FichaDetalle() {
         </CardHeader>
         <CardContent className="space-y-3 px-0 pb-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <TablaFormulario>
               <thead>
                 <tr className="border-y border-border text-left text-xs text-muted">
                   <th className="px-5 py-2 font-medium">Producto</th>
@@ -328,7 +329,7 @@ export default function FichaDetalle() {
                     precio === undefined ? null : Number(linea.cantidad || 0) * precio
                   return (
                     <tr key={indice} className="border-b border-border/60 last:border-0">
-                      <td className="px-5 py-2">
+                      <Celda etiqueta="Producto" className="px-4 py-2 sm:px-5 sm:py-2">
                         <Select
                           value={linea.productoId}
                           onChange={(event) =>
@@ -342,8 +343,8 @@ export default function FichaDetalle() {
                             </option>
                           ))}
                         </Select>
-                      </td>
-                      <td className="px-2 py-2">
+                      </Celda>
+                      <Celda etiqueta="Nota" className="px-4 py-2 sm:px-2 sm:py-2">
                         <Input
                           placeholder="Opcional"
                           value={linea.descripcion}
@@ -351,8 +352,8 @@ export default function FichaDetalle() {
                             cambiarLinea(indice, 'descripcion', event.target.value)
                           }
                         />
-                      </td>
-                      <td className="px-2 py-2">
+                      </Celda>
+                      <Celda etiqueta="Cantidad" className="px-4 py-2 sm:px-2 sm:py-2">
                         <Input
                           type="number"
                           step="0.001"
@@ -361,19 +362,22 @@ export default function FichaDetalle() {
                             cambiarLinea(indice, 'cantidad', event.target.value)
                           }
                         />
-                      </td>
-                      <td className="px-2 py-2">
+                      </Celda>
+                      <Celda etiqueta="Unidad" className="px-4 py-2 sm:px-2 sm:py-2">
                         <Input
                           value={linea.unidad}
                           onChange={(event) =>
                             cambiarLinea(indice, 'unidad', event.target.value)
                           }
                         />
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums">
+                      </Celda>
+                      <Celda
+                        etiqueta="Coste"
+                        className="px-4 py-2 text-right tabular-nums sm:px-2 sm:py-2"
+                      >
                         {coste === null ? '—' : moneda(coste)}
-                      </td>
-                      <td className="px-2 py-2">
+                      </Celda>
+                      <Celda className="px-4 py-2 sm:px-2 sm:py-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -382,14 +386,14 @@ export default function FichaDetalle() {
                         >
                           <Trash2 className="size-4" />
                         </Button>
-                      </td>
+                      </Celda>
                     </tr>
                   )
                 })}
               </tbody>
-            </table>
+            </TablaFormulario>
           </div>
-          <div className="px-5 pb-5">
+          <div className="px-4 pb-5 sm:px-5">
             <Button variant="outline" onClick={anadirLinea}>
               <Plus className="size-4" />
               Añadir ingrediente

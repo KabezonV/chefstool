@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Paginador from '@/components/ui/paginador'
-import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
 export default function Fichas() {
   const navigate = useNavigate()
@@ -61,7 +61,7 @@ export default function Fichas() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -85,7 +85,7 @@ export default function Fichas() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     <CabeceraOrdenable
@@ -129,17 +129,36 @@ export default function Fichas() {
                     <tr
                       key={ficha.id}
                       onClick={() => navigate(`/fichas/${ficha.id}`)}
-                      className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-black/[0.02]"
+                      className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-hover"
                     >
-                      <td className="px-5 py-3 font-medium">{ficha.nombre}</td>
-                      <td className="px-3 py-3 text-right tabular-nums">{ficha.raciones}</td>
-                      <td className="px-3 py-3 text-right tabular-nums">
+                      <Celda
+                        etiqueta="Ficha"
+                        className="px-4 py-2.5 font-medium sm:px-5 sm:py-3"
+                      >
+                        {ficha.nombre}
+                      </Celda>
+                      <Celda
+                        etiqueta="Raciones"
+                        className="px-4 py-2.5 text-right tabular-nums sm:px-3 sm:py-3"
+                      >
+                        {ficha.raciones}
+                      </Celda>
+                      <Celda
+                        etiqueta="Coste/ración"
+                        className="px-4 py-2.5 text-right tabular-nums sm:px-3 sm:py-3"
+                      >
                         {moneda(ficha.costePorRacion)}
-                      </td>
-                      <td className="px-3 py-3 text-right tabular-nums">
+                      </Celda>
+                      <Celda
+                        etiqueta="Precio venta"
+                        className="px-4 py-2.5 text-right tabular-nums sm:px-3 sm:py-3"
+                      >
                         {ficha.precioVenta ? moneda(ficha.precioVenta) : '—'}
-                      </td>
-                      <td className="px-3 py-3 text-right">
+                      </Celda>
+                      <Celda
+                        etiqueta="Margen"
+                        className="px-4 py-2.5 text-right sm:px-3 sm:py-3"
+                      >
                         {ficha.margenPct === null || ficha.margenPct === undefined ? (
                           '—'
                         ) : (
@@ -147,11 +166,11 @@ export default function Fichas() {
                             {Number(ficha.margenPct).toFixed(1)} %
                           </Badge>
                         )}
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
           <Paginador

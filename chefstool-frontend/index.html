@@ -4,7 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1b1b1b" />
+    <meta name="theme-color" content="#faf9f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#15130f" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Aplica el tema antes de pintar para que no haya un destello claro.
+      try {
+        var tema = localStorage.getItem('chefstool.tema')
+        if (tema !== 'claro' && tema !== 'oscuro') {
+          tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro'
+        }
+        document.documentElement.classList.toggle('dark', tema === 'oscuro')
+        document.documentElement.style.colorScheme = tema === 'oscuro' ? 'dark' : 'light'
+      } catch (error) {
+        /* sin almacenamiento: se queda el tema del sistema */
+      }
+    </script>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icono-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

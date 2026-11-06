@@ -33,7 +33,7 @@ function clasificar(origen, primeraLinea) {
   if (origen.startsWith('@/')) {
     if (origen.startsWith('@/constants/') || origen.startsWith('@/config/')) return 'Enumerations'
     if (origen === '@/lib/api' || origen.startsWith('@/lib/api/')) return 'Handlers'
-    if (['@/lib/useListado', '@/lib/auth-context', '@/lib/auth'].includes(origen)) return 'Hooks'
+    if (['@/lib/useListado', '@/lib/auth-context', '@/lib/auth', '@/lib/tema', '@/lib/tema-context'].includes(origen)) return 'Hooks'
     if (origen.startsWith('@/lib/')) return 'Utils'
     if (origen.startsWith('@/components/') || origen.startsWith('@/pages/')) return 'Components'
     return 'Utils'

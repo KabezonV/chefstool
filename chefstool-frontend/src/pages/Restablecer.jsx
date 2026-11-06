@@ -8,7 +8,7 @@ import { api } from '@/lib/api'
 
 // Components
 import { Button } from '@/components/ui/button'
-import { Field, Input } from '@/components/ui/input'
+import { Field, InputContrasena } from '@/components/ui/input'
 
 export default function Restablecer() {
   const navigate = useNavigate()
@@ -43,7 +43,7 @@ export default function Restablecer() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-background px-4">
+    <div className="grid min-h-dvh place-items-center bg-background px-4 py-8">
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-2">
           <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
@@ -75,15 +75,15 @@ export default function Restablecer() {
               </p>
 
               {error && (
-                <div className="rounded-lg border border-danger/30 bg-red-50 px-3 py-2 text-sm text-danger">
+                <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
                   {error}
                 </div>
               )}
 
               <Field label="Contraseña nueva" htmlFor="password">
-                <Input
+                <InputContrasena
                   id="password"
-                  type="password"
+                  name="password"
                   required
                   minLength={8}
                   autoComplete="new-password"
@@ -94,9 +94,9 @@ export default function Restablecer() {
               </Field>
 
               <Field label="Repite la contraseña" htmlFor="repetida">
-                <Input
+                <InputContrasena
                   id="repetida"
-                  type="password"
+                  name="repetida"
                   required
                   minLength={8}
                   autoComplete="new-password"

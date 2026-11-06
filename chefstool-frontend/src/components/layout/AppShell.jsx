@@ -1,6 +1,6 @@
 // Vendors
 import { ChefHat, LogOut, Menu, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
 // Utils
@@ -14,13 +14,32 @@ import { useAuth } from '@/lib/auth-context'
 
 // Components
 import { Button } from '@/components/ui/button'
+import BotonTema from '@/components/ui/tema'
 
 export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { sesion, salir } = useAuth()
 
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+
+    function cerrarConEscape(event) {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+
+    window.addEventListener('keydown', cerrarConEscape)
+
+    return () => {
+      document.body.style.overflow = overflow
+      window.removeEventListener('keydown', cerrarConEscape)
+    }
+  }, [menuOpen])
+
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[16rem_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
       {menuOpen && (
         <button
           type="button"
@@ -31,12 +50,13 @@ export default function AppShell() {
       )}
 
       <aside
+        id="menu-lateral"
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-card transition-transform lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col border-r border-border bg-card transition-transform lg:static lg:translate-x-0',
           menuOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between gap-2 px-4 py-4">
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
               <ChefHat className="size-4" />
@@ -74,8 +94,8 @@ export default function AppShell() {
                     cn(
                       'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
                       isActive
-                        ? 'bg-black/[0.06] font-medium text-foreground'
-                        : 'text-muted hover:bg-black/[0.03] hover:text-foreground',
+                        ? 'bg-active font-medium text-foreground'
+                        : 'text-muted hover:bg-hover hover:text-foreground',
                     )
                   }
                 >
@@ -92,31 +112,37 @@ export default function AppShell() {
           <p className="truncate text-xs text-muted">
             {sesion?.organizacion ?? 'Sin organizacion'} · {sesion?.rol ?? ''}
           </p>
-          <button
-            type="button"
-            onClick={salir}
-            className="mt-2 inline-flex items-center gap-1 text-xs text-muted hover:text-foreground"
-          >
-            <LogOut className="size-3.5" />
-            Cerrar sesión
-          </button>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <BotonTema variante="texto" />
+            <button
+              type="button"
+              onClick={salir}
+              className="inline-flex items-center gap-1 text-xs text-muted hover:text-foreground"
+            >
+              <LogOut className="size-3.5" />
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-col">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur lg:px-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <Menu className="size-4" />
-          </Button>
-          <span className="text-sm text-muted lg:hidden">Chefstool</span>
-          <div className="hidden lg:block" />
-          <Button asChild size="sm" className="lg:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Abrir menú"
+              aria-expanded={menuOpen}
+              aria-controls="menu-lateral"
+            >
+              <Menu className="size-4" />
+            </Button>
+            <span className="truncate text-sm text-muted lg:hidden">Chefstool</span>
+          </div>
+          <Button asChild size="sm" className="shrink-0 lg:hidden">
             <Link to="/documentos/nuevo">
               <Plus className="size-4" />
               Añadir

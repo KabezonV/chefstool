@@ -8,7 +8,28 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 /**
- * Cabecera de tabla opcionalmente ordenable. `campo` es el nombre que entiende la API
+ * Tabla que en móvil se muestra como una lista de fichas: la cabecera se oculta y
+ * cada celda pinta su etiqueta (`data-label`). En escritorio se ve igual que siempre.
+ */
+export function Tabla({ className, ...props }) {
+  return <table className={cn('tabla-apilada w-full text-sm', className)} {...props} />
+}
+
+/** Como `Tabla`, pero pensada para filas con campos: etiqueta encima y campo a todo el ancho. */
+export function TablaFormulario({ className, ...props }) {
+  return <table className={cn('tabla-apilada-bloque w-full text-sm', className)} {...props} />
+}
+
+/** Celda de `Tabla`/`TablaFormulario`; `etiqueta` solo se ve en la vista de móvil. */
+export function Celda({ etiqueta, className, children, ...props }) {
+  return (
+    <td data-label={etiqueta} className={className} {...props}>
+      {children}
+    </td>
+  )
+}
+
+/** Cabecera de tabla opcionalmente ordenable. `campo` es el nombre que entiende la API
  * (solo se permite un orden si la columna lo declara).
  */
 export function CabeceraOrdenable({ columna, orden, direccion, onOrdenar, className }) {

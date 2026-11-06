@@ -11,7 +11,8 @@ import { useAuth } from '@/lib/auth-context'
 
 // Components
 import { Button } from '@/components/ui/button'
-import { Field, Input } from '@/components/ui/input'
+import { Field, Input, InputContrasena } from '@/components/ui/input'
+import BotonTema from '@/components/ui/tema'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -71,7 +72,10 @@ export default function Auth() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-background px-4">
+    <div className="relative grid min-h-dvh place-items-center bg-background px-4 py-8">
+      <div className="absolute right-2 top-2">
+        <BotonTema />
+      </div>
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-2">
           <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
@@ -90,7 +94,7 @@ export default function Auth() {
             className={
               modo === 'recuperar'
                 ? 'hidden'
-                : 'mb-4 grid grid-cols-2 gap-1 rounded-lg bg-black/[0.04] p-1'
+                : 'mb-4 grid grid-cols-2 gap-1 rounded-lg bg-sunken p-1'
             }
           >
             {[
@@ -116,13 +120,13 @@ export default function Auth() {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-danger/30 bg-red-50 px-3 py-2 text-sm text-danger">
+            <div className="mb-4 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
               {error}
             </div>
           )}
 
           {aviso && (
-            <div className="mb-4 space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-success">
+            <div className="mb-4 space-y-2 rounded-lg border border-success-border bg-success-soft px-3 py-2 text-sm text-success">
               <p>{aviso.mensaje}</p>
               {aviso.token && (
                 <p>
@@ -144,6 +148,8 @@ export default function Auth() {
                 <Field label="Tu nombre" htmlFor="nombre">
                   <Input
                     id="nombre"
+                    name="nombre"
+                    autoComplete="name"
                     placeholder="Ana García"
                     value={datos.nombre}
                     onChange={(event) => cambiar('nombre', event.target.value)}
@@ -152,6 +158,8 @@ export default function Auth() {
                 <Field label="Nombre de la cocina u organización" htmlFor="organizacion">
                   <Input
                     id="organizacion"
+                    name="organizacion"
+                    autoComplete="organization"
                     placeholder="Restaurante La Sal"
                     value={datos.organizacion}
                     onChange={(event) => cambiar('organizacion', event.target.value)}
@@ -163,9 +171,10 @@ export default function Auth() {
             <Field label="Correo electrónico" htmlFor="email">
               <Input
                 id="email"
+                name="email"
                 type="email"
                 required
-                autoComplete="email"
+                autoComplete={modo === 'login' ? 'username' : 'email'}
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
@@ -178,9 +187,9 @@ export default function Auth() {
 
             {modo !== 'recuperar' && (
               <Field label="Contraseña" htmlFor="password">
-                <Input
+                <InputContrasena
                   id="password"
-                  type="password"
+                  name="password"
                   required
                   minLength={modo === 'registro' ? 8 : undefined}
                   autoComplete={modo === 'login' ? 'current-password' : 'new-password'}

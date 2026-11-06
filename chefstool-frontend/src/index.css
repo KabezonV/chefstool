@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* El tema se elige con la clase `.dark` en <html> (ver lib/tema.jsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: #faf9f7;
   --color-foreground: #1b1b1b;
@@ -13,12 +16,32 @@
   --color-success: #15803d;
   --color-danger: #b91c1c;
 
+  /* Superficies suaves y avisos: cambian con el tema. */
+  --color-hover: rgb(0 0 0 / 0.03);
+  --color-active: rgb(0 0 0 / 0.06);
+  --color-sunken: rgb(0 0 0 / 0.05);
+  --color-track: rgb(0 0 0 / 0.06);
+  --color-danger-soft: #fef2f2;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-success-soft: #ecfdf5;
+  --color-success-border: #a7f3d0;
+
   --radius-xl: 0.9rem;
 }
 
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
   }
 
   body {
@@ -29,5 +52,118 @@
       'Segoe UI',
       Roboto,
       sans-serif;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/*
+ * Tema oscuro: se redefinen las mismas variables, así que todos los componentes
+ * (que usan bg-background, bg-card, text-muted…) se adaptan sin tocar sus clases.
+ */
+.dark {
+  --color-background: #15130f;
+  --color-foreground: #f4f1ea;
+  --color-card: #1e1b17;
+  --color-muted: #a49b8f;
+  --color-border: #332e28;
+  --color-primary: #f4f1ea;
+  --color-primary-foreground: #1a1712;
+  --color-accent: #f97316;
+  --color-accent-foreground: #1a1206;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+
+  --color-hover: rgb(255 255 255 / 0.06);
+  --color-active: rgb(255 255 255 / 0.11);
+  --color-sunken: rgb(255 255 255 / 0.08);
+  --color-track: rgb(255 255 255 / 0.14);
+  --color-danger-soft: rgb(248 113 113 / 0.13);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgb(251 191 36 / 0.13);
+  --color-warning-border: rgb(251 191 36 / 0.35);
+  --color-success-soft: rgb(74 222 128 / 0.13);
+  --color-success-border: rgb(74 222 128 / 0.35);
+}
+
+/* Nombres de fichero o correos muy largos: parten en vez de ensanchar la tabla. */
+.tabla-apilada td,
+.tabla-apilada-bloque td {
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Adaptación a móvil.
+ * Estas reglas van sin capa a propósito: deben poder ajustar lo que definen las
+ * utilidades (por ejemplo el tamaño de fuente de los campos) sin duplicar clases.
+ */
+@media (max-width: 639.98px) {
+  /* iOS amplía la página al enfocar un campo con fuente menor de 16 px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /*
+   * Tablas apiladas: cada fila se convierte en una ficha con la etiqueta de la
+   * columna (`data-label`) a la izquierda y el valor a la derecha. La cabecera
+   * se oculta porque la etiqueta ya viaja en cada celda.
+   */
+  .tabla-apilada,
+  .tabla-apilada-bloque,
+  .tabla-apilada tbody,
+  .tabla-apilada-bloque tbody,
+  .tabla-apilada tr,
+  .tabla-apilada-bloque tr {
+    display: block;
+  }
+
+  .tabla-apilada thead,
+  .tabla-apilada-bloque thead {
+    display: none;
+  }
+
+  .tabla-apilada td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    text-align: right;
+  }
+
+  .tabla-apilada td::before,
+  .tabla-apilada-bloque td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-muted);
+    text-align: left;
+  }
+
+  .tabla-apilada td:not([data-label])::before,
+  .tabla-apilada-bloque td:not([data-label])::before {
+    content: none;
+  }
+
+  /* Celdas de acciones: sin etiqueta y alineadas a la derecha. */
+  .tabla-apilada td:not([data-label]) {
+    justify-content: flex-end;
+  }
+
+  /* Variante para filas con campos: la etiqueta va encima y el campo ocupa el ancho. */
+  .tabla-apilada-bloque td {
+    display: block;
+  }
+
+  .tabla-apilada-bloque td::before {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .tabla-apilada-bloque td:not([data-label]) {
+    text-align: right;
   }
 }

@@ -16,7 +16,7 @@ export function Buscador({ valor, onChange, placeholder = 'Buscar…' }) {
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       aria-label={placeholder}
-      className="h-9 w-full max-w-xs rounded-lg border border-border bg-card px-3 text-sm outline-none transition-colors placeholder:text-muted/60 focus-visible:ring-2 focus-visible:ring-foreground/20"
+      className="h-9 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none transition-colors placeholder:text-muted/60 focus-visible:ring-2 focus-visible:ring-foreground/20 sm:w-64"
     />
   )
 }
@@ -28,13 +28,13 @@ export default function Paginador({ pagina, tamano, totalElementos, totalPaginas
   const hasta = Math.min((pagina + 1) * tamano, totalElementos)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm sm:px-5">
       <span className="text-muted">
         {desde}–{hasta} de {totalElementos}
       </span>
 
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted">Por página</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="hidden text-xs text-muted sm:inline">Por página</span>
         <Select
           aria-label="Registros por página"
           value={tamano}

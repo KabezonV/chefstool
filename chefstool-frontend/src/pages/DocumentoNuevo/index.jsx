@@ -75,7 +75,7 @@ export default function DocumentoNuevo() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -101,7 +101,7 @@ export default function DocumentoNuevo() {
         {OPCIONES_ALTA.map(({ clave, icono: Icono, titulo, texto }) => (
           <Card key={clave} className="flex flex-col">
             <CardContent className="flex flex-1 flex-col gap-3 pt-5">
-              <span className="grid size-10 place-items-center rounded-lg bg-black/[0.05]">
+              <span className="grid size-10 place-items-center rounded-lg bg-sunken">
                 <Icono className="size-5" />
               </span>
               <div>

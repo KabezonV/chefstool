@@ -105,7 +105,7 @@ export default function Configuracion() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -189,7 +189,7 @@ export default function Configuracion() {
             </span>
           </div>
 
-          <div className="rounded-xl border border-danger/30 bg-red-50/60 p-4">
+          <div className="rounded-xl border border-danger/30 bg-danger-soft/60 p-4">
             <p className="font-medium text-danger">Darte de baja</p>
             <p className="mt-1 text-xs text-danger/80">
               Se elimina tu cuenta y tu acceso. Si eres el único miembro de la organización se
@@ -200,7 +200,7 @@ export default function Configuracion() {
             {!bajaAbierta ? (
               <Button
                 variant="outline"
-                className="mt-3 border-danger/40 text-danger hover:bg-red-100"
+                className="mt-3 border-danger/40 text-danger hover:bg-danger-soft"
                 onClick={() => setBajaAbierta(true)}
               >
                 <Trash2 className="size-4" />

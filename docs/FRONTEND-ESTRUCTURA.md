@@ -120,3 +120,40 @@ src/
     ├── Privacidad/{index.jsx,utils/}
     └── … (las vistas simples siguen siendo un fichero suelto)
 ```
+
+## 4. Adaptación a móvil
+
+La app se usa también desde el móvil (y como PWA instalada), así que hay dos reglas fijas:
+
+1. **Tablas con `Tabla` / `TablaFormulario` y `Celda`** (`components/ui/tabla.jsx`). En
+   escritorio se ven como siempre; por debajo de 640 px cada fila pasa a ser una ficha y
+   la cabecera se oculta, porque la etiqueta viaja en cada celda:
+
+   ```jsx
+   import { Celda, Tabla } from '@/components/ui/tabla'
+
+   <Tabla>
+     <thead>…</thead>
+     <tbody>
+       <tr>
+         <Celda etiqueta="Proveedor">{compra.proveedorNombre}</Celda>
+         <Celda etiqueta="Total" className="px-4 py-2.5 text-right sm:px-3 sm:py-2">
+           {moneda(compra.importeTotal)}
+         </Celda>
+       </tr>
+     </tbody>
+   </Tabla>
+   ```
+
+   - `Tabla` es para datos de lectura (etiqueta y valor en la misma línea).
+   - `TablaFormulario` es para filas con campos: la etiqueta va encima y el campo ocupa
+     todo el ancho.
+   - Los márgenes se escriben **mobile-first** (`px-4 … sm:px-5`), porque las utilidades
+     de Tailwind tienen prioridad sobre las reglas de apilado.
+   - Una celda de acciones (editar, borrar) se deja sin `etiqueta`.
+
+2. **Nada de anchos fijos en píxeles que no quepan en 320 px.** Lo que no se pueda
+   reorganizar se envuelve en `overflow-x-auto`.
+
+Las reglas CSS del apilado y el ajuste de `font-size: 16px` en los campos (evita que iOS
+amplíe la página al enfocar un input) están en `src/index.css`.

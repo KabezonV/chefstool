@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import Paginador, { Buscador } from '@/components/ui/paginador'
-import { BotonesExportar, CabeceraOrdenable } from '@/components/ui/tabla'
+import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
 function Campo({ campo, valor, onChange, opciones }) {
   const id = `campo-${campo.name}`
@@ -258,7 +258,7 @@ export default function ResourcePage({ recurso }) {
         <div className="flex flex-wrap items-center gap-2">
           {recurso.importar && (
             <label
-              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm hover:bg-black/[0.03]"
+              className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm hover:bg-hover"
               title={recurso.importar.ayuda}
             >
               <Upload className="size-4" />
@@ -280,7 +280,7 @@ export default function ResourcePage({ recurso }) {
       </div>
 
       {importacion && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-success">
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-success-border bg-success-soft px-4 py-3 text-sm text-success">
           <div>
             <p className="font-medium">
               Importación terminada: {importacion.creados} creados
@@ -301,7 +301,7 @@ export default function ResourcePage({ recurso }) {
       )}
 
       {error && (
-        <div className="flex items-start justify-between gap-3 rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           <span>{error}</span>
           <button type="button" onClick={() => setError(null)} aria-label="Descartar aviso">
             <X className="size-4" />
@@ -364,7 +364,7 @@ export default function ResourcePage({ recurso }) {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tabla>
                 <thead>
                   <tr className="border-y border-border text-left text-xs text-muted">
                     {columnas.map((columna) => (
@@ -386,17 +386,24 @@ export default function ResourcePage({ recurso }) {
                       onClick={detalle ? () => navigate(detalle(item)) : undefined}
                       className={cn(
                         'border-b border-border/60 last:border-0',
-                        detalle && 'cursor-pointer hover:bg-black/[0.02]',
+                        detalle && 'cursor-pointer hover:bg-hover',
                       )}
                     >
                       {columnas.map((columna) => (
-                        <td key={columna.key} className="px-5 py-3">
+                        <Celda
+                          key={columna.key}
+                          etiqueta={columna.label}
+                          className="px-4 py-2.5 sm:px-5 sm:py-3"
+                        >
                           {columna.format
                             ? columna.format(item[columna.key], item)
                             : (item[columna.key] ?? '—')}
-                        </td>
+                        </Celda>
                       ))}
-                      <td className="px-5 py-3" onClick={(event) => event.stopPropagation()}>
+                      <Celda
+                        className="px-4 py-2.5 sm:px-5 sm:py-3"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
@@ -415,11 +422,11 @@ export default function ResourcePage({ recurso }) {
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
-                      </td>
+                      </Celda>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
           <Paginador

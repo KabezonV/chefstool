@@ -6,6 +6,9 @@ import { BrowserRouter } from 'react-router-dom'
 // Utils
 import App from './App.jsx'
 
+// Hooks
+import { TemaProvider } from '@/lib/tema'
+
 // Styles
 import './index.css'
 
@@ -18,7 +21,9 @@ if ('serviceWorker' in navigator) {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <TemaProvider>
+        <App />
+      </TemaProvider>
     </BrowserRouter>
   </StrictMode>,
 )

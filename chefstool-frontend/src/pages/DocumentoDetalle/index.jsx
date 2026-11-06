@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
+import { Celda, TablaFormulario } from '@/components/ui/tabla'
 
 export default function DocumentoDetalle() {
   const { id } = useParams()
@@ -207,7 +208,7 @@ export default function DocumentoDetalle() {
           Documentos
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="min-w-0 break-words text-xl font-semibold tracking-tight">
             {documento.nombreOriginal}
           </h1>
           <Badge tone={estado.tono}>{estado.texto}</Badge>
@@ -236,7 +237,7 @@ export default function DocumentoDetalle() {
         </p>
         {documento.confianzaExtraccion !== null &&
           Number(documento.confianzaExtraccion) < 0.85 && (
-            <p className="mt-1 text-xs text-amber-800">
+            <p className="mt-1 text-xs text-warning">
               La lectura automática no ha reconocido todo con seguridad: revisa proveedor,
               importes y líneas antes de confirmar.
             </p>
@@ -244,13 +245,13 @@ export default function DocumentoDetalle() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {avisosImportes.length > 0 && documento.estado === 'pendiente_revision' && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
           <p className="font-medium">Los importes no cuadran</p>
           <ul className="mt-1 list-disc pl-5">
             {avisosImportes.map((aviso) => (
@@ -267,7 +268,7 @@ export default function DocumentoDetalle() {
         confianzaBaja &&
         lineas.length === 0 &&
         documento.estado === 'pendiente_revision' && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
             <p className="font-medium">No se han reconocido las líneas del documento</p>
             <p className="mt-1">
               Puede ser una foto movida, poco iluminada o un formato poco habitual. Prueba
@@ -278,7 +279,7 @@ export default function DocumentoDetalle() {
         )}
 
       {documento.errorExtraccion && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
           <p className="font-medium">No se ha podido leer el documento</p>
           <p className="mt-1">{documento.errorExtraccion}</p>
           <p className="mt-1">
@@ -346,7 +347,7 @@ export default function DocumentoDetalle() {
         </CardHeader>
         <CardContent className="space-y-3 px-0 pb-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <TablaFormulario>
               <thead>
                 <tr className="border-y border-border text-left text-xs text-muted">
                   <th className="px-5 py-2 font-medium">Descripción</th>
@@ -361,7 +362,7 @@ export default function DocumentoDetalle() {
               <tbody>
                 {lineas.map((linea, indice) => (
                   <tr key={indice} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2">
+                    <Celda etiqueta="Descripción" className="px-4 py-2 sm:px-5 sm:py-2">
                       <Input
                         disabled={soloLectura}
                         value={linea.descripcion}
@@ -369,8 +370,8 @@ export default function DocumentoDetalle() {
                           cambiarLinea(indice, 'descripcion', event.target.value)
                         }
                       />
-                    </td>
-                    <td className="px-2 py-2">
+                    </Celda>
+                    <Celda etiqueta="Cantidad" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Input
                         type="number"
                         step="0.001"
@@ -380,8 +381,8 @@ export default function DocumentoDetalle() {
                           cambiarLinea(indice, 'cantidad', event.target.value)
                         }
                       />
-                    </td>
-                    <td className="px-2 py-2">
+                    </Celda>
+                    <Celda etiqueta="Unidad" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Input
                         disabled={soloLectura}
                         value={linea.unidad}
@@ -389,8 +390,8 @@ export default function DocumentoDetalle() {
                           cambiarLinea(indice, 'unidad', event.target.value)
                         }
                       />
-                    </td>
-                    <td className="px-2 py-2">
+                    </Celda>
+                    <Celda etiqueta="Precio" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Input
                         type="number"
                         step="0.0001"
@@ -400,11 +401,14 @@ export default function DocumentoDetalle() {
                           cambiarLinea(indice, 'precioUnitario', event.target.value)
                         }
                       />
-                    </td>
-                    <td className="px-2 py-2 tabular-nums">
+                    </Celda>
+                    <Celda
+                      etiqueta="Importe"
+                      className="px-4 py-2 tabular-nums sm:px-2 sm:py-2"
+                    >
                       {moneda(importeLinea(linea))}
-                    </td>
-                    <td className="px-2 py-2">
+                    </Celda>
+                    <Celda etiqueta="Producto" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Select
                         disabled={soloLectura}
                         value={linea.productoId}
@@ -419,8 +423,8 @@ export default function DocumentoDetalle() {
                           </option>
                         ))}
                       </Select>
-                    </td>
-                    <td className="px-2 py-2">
+                    </Celda>
+                    <Celda className="px-4 py-2 sm:px-2 sm:py-2">
                       {!soloLectura && (
                         <Button
                           variant="ghost"
@@ -431,14 +435,14 @@ export default function DocumentoDetalle() {
                           <Trash2 className="size-4" />
                         </Button>
                       )}
-                    </td>
+                    </Celda>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </TablaFormulario>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-4 pb-5 sm:px-5">
             {!soloLectura ? (
               <Button variant="outline" onClick={anadirLinea}>
                 <Plus className="size-4" />

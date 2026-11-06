@@ -8,8 +8,8 @@ export const variantesBoton = cva(
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
         accent: 'bg-accent text-accent-foreground hover:bg-accent/90',
-        outline: 'border border-border bg-card hover:bg-black/[0.03]',
-        ghost: 'hover:bg-black/[0.04]',
+        outline: 'border border-border bg-card hover:bg-hover',
+        ghost: 'hover:bg-sunken',
       },
       size: {
         default: 'h-9 px-4',

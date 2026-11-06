@@ -22,12 +22,12 @@ export default function Barras({ datos, etiquetaVacia = 'Sin datos' }) {
       {datos.map((dato) => (
         <li key={dato.etiqueta} className="text-sm">
           <div className="mb-1 flex items-center justify-between gap-2">
-            <span className="truncate">{etiquetaLegible(dato.etiqueta)}</span>
+            <span className="min-w-0 truncate">{etiquetaLegible(dato.etiqueta)}</span>
             <span className="shrink-0 tabular-nums text-muted">
               {moneda(dato.importe)}
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/[0.06]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-active">
             <div
               className="h-full rounded-full bg-accent/80"
               style={{ width: `${Math.max(2, (Number(dato.importe) / maximo) * 100)}%` }}
