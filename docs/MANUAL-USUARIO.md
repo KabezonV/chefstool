@@ -36,10 +36,16 @@ Si intentas borrar algo y no te deja, es por este motivo: pídeselo a un adminis
 4. Espera unos segundos: la aplicación lee el documento y te lleva a la pantalla de
    revisión.
 
+> **Si la foto tiene poca resolución** (por ejemplo, porque te la han reenviado por
+> WhatsApp, que la comprime), la aplicación te avisa antes de leerla. El texto pequeño
+> de las líneas puede no leerse: pide la **foto original** o, mejor, el **PDF del
+> proveedor**. Un PDF con texto se lee sin errores porque no hay que interpretar píxeles.
+
 ### Opción B — Archivo (PDF o imagen)
 
 1. **Documentos → Añadir documento → Elegir archivo**.
-2. Selecciona el PDF que te haya mandado el proveedor.
+2. Selecciona el PDF que te haya mandado el proveedor. Es la vía más fiable: si el PDF
+   trae texto, la aplicación lo copia tal cual y no depende de la calidad de la imagen.
 
 ### Opción C — Prueba rápida sin papel
 

@@ -13,12 +13,42 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
+const ANCHO_MINIMO_AVISO = 1200
+
+/** Ancho en pixeles del archivo, o null si no es una imagen que se pueda medir. */
+async function anchoDeImagen(archivo) {
+  if (!archivo.type.startsWith('image/') || typeof createImageBitmap !== 'function') {
+    return null
+  }
+  try {
+    const mapa = await createImageBitmap(archivo)
+    const ancho = mapa.width
+    mapa.close?.()
+    return ancho
+  } catch {
+    return null
+  }
+}
+
+/** Imágenes con tan poca resolución que el texto pequeño del albarán no se puede leer. */
+async function imagenesPequenas(archivos) {
+  const pequenas = []
+  for (const archivo of archivos) {
+    const ancho = await anchoDeImagen(archivo)
+    if (ancho !== null && ancho < ANCHO_MINIMO_AVISO) {
+      pequenas.push({ nombre: archivo.name, ancho })
+    }
+  }
+  return pequenas
+}
+
 export default function DocumentoNuevo() {
   const navigate = useNavigate()
   const camaraRef = useRef(null)
   const archivoRef = useRef(null)
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState(null)
+  const [avisoCalidad, setAvisoCalidad] = useState([])
 
   async function enviar(archivos, origen) {
     setSubiendo(true)
@@ -32,6 +62,8 @@ export default function DocumentoNuevo() {
         navigate(`/documentos/${documento.id}`)
         return
       }
+
+      setAvisoCalidad(await imagenesPequenas(archivos))
 
       const creados = []
       for (const archivo of archivos) {
@@ -77,6 +109,23 @@ export default function DocumentoNuevo() {
       {error && (
         <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
+        </div>
+      )}
+
+      {avisoCalidad.length > 0 && (
+        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
+          <p className="font-medium">Estas imágenes tienen poca resolución</p>
+          <ul className="mt-1 list-disc pl-5">
+            {avisoCalidad.map((imagen) => (
+              <li key={imagen.nombre}>
+                {imagen.nombre} ({imagen.ancho} px de ancho)
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1">
+            El texto pequeño puede no leerse bien. Sube la foto original (no reenviada por
+            mensajería) o, mejor, el PDF del proveedor.
+          </p>
         </div>
       )}
 

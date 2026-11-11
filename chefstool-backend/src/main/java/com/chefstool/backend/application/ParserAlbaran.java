@@ -247,6 +247,10 @@ public class ParserAlbaran {
     }
 
     private LineaExtraccion interpretarLinea(String linea, List<Producto> catalogo) {
+        if (LINEA_NO_ARTICULO.matcher(linea.trim()).find()) {
+            return null;
+        }
+
         Matcher conUnidad = LINEA_CON_UNIDAD.matcher(linea);
         if (conUnidad.matches()) {
             BigDecimal cantidad = numero(conUnidad.group(2));
@@ -254,7 +258,7 @@ public class ParserAlbaran {
             BigDecimal importe = numero(conUnidad.group(5));
 
             // La linea ya tiene la forma completa: si las cuentas no salen, es ruido.
-            return cuadra(cantidad, precio, importe)
+            return cuadra(cantidad, precio, importe) && cantidadPlausible(cantidad)
                     ? construir(
                             conUnidad.group(1),
                             cantidad,
@@ -271,12 +275,116 @@ public class ParserAlbaran {
             BigDecimal importe = numero(sinUnidad.group(3));
             if (precio.signum() > 0 && importe.signum() > 0) {
                 BigDecimal cantidad = importe.divide(precio, 3, RoundingMode.HALF_UP);
-                return construir(
-                        sinUnidad.group(1), cantidad, null, precio, importe, catalogo);
+                if (cantidadPlausible(cantidad)) {
+                    return construir(
+                            sinUnidad.group(1), cantidad, null, precio, importe, catalogo);
+                }
             }
         }
 
-        return null;
+        return interpretarFilaConColumnas(linea, catalogo);
+    }
+
+    /** Tokens que el OCR añade de otras columnas (código, lote, %IVA). */
+    private static final Pattern TOKEN_NUMERICO = Pattern.compile("\\d+(?:[.,]\\d+)?");
+
+    private static final Pattern TOKEN_PORCENTAJE = Pattern.compile("\\d{1,2}");
+
+    /** Un importe de linea plausible: hasta 5 enteros y exactamente 2 decimales. */
+    private static final Pattern IMPORTE_TOKEN = Pattern.compile("\\d{1,5}[.,]\\d{2}");
+
+    private static final Pattern PRECIO_TOKEN = Pattern.compile("\\d{1,4}[.,]\\d{2,4}");
+
+    private static final BigDecimal CANTIDAD_MAXIMA = new BigDecimal("999");
+
+    /** Lineas que llevan numeros pero no son articulos. */
+    private static final Pattern LINEA_NO_ARTICULO =
+            Pattern.compile(
+                    "(?i)^(total|base|iva|dto|descuento|subtotal|suma|importe|neto|cuenta"
+                            + "|abono|cuota|recargo|vencimiento|forma de pago)\\b");
+
+    /**
+     * Filas de albaranes con mas columnas de las habituales: codigo, lote, cantidad pedida y
+     * servida, precio, importe y % de IVA. Se toman el importe y el precio como los dos ultimos
+     * numeros y la cantidad se deduce de ellos, que es lo unico que se puede afirmar sin ambiguedad.
+     */
+    private LineaExtraccion interpretarFilaConColumnas(String linea, List<Producto> catalogo) {
+        List<String> tokens = new ArrayList<>(List.of(linea.trim().split("\\s+")));
+
+        // Un % de IVA suelto al final ("... 1,50 4" o "... 12,40 10")
+        if (tokens.size() > 4 && TOKEN_PORCENTAJE.matcher(tokens.getLast()).matches()) {
+            tokens.removeLast();
+        }
+        if (tokens.size() < 4) {
+            return null;
+        }
+
+        int iImporte = ultimoNumero(tokens, tokens.size() - 1);
+        int iPrecio = iImporte > 0 ? ultimoNumero(tokens, iImporte - 1) : -1;
+        if (iPrecio <= 0) {
+            return null;
+        }
+
+        // El importe y el precio tienen que parecer dinero, no telefonos ni referencias
+        if (!IMPORTE_TOKEN.matcher(tokens.get(iImporte)).matches()
+                || !PRECIO_TOKEN.matcher(tokens.get(iPrecio)).matches()) {
+            return null;
+        }
+
+        String descripcion = descripcionHastaElPrimerNumero(tokens);
+        if (palabrasConLetras(descripcion) < 2
+                || LINEA_NO_ARTICULO.matcher(descripcion).find()) {
+            return null;
+        }
+
+        BigDecimal importe = numero(tokens.get(iImporte));
+        BigDecimal precio = numero(tokens.get(iPrecio));
+        if (precio.signum() <= 0 || importe.signum() <= 0) {
+            return null;
+        }
+
+        BigDecimal cantidad = importe.divide(precio, 3, RoundingMode.HALF_UP);
+        if (!cuadra(cantidad, precio, importe) || cantidad.signum() <= 0
+                || cantidad.compareTo(CANTIDAD_MAXIMA) > 0) {
+            return null;
+        }
+        return construir(descripcion, cantidad, null, precio, importe, catalogo);
+    }
+
+    private int palabrasConLetras(String texto) {
+        int palabras = 0;
+        for (String palabra : texto.split("\\s+")) {
+            if (palabra.chars().anyMatch(Character::isLetter) && palabra.length() >= 2) {
+                palabras++;
+            }
+        }
+        return palabras;
+    }
+
+    /** Una cantidad de mas de 999 unidades casi siempre es una referencia mal leida. */
+    private boolean cantidadPlausible(BigDecimal cantidad) {
+        return cantidad.signum() > 0 && cantidad.compareTo(CANTIDAD_MAXIMA) <= 0;
+    }
+
+    private int ultimoNumero(List<String> tokens, int desde) {
+        for (int i = Math.min(desde, tokens.size() - 1); i >= 0; i--) {
+            if (TOKEN_NUMERICO.matcher(tokens.get(i)).matches()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** El nombre del articulo termina donde empieza la primera columna numerica. */
+    private String descripcionHastaElPrimerNumero(List<String> tokens) {
+        StringBuilder texto = new StringBuilder();
+        for (String token : tokens) {
+            if (TOKEN_NUMERICO.matcher(token).matches()) {
+                break;
+            }
+            texto.append(texto.isEmpty() ? "" : " ").append(token);
+        }
+        return texto.toString().trim();
     }
 
     /** El OCR a veces pega la cantidad al nombre: "Tomate pera —10kg". */

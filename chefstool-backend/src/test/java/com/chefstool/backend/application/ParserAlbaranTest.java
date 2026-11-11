@@ -266,4 +266,57 @@ class ParserAlbaranTest {
 
         assertThat(resultado.extraccion().proveedorNombre()).isEqualTo("DISTRIBUCIONES MAKRO SL");
     }
+
+    @Test
+    void leeFilasConCodigoLoteYCantidadesDeMas() {
+        String texto =
+                """
+                FRUTAS Y PERECEDEROS NAVARRO, S.L.
+                Albaran: 26007435 /102
+                Fecha: 10/04/2026
+                RABANOS MANOJO 010203 2026040282 1,00 1,00 1,500 1,50 4
+                CIRUELA ROJA 0300034 2026040882 0,70 0,70 4,750 3,33 4
+                TOTAL: 4,83
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+        var lineas = resultado.extraccion().lineas();
+
+        assertThat(lineas).hasSize(2);
+        assertThat(lineas.get(0).descripcion()).isEqualTo("RABANOS MANOJO");
+        assertThat(lineas.get(0).precioUnitario()).isEqualByComparingTo("1.50");
+        assertThat(lineas.get(0).importe()).isEqualByComparingTo("1.50");
+        assertThat(lineas.get(1).descripcion()).isEqualTo("CIRUELA ROJA");
+        assertThat(lineas.get(1).importe()).isEqualByComparingTo("3.33");
+    }
+
+    @Test
+    void noConvierteLasLineasDeTotalesEImpuestosEnArticulos() {
+        String texto =
+                """
+                FRUTAS GARCIA SL
+                Albaran: A-2026-0451
+                Fecha: 05/10/2026
+                Base imponible 141,10 14,11
+                TOTAL 155,21 0,00
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+
+        assertThat(resultado.extraccion().lineas()).isEmpty();
+    }
+    @Test
+    void noInventaArticulosConDireccionesNiTelefonos() {
+        String texto =
+                """
+                FRUTAS GARCIA SL
+                Tel: 971 491 005 Buzon Voz: 971 101 698
+                Gremi Teixidor 17, Local 3,00 19198427,00
+                : E 4,00 7002,00
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+
+        assertThat(resultado.extraccion().lineas()).isEmpty();
+    }
 }
