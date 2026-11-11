@@ -1,17 +1,18 @@
-**Asunto:** Chefstool — versión móvil entregada (enlaces para descargar y probar)
+**Asunto:** Chefstool — entrega del 11/11: versión móvil y lectura de albaranes corregida
 
 Hola Bernart:
 
-Ya está lista la versión para móvil. Te dejo los enlaces y, al final, por qué ha llevado más
-días de lo que te dije.
+Ya está la entrega. Además del trabajo de móvil, esta vez va incluida una corrección
+importante de la lectura de albaranes, que es lo que ha alargado el plazo. Te dejo primero
+los enlaces y luego el detalle.
 
 **Enlaces**
 
 - **Repositorio completo (GitHub):** <https://github.com/KabezonV/chefstool>
-  Es público, así que no necesitas invitación ni cuenta: lo abres y ya está.
-- **Descarga directa en ZIP (versión de esta entrega, 11/11/2026):**
+  Es público: no necesitas invitación ni cuenta, lo abres y ya está.
+- **Descarga directa en ZIP (esta entrega, 11/11/2026):**
   <https://github.com/KabezonV/chefstool/archive/refs/tags/entrega-2026-11-11.zip>
-- **Página de la versión concreta** (por si prefieres revisar los cambios antes de descargar):
+- **Página de la versión concreta** (por si quieres ver los cambios antes de descargar):
   <https://github.com/KabezonV/chefstool/tree/entrega-2026-11-11>
 
 **Cómo levantarlo (3 pasos)**
@@ -26,55 +27,72 @@ cp .env.ejemplo .env
 docker compose up --build
 ```
 
-Cuando acabe de compilar, abre <http://localhost:8081>, pulsa **Crear cuenta** y, dentro del
-panel, **Cargar datos de ejemplo** para tener productos, compras y fichas con los que probar.
-La primera vez tarda unos minutos porque compila el backend y el frontend; las siguientes
-arranca en segundos. Si prefieres el ZIP, se descomprime, se copia igual el `.env.ejemplo` a
-`.env` y se lanza el mismo `docker compose up --build`.
+Cuando termine de compilar, abre <http://localhost:8081>, pulsa **Crear cuenta** y, ya dentro
+del panel, **Cargar datos de ejemplo** para tener productos, compras y fichas con los que
+probar. La primera vez tarda unos minutos porque compila; las siguientes arranca en segundos.
 
-**Qué incluye**
+**Qué incluye esta entrega**
 
-- **Uso en móvil completo**: la app se maneja desde el teléfono sin romper el diseño de
-  escritorio. Las tablas se convierten en fichas legibles, el menú lateral se abre deslizando y
-  el formulario de albaranes se rellena cómodamente con el pulgar.
+*Uso en móvil*
+
+- La app se maneja entera desde el teléfono sin romper nada del escritorio: las tablas se
+  convierten en fichas legibles, el menú se abre deslizando y el formulario de albaranes se
+  rellena cómodamente con el pulgar.
 - **Tema claro y oscuro**, con la preferencia guardada. Lo que viste en negro era el modo
   oscuro forzado del navegador, no la app; ahora hay un botón para elegir.
 - **Ver la contraseña** al entrar, al registrarse y al restablecerla.
-- **Guardar contraseña**: el navegador ya ofrece recordarla, que antes no lo hacía.
+- El navegador ya ofrece **guardar la contraseña**, que antes no hacía.
+
+*Lectura de albaranes*
+
+- **Reconoce al proveedor y lo da de alta solo** si no estaba en el catálogo, sin duplicarlo
+  cuando ya existe. Si no lo reconoce, la pantalla de revisión te deja escribirlo a mano.
+- **Entiende las filas reales de tus proveedores**, las que llevan código, lote, cantidad,
+  precio, importe y % de IVA, no solo las de cuatro columnas.
+- **No confunde los totales con artículos**: las líneas de base imponible, IVA o descuento ya
+  no se cuelan como productos.
+- **Avisa cuando la foto no da para leerla**, antes de procesarla.
 
 **Por qué ha llevado más días de lo previsto**
 
-El trabajo de móvil estaba planteado como un ajuste de estilos, pero al probarlo en teléfonos de
-verdad empezaron a salir problemas que desde el ordenador no se ven:
+El trabajo de móvil estaba planteado como un ajuste de estilos. Al probarlo en teléfonos de
+verdad empezaron a salir cosas que desde el ordenador no se ven:
 
-- **La app se quedaba en negro** tras desplegar: el móvil conservaba en caché un `index.html`
+- **La app se quedaba en negro** tras desplegar: el móvil guardaba en caché un `index.html`
   antiguo que apuntaba a ficheros que ya no existían. Hubo que rehacer el mecanismo de caché
-  del service worker y forzar a que el index se pida siempre al servidor.
+  y forzar a que ese fichero se pida siempre al servidor.
 - **Nombres de fichero largos**: las fotos del móvil traen nombres de más de 30 caracteres sin
-  espacios y desbordaban las tarjetas, arrastrando toda la página en horizontal.
+  espacios y desbordaban las tarjetas, arrastrando la página entera en horizontal.
 - **Zoom automático en iPhone**: al tocar un campo, Safari ampliaba la pantalla y ya no volvía.
-- **La plantilla de entorno del backend estaba desfasada** (apuntaba a un servicio que ya no se
-  usa), justo lo que se nota cuando alguien intenta levantar el proyecto desde cero.
-- **La lectura de albaranes fallaba con fotos reales**: al probarla en el teléfono, con
-  albaranes de proveedores de verdad, el lector partía las columnas y no reconocía las líneas;
-  además, las fotos reenviadas por WhatsApp llegan comprimidas a 768 px, sin resolución
-  suficiente para el texto pequeño. Se ha corregido la forma de segmentar, se amplían las
-  imágenes pequeñas antes de leerlas, el lector entiende ya las filas con código, lote y % de
-  IVA, y la aplicación avisa cuando la foto no da para leerla.
+- **La plantilla de entorno del backend estaba desfasada**, justo lo que se nota cuando alguien
+  intenta levantar el proyecto desde cero.
+- **La lectura de albaranes fallaba con fotos reales.** Probándola con albaranes de proveedores
+  de verdad salieron tres problemas de fondo: el lector partía las columnas y no reconocía las
+  líneas; las fotos reenviadas por WhatsApp llegan comprimidas a 768 px, sin resolución para el
+  texto pequeño; y las filas con muchas columnas no encajaban en el formato que esperaba.
 
-Cada uno de esos arreglos obligaba a volver a probar todo lo anterior, y de ahí el retraso: no
-era añadir trabajo nuevo, era que lo que ya estaba hecho dejaba de funcionar.
+La lectura no era "un ajuste": había que cambiar cómo se segmenta la imagen, ampliar las fotos
+pequeñas antes de leerlas, rehacer el reconocimiento de filas y añadir controles para no
+inventar importes. Cada arreglo obligaba a volver a probar todo lo anterior, y de ahí el
+retraso: no era añadir trabajo nuevo, era que lo que ya funcionaba dejaba de hacerlo.
 
 **Cómo está probado**
 
 - Revisado en pantallas de 320 px y 390 px (móvil pequeño y habitual), en tema claro y oscuro,
   y en escritorio para confirmar que no cambia nada de lo que ya teníamos.
-- **165 pruebas automáticas en verde** (133 del backend y 32 del frontend), revisión de código y
-  compilación correctas.
-- Para la lectura de albaranes he dejado **dos documentos de prueba en `docs/ejemplos/`**, con
-  escrito lo que debe salir, para que compruebes tú mismo el acierto.
-- He clonado el repositorio desde cero, como lo vas a hacer tú, y lo he levantado: base de datos,
-  migraciones, API y web funcionando. No debería darte ninguna sorpresa.
+- **165 pruebas automáticas en verde** (133 del backend y 32 del frontend), con la compilación
+  y la revisión de código correctas.
+- He clonado el repositorio desde cero, como lo vas a hacer tú, y lo he levantado: base de
+  datos, migraciones, API y web funcionando. No debería darte ninguna sorpresa.
+- Para la lectura he dejado **dos albaranes de prueba en `docs/ejemplos/`**, con escrito lo que
+  debe salir, para que compruebes tú mismo el acierto: uno limpio (saca las 6 líneas exactas) y
+  otro con aspecto de foto torcida y con sombra (saca 4 de 6).
+
+**Lo que sigue pendiente de tu decisión**
+
+La aplicación está terminada y funciona, pero para meter datos reales falta **dónde alojarla**
+(servidor, dominio y copias de seguridad). Está detallado en `docs/PENDIENTES-BERNART.md`.
+Cuando me digas por dónde tirar, lo dejo funcionando.
 
 Cualquier cosa que veas rara al probarlo, dímela y la corrijo el mismo día.
 
