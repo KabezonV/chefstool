@@ -34,12 +34,24 @@ public class LectorImagen {
     private static final Logger log = LoggerFactory.getLogger(LectorImagen.class);
 
     /** Si el texto de la primera pasada ya trae importes y palabras de albaran, no se gira. */
-    private static final int PUNTUACION_SUFICIENTE = 6;
+    private static final int PUNTUACION_SUFICIENTE = 12;
 
     /** Las fotos de movil vienen enormes; con 2200 px de ancho Tesseract va mas rapido. */
     private static final int ANCHO_MAXIMO = 2200;
 
+    /**
+     * Segmentacion por bloques: es la que mantiene cada fila del albaran en una sola linea.
+     * Con la segmentacion automatica (3) las columnas se parten y luego no hay forma de leerlas.
+     */
+    private static final int PSM_BLOQUE = 6;
+
+    /** Segmentacion automatica, solo como rescate si la de bloque no encuentra nada. */
+    private static final int PSM_AUTOMATICO = 3;
+
     private static final Pattern IMPORTE = Pattern.compile("\\d{1,4}[.,]\\d{2}\\b");
+
+    /** Dos importes seguidos en la misma linea: la forma de una fila de albaran. */
+    private static final Pattern FILA_ALBARAN = Pattern.compile("\\d[.,]\\d{2,4}\\s+\\d[.,]\\d{2,4}\\b");
 
     private static final Pattern PALABRAS_CLAVE =
             Pattern.compile(
@@ -94,10 +106,11 @@ public class LectorImagen {
 
         String mejorTexto = null;
         int mejorPuntuacion = -1;
+        int mejorIndice = -1;
 
         List<BufferedImage> variantes = rotaciones(original);
         for (int i = 0; i < variantes.size(); i++) {
-            Optional<String> texto = leerConTesseract(aPng(variantes.get(i)));
+            Optional<String> texto = leerConTesseract(aPng(variantes.get(i)), PSM_BLOQUE);
             if (texto.isEmpty()) {
                 continue;
             }
@@ -105,9 +118,21 @@ public class LectorImagen {
             if (puntuacion > mejorPuntuacion) {
                 mejorPuntuacion = puntuacion;
                 mejorTexto = texto.get();
+                mejorIndice = i;
             }
             if (i == 0 && puntuacion >= PUNTUACION_SUFICIENTE) {
                 break;
+            }
+        }
+
+        // Rescate: hay documentos (columnas anchas, tablas con bordes) que la segmentacion por
+        // bloques corta mal. Se prueba la automatica sobre la orientacion que mejor puntuo.
+        if (mejorIndice >= 0 && mejorPuntuacion < PUNTUACION_SUFICIENTE) {
+            Optional<String> rescate =
+                    leerConTesseract(aPng(variantes.get(mejorIndice)), PSM_AUTOMATICO);
+            if (rescate.isPresent() && puntuar(rescate.get()) > mejorPuntuacion) {
+                mejorTexto = rescate.get();
+                mejorPuntuacion = puntuar(mejorTexto);
             }
         }
 
@@ -202,6 +227,14 @@ public class LectorImagen {
             }
         }
 
+        Matcher filas = FILA_ALBARAN.matcher(texto);
+        while (filas.find()) {
+            puntuacion += 4;
+            if (puntuacion > 80) {
+                break;
+            }
+        }
+
         long letras = texto.chars().filter(Character::isLetter).count();
         long total = texto.length();
         if (total > 0 && letras * 100 / total >= 40) {
@@ -210,8 +243,8 @@ public class LectorImagen {
         return puntuacion;
     }
 
-    private Optional<String> leerConTesseract(byte[] png) {
-        return ejecutar(png);
+    private Optional<String> leerConTesseract(byte[] png, int psm) {
+        return ejecutar(png, psm);
     }
 
     private byte[] aPng(BufferedImage imagen) {
@@ -226,14 +259,21 @@ public class LectorImagen {
 
 
     /** Invoca Tesseract sobre el PNG preparado. */
-    private Optional<String> ejecutar(byte[] imagenPng) {
+    private Optional<String> ejecutar(byte[] imagenPng, int psm) {
         Path temporal = null;
         try {
             temporal = Files.createTempFile("chefstool-ocr-", ".png");
             Files.write(temporal, imagenPng);
 
             Process proceso =
-                    new ProcessBuilder(comando, temporal.toString(), "stdout", "-l", idioma)
+                    new ProcessBuilder(
+                                    comando,
+                                    temporal.toString(),
+                                    "stdout",
+                                    "-l",
+                                    idioma,
+                                    "--psm",
+                                    String.valueOf(psm))
                             .redirectErrorStream(false)
                             .start();
 

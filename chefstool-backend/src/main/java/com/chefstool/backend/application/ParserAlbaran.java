@@ -37,6 +37,11 @@ public class ParserAlbaran {
 
     private static final int NOMBRE_PROVEEDOR_MAX = 60;
 
+    /** Etiquetas que marcan el final del nombre: lo que venga despues ya no es el proveedor. */
+    private static final Pattern CORTE_NOMBRE =
+            Pattern.compile(
+                    "(?i)\\s+(albar[aá]n|factura|pedido|presupuesto|cif|nif|fecha|tel[eé]fono|tel)\\b");
+
     private static final Pattern NUMERO_DOCUMENTO =
             Pattern.compile(
                     "(?:N[º°o]?\\.?|NUM(?:ERO)?|FACTURA|ALBAR[AÁ]N)\\s*[:.]?\\s*"
@@ -416,6 +421,10 @@ public class ParserAlbaran {
     private String limpiarNombreProveedor(String linea) {
         String limpia = linea.trim();
 
+        Matcher etiqueta = CORTE_NOMBRE.matcher(limpia);
+        if (etiqueta.find() && etiqueta.start() > 0) {
+            limpia = limpia.substring(0, etiqueta.start());
+        }
         Matcher fecha = FECHA.matcher(limpia);
         if (fecha.find() && fecha.start() > 0) {
             limpia = limpia.substring(0, fecha.start());

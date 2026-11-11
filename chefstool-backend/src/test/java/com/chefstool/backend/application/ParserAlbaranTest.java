@@ -250,4 +250,20 @@ class ParserAlbaranTest {
         assertThat(resultado.extraccion().proveedorNombre())
                 .isEqualTo("Muebles Salinas Rodriguez Alhendin, S.L.");
     }
+
+    @Test
+    void cortaElNombreCuandoElOcrJuntaCabeceraYNumeroDeAlbaran() {
+        String texto =
+                """
+                DISTRIBUCIONES MAKRO SL ALBARAN N: A-2026/0457
+                CIF: B12345678 Fecha: 08/11/2026
+                Descripcion Cant. Precio Importe
+                Aceite de oliva virgen extra 5L 2 24,50 49,00
+                TOTAL: 49,00
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+
+        assertThat(resultado.extraccion().proveedorNombre()).isEqualTo("DISTRIBUCIONES MAKRO SL");
+    }
 }
