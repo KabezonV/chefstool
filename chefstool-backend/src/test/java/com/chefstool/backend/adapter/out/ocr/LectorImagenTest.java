@@ -2,6 +2,7 @@ package com.chefstool.backend.adapter.out.ocr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.awt.image.BufferedImage;
 import org.junit.jupiter.api.Test;
 
 class LectorImagenTest {
@@ -38,5 +39,21 @@ class LectorImagenTest {
     void sinTextoNoPuntua() {
         assertThat(lector.puntuar(null)).isZero();
         assertThat(lector.puntuar("   ")).isZero();
+    }
+
+    @Test
+    void ampliaLasImagenesPequenasAntesDeLeerlas() {
+        // Un reenvio de mensajeria llega a 768 px: el texto seria ilegible para Tesseract
+        BufferedImage pequena = new BufferedImage(768, 1365, BufferedImage.TYPE_INT_RGB);
+
+        assertThat(lector.rotaciones(pequena).getFirst().getWidth())
+                .isGreaterThanOrEqualTo(1600);
+    }
+
+    @Test
+    void reduceLasFotosEnormesParaNoTardarDeMas() {
+        BufferedImage grande = new BufferedImage(4096, 3072, BufferedImage.TYPE_INT_RGB);
+
+        assertThat(lector.rotaciones(grande).getFirst().getWidth()).isEqualTo(2200);
     }
 }

@@ -40,6 +40,15 @@ public class LectorImagen {
     private static final int ANCHO_MAXIMO = 2200;
 
     /**
+     * Por debajo de este ancho el texto sale demasiado pequeno para Tesseract. Pasa con las
+     * imagenes reenviadas por mensajeria (por ejemplo, 768 px): se amplian hasta este tamano.
+     */
+    private static final int ANCHO_MINIMO = 1600;
+
+    /** Tope de ampliacion, para no inflar una imagen diminuta hasta el absurdo. */
+    private static final double FACTOR_MAXIMO = 3.0;
+
+    /**
      * Segmentacion por bloques: es la que mantiene cada fila del albaran en una sola linea.
      * Con la segmentacion automatica (3) las columnas se parten y luego no hay forma de leerlas.
      */
@@ -179,17 +188,32 @@ public class LectorImagen {
     private BufferedImage escalar(BufferedImage original) {
         int ancho = original.getWidth();
         int alto = original.getHeight();
-        if (ancho <= ANCHO_MAXIMO) {
-            return aRgb(original);
+        if (ancho > ANCHO_MAXIMO) {
+            double factor = (double) ANCHO_MAXIMO / ancho;
+            int nuevoAlto = Math.max((int) (alto * factor), 1);
+            BufferedImage destino =
+                    new BufferedImage(ANCHO_MAXIMO, nuevoAlto, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = destino.createGraphics();
+            g.setRenderingHint(
+                    RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.drawImage(original, 0, 0, ANCHO_MAXIMO, nuevoAlto, null);
+            g.dispose();
+            return destino;
         }
-        double factor = (double) ANCHO_MAXIMO / ancho;
-        int nuevoAlto = Math.max((int) (alto * factor), 1);
-        BufferedImage destino = new BufferedImage(ANCHO_MAXIMO, nuevoAlto, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = destino.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(original, 0, 0, ANCHO_MAXIMO, nuevoAlto, null);
-        g.dispose();
-        return destino;
+        if (ancho < ANCHO_MINIMO) {
+            double factor = Math.min(FACTOR_MAXIMO, (double) ANCHO_MINIMO / ancho);
+            int nuevoAncho = Math.max((int) (ancho * factor), 1);
+            int nuevoAlto = Math.max((int) (alto * factor), 1);
+            BufferedImage destino =
+                    new BufferedImage(nuevoAncho, nuevoAlto, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = destino.createGraphics();
+            g.setRenderingHint(
+                    RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.drawImage(original, 0, 0, nuevoAncho, nuevoAlto, null);
+            g.dispose();
+            return destino;
+        }
+        return aRgb(original);
     }
 
     private BufferedImage aRgb(BufferedImage original) {
