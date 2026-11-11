@@ -88,6 +88,13 @@ export default function DocumentoDetalle() {
   const iva = Number(cabecera.iva || 0)
   const total = Math.round((neto + iva) * 100) / 100
 
+  const proveedorDetectado = documento?.extraccion?.proveedorNombre?.trim() ?? ''
+  const proveedorNuevo =
+    proveedorDetectado !== '' &&
+    !proveedores.some(
+      (proveedor) => proveedor.nombre.trim().toLowerCase() === proveedorDetectado.toLowerCase(),
+    )
+
   const soloLectura =
     documento?.estado === 'confirmado' || documento?.estado === 'descartado'
 
@@ -308,6 +315,11 @@ export default function DocumentoDetalle() {
                   </option>
                 ))}
               </Select>
+              {proveedorNuevo && !cabecera.proveedorId && !soloLectura && (
+                <p className="mt-1 text-xs text-muted">
+                  «{proveedorDetectado}» no está en tu catálogo: se creará al confirmar.
+                </p>
+              )}
             </Field>
             <Field label="Número de documento" htmlFor="numero">
               <Input

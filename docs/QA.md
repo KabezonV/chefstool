@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 118 tests (unitarios, integración y seguridad)
+# Backend: 122 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 32 tests (Vitest + Testing Library)
@@ -29,12 +29,12 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | --- | --- | --- |
 | Modelo de datos | `ChefstoolBackendApplicationTests` | Arranque, Flyway y validación del esquema |
 | Productos | `ProductoServiceTest`, `ProductoControllerTest` | Alta, duplicados, borrado lógico, reciclado de nombres |
-| Parser de albaranes | `ParserAlbaranTest` | Proveedor, fecha, número, líneas, importes con coma y miles, líneas que no cuadran |
+| Parser de albaranes | `ParserAlbaranTest` | Proveedor, fecha, número (incluido el que llega cortado), líneas, importes con coma y miles, líneas que no cuadran |
 | Extracción real | `DocumentoControllerTest` | Sube un PDF y comprueba los datos extraídos; imagen sin OCR no inventa datos |
 | OCR con IA | `ExtractorVisionTest` | Interpretación del JSON del modelo, importes en formato español, bloques markdown y respuesta vacía |
 | OCR híbrido | `ExtractorHibridoTest` | Usa la IA si está configurada y cae a Tesseract si falla o no hay clave |
 | PDF escaneado | `LectorPdfTest` | Detecta que no hay texto y rasteriza las páginas (máx. 3) para pasarlas por OCR; aviso claro si el OCR no está disponible |
-| Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral |
+| Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral, alta del proveedor leído del albarán cuando no existe y reutilización del existente sin duplicar |
 | Fichas | `FichaServiceTest`, `FichaControllerTest` | Coste con el mejor precio, productos sin precio, margen (incluido negativo) |
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
 | Recuperación de contraseña | `RecuperacionPasswordServiceTest` | Enlace de un solo uso, caducidad, enlace nuevo anula el anterior, correo desconocido |

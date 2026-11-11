@@ -207,7 +207,16 @@ public class ParserAlbaran {
 
     private String buscarNumero(String texto) {
         Matcher matcher = NUMERO_DOCUMENTO.matcher(texto);
-        return matcher.find() ? matcher.group(1) : null;
+        if (!matcher.find()) {
+            return null;
+        }
+        // Un numero cortado por el OCR ("A-2026/") no debe quedarse con el separador final
+        String numero = matcher.group(1);
+        int fin = numero.length();
+        while (fin > 0 && (numero.charAt(fin - 1) == '-' || numero.charAt(fin - 1) == '/')) {
+            fin--;
+        }
+        return numero.substring(0, fin);
     }
 
     private List<LineaExtraccion> buscarLineas(List<String> lineas, UUID organizacionId) {

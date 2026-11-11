@@ -243,15 +243,36 @@ public class CompraService {
                     .filter(proveedor -> proveedor.getDeletedAt() == null)
                     .orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
         }
-        if (extraccion.proveedorNombre() == null || extraccion.proveedorNombre().isBlank()) {
+        String nombre = nombreDeProveedorUtilizable(extraccion.proveedorNombre());
+        if (nombre == null) {
             return null;
         }
         return proveedorRepository
                 .findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(organizacionId)
                 .stream()
-                .filter(p -> p.getNombre().equalsIgnoreCase(extraccion.proveedorNombre().trim()))
+                .filter(p -> p.getNombre().equalsIgnoreCase(nombre))
                 .findFirst()
-                .orElse(null);
+                .orElseGet(() -> crearProveedor(organizacionId, nombre));
+    }
+
+    /**
+     * Normaliza el nombre leido del albaran y descarta lo que no parece un proveedor real, para
+     * no llenar el catalogo con ruido del OCR ("1", "||", "N").
+     */
+    private String nombreDeProveedorUtilizable(String nombre) {
+        if (nombre == null) {
+            return null;
+        }
+        String limpio = nombre.trim().replaceAll("\\s+", " ");
+        boolean tieneLetras = limpio.chars().anyMatch(Character::isLetter);
+        return tieneLetras && limpio.length() >= 3 ? limpio : null;
+    }
+
+    private Proveedor crearProveedor(UUID organizacionId, String nombre) {
+        Proveedor proveedor = new Proveedor();
+        proveedor.setOrganizacionId(organizacionId);
+        proveedor.setNombre(nombre);
+        return proveedorRepository.save(proveedor);
     }
 
     private Producto resolverProducto(UUID productoId) {

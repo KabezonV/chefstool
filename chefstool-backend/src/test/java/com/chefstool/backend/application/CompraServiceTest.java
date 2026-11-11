@@ -90,6 +90,77 @@ class CompraServiceTest extends IntegracionBase {
                 .noneMatch(alerta -> alerta.getProducto().getId().equals(producto.getId()));
     }
 
+    @Test
+    void creaElProveedorCuandoElNombreDelAlbaranNoEstaEnElCatalogo() {
+        Producto producto = producto();
+
+        CompraResponse compra =
+                compraService.crearDesdeDocumento(
+                        documento(),
+                        extraccionConNombre("  Distribuciones   Makro SL  ", producto));
+
+        assertThat(compra.proveedorNombre()).isEqualTo("Distribuciones Makro SL");
+        assertThat(proveedores())
+                .anyMatch(proveedor -> proveedor.getNombre().equals("Distribuciones Makro SL"));
+    }
+
+    @Test
+    void reutilizaElProveedorExistenteAunqueCambienMayusculasYEspacios() {
+        Producto producto = producto();
+        Proveedor existente = proveedor();
+        long antes = proveedores().size();
+
+        CompraResponse compra =
+                compraService.crearDesdeDocumento(
+                        documento(),
+                        extraccionConNombre("  " + existente.getNombre().toUpperCase() + "  ", producto));
+
+        assertThat(compra.proveedorNombre()).isEqualTo(existente.getNombre());
+        assertThat(proveedores()).hasSize((int) antes);
+    }
+
+    @Test
+    void noCreaProveedorSiElNombreNoPareceReal() {
+        Producto producto = producto();
+        long antes = proveedores().size();
+
+        CompraResponse compra =
+                compraService.crearDesdeDocumento(documento(), extraccionConNombre(" 1 ", producto));
+
+        assertThat(compra.proveedorNombre()).isNull();
+        assertThat(proveedores()).hasSize((int) antes);
+    }
+
+    private List<Proveedor> proveedores() {
+        return proveedorRepository.findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(ORG);
+    }
+
+    private ExtraccionDocumento extraccionConNombre(String nombre, Producto producto) {
+        BigDecimal precio = new BigDecimal("10.00");
+        BigDecimal importe = precio.multiply(BigDecimal.valueOf(3));
+        BigDecimal iva = importe.multiply(new BigDecimal("0.10"));
+
+        return new ExtraccionDocumento(
+                nombre,
+                null,
+                "ALB-" + UUID.randomUUID().toString().substring(0, 6),
+                LocalDate.now(),
+                "EUR",
+                importe,
+                iva,
+                importe.add(iva),
+                List.of(
+                        new LineaExtraccion(
+                                producto.getNombre(),
+                                BigDecimal.valueOf(3),
+                                producto.getUnidadBase(),
+                                precio,
+                                importe,
+                                producto.getId(),
+                                null,
+                                null)));
+    }
+
     private ExtraccionDocumento extraccion(
             Proveedor proveedor, Producto producto, String precioUnitario) {
         BigDecimal precio = new BigDecimal(precioUnitario);

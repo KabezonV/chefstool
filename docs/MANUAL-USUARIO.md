@@ -63,6 +63,8 @@ el **total**. Cuando esté bien, pulsa **Confirmar y guardar**.
 Al confirmar, la aplicación:
 
 - crea la compra con sus líneas e IVA,
+- **da de alta el proveedor si todavía no está en tu catálogo** (con el nombre que
+  leyó del albarán; si ya existe, reutiliza el que hay),
 - actualiza el precio de cada producto en ese proveedor,
 - recalcula las fichas técnicas que usan esos productos,
 - avisa si algún proveedor ha subido un precio un 5 % o más.

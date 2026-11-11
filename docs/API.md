@@ -197,7 +197,10 @@ Cuerpo de revisión y confirmación (`ExtraccionDocumento`):
 ```
 
 Al confirmar se crea la compra, se actualiza `proveedor_productos` y se genera
-una alerta si el precio sube ≥5 % respecto al último registrado.
+una alerta si el precio sube ≥5 % respecto al último registrado. Si llega
+`proveedorNombre` sin `proveedorId` y no hay ningún proveedor con ese nombre, se
+crea uno nuevo con ese nombre (sin duplicar cuando ya existe, ignorando
+mayúsculas y espacios).
 
 Al subir el archivo, el backend intenta leerlo:
 
