@@ -332,8 +332,9 @@ public class ParserAlbaran {
         }
 
         String descripcion = descripcionHastaElPrimerNumero(tokens);
-        if (palabrasConLetras(descripcion) < 2
-                || LINEA_NO_ARTICULO.matcher(descripcion).find()) {
+        if (palabrasConLetras(descripcion) < 1
+                || LINEA_NO_ARTICULO.matcher(descripcion).find()
+                || PALABRA_NO_ARTICULO.matcher(descripcion).find()) {
             return null;
         }
 
@@ -360,6 +361,13 @@ public class ParserAlbaran {
         }
         return palabras;
     }
+
+    /** Palabras de cabecera o de pie que no son nombres de articulo. */
+    private static final Pattern PALABRA_NO_ARTICULO =
+            Pattern.compile(
+                    "(?i)\\b(tel|telefono|teléfono|cif|nif|iban|fecha|cliente|proveedor"
+                            + "|direccion|dirección|calle|poligono|polígono|email|web|pedido"
+                            + "|albaran|albarán|transporte|observaciones|firma)\\b");
 
     /** Una cantidad de mas de 999 unidades casi siempre es una referencia mal leida. */
     private boolean cantidadPlausible(BigDecimal cantidad) {

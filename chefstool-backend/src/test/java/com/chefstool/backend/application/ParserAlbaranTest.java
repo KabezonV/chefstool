@@ -319,4 +319,24 @@ class ParserAlbaranTest {
 
         assertThat(resultado.extraccion().lineas()).isEmpty();
     }
+    @Test
+    void leeArticulosDeUnaSolaPalabraEnFilasConColumnasDeMas() {
+        String texto =
+                """
+                DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.
+                Albaran N: A-2026/0457
+                Fecha: 08/11/2026
+                PATATA 0110101 20260409167 10 0,95 9,50 10
+                ZANAHORIA 0110104 20260407167 5 1,10 5,50 10
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+        var lineas = resultado.extraccion().lineas();
+
+        assertThat(lineas).hasSize(2);
+        assertThat(lineas.get(0).descripcion()).isEqualTo("PATATA");
+        assertThat(lineas.get(0).cantidad()).isEqualByComparingTo("10");
+        assertThat(lineas.get(0).importe()).isEqualByComparingTo("9.50");
+        assertThat(lineas.get(1).descripcion()).isEqualTo("ZANAHORIA");
+    }
 }
