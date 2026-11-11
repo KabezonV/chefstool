@@ -52,6 +52,10 @@ La pantalla de revisión es la más importante: **nada se guarda sin tu confirma
 
 - **Confianza**: el porcentaje indica cuánto ha reconocido la lectura automática.
   Por debajo del 85 % conviene mirar línea por línea.
+- **Proveedor**: si el que leyó el albarán ya está en tu catálogo, sale elegido. Si no,
+  aparece **"Dar de alta un proveedor nuevo…"** con el nombre detectado escrito debajo:
+  corrígelo ahí y se dará de alta al confirmar. También puedes elegir **"Sin asignar"** o
+  cualquier proveedor de la lista.
 - **Aviso "Los importes no cuadran"**: si aparece, significa que las líneas no suman
   lo mismo que el total. Suele ser una línea que no se ha leído.
 - **Aviso "No se han reconocido las líneas"**: la foto no era buena o el formato es

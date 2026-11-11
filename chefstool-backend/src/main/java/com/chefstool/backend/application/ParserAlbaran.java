@@ -35,6 +35,8 @@ public class ParserAlbaran {
     private static final Pattern FECHA =
             Pattern.compile("(\\d{1,2})[/\\-.]{1}(\\d{1,2})[/\\-.]{1}(\\d{2,4})");
 
+    private static final int NOMBRE_PROVEEDOR_MAX = 60;
+
     private static final Pattern NUMERO_DOCUMENTO =
             Pattern.compile(
                     "(?:N[º°o]?\\.?|NUM(?:ERO)?|FACTURA|ALBAR[AÁ]N)\\s*[:.]?\\s*"
@@ -384,14 +386,14 @@ public class ParserAlbaran {
     private String nombreProveedorProbable(List<String> lineas) {
         // 1) Una linea con forma de razon social ("Muebles Salinas Rodriguez, S.L.")
         for (String linea : lineas) {
-            String limpia = linea.trim();
+            String limpia = limpiarNombreProveedor(linea);
             if (RAZON_SOCIAL.matcher(limpia).find() && contieneTexto(limpia)) {
                 return limpia;
             }
         }
         // 2) La primera linea con letras y sin numeros (los importes y fechas no valen)
         for (String linea : lineas) {
-            String limpia = linea.trim();
+            String limpia = limpiarNombreProveedor(linea);
             if (contieneTexto(limpia)
                     && limpia.chars().noneMatch(Character::isDigit)
                     && limpia.length() >= 3
@@ -402,8 +404,33 @@ public class ParserAlbaran {
         return lineas.stream()
                 .filter(linea -> linea.chars().anyMatch(Character::isLetter))
                 .findFirst()
-                .map(String::trim)
+                .map(this::limpiarNombreProveedor)
                 .orElse(null);
+    }
+
+    /**
+     * El OCR suele pegar en la misma linea el nombre y la fecha ("... S.L. Fecha08/08/2024").
+     * Se corta por la fecha o por las etiquetas habituales y se acota la longitud, para no
+     * proponer como proveedor una cadena con la fecha dentro.
+     */
+    private String limpiarNombreProveedor(String linea) {
+        String limpia = linea.trim();
+
+        Matcher fecha = FECHA.matcher(limpia);
+        if (fecha.find() && fecha.start() > 0) {
+            limpia = limpia.substring(0, fecha.start());
+        }
+        limpia =
+                limpia.replaceAll(
+                                "(?i)[\\s,;:—–-]*\\b(fecha|cif|nif|tel[eé]fono|tel"
+                                        + "|albar[aá]n|factura)\\s*[:.]?\\s*$",
+                                "")
+                        .replaceAll("[\\s,;:—–/-]+$", "")
+                        .trim();
+        if (limpia.length() > NOMBRE_PROVEEDOR_MAX) {
+            limpia = limpia.substring(0, NOMBRE_PROVEEDOR_MAX).trim();
+        }
+        return limpia;
     }
 
     private boolean contieneTexto(String linea) {

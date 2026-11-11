@@ -234,4 +234,20 @@ class ParserAlbaranTest {
 
         assertThat(resultado.extraccion().numeroDocumento()).isEqualTo("A-2026");
     }
+
+    @Test
+    void recortaLaFechaQueElOcrPegaAlNombreDelProveedor() {
+        String texto =
+                """
+                Muebles Salinas Rodriguez Alhendin, S.L. Fecha08/08/2024
+                CIF B12345678
+                Albaran numero A-77
+                Fecha: 08/08/2024
+                """;
+
+        var resultado = parser.interpretar(texto, ORG);
+
+        assertThat(resultado.extraccion().proveedorNombre())
+                .isEqualTo("Muebles Salinas Rodriguez Alhendin, S.L.");
+    }
 }

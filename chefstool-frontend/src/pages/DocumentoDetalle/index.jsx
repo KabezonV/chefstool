@@ -21,6 +21,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, Input, Select } from '@/components/ui/input'
 import { Celda, TablaFormulario } from '@/components/ui/tabla'
 
+const PROVEEDOR_NUEVO = '__proveedor_nuevo__'
+
 export default function DocumentoDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -31,6 +33,7 @@ export default function DocumentoDetalle() {
   const [lineas, setLineas] = useState([])
   const [cabecera, setCabecera] = useState({
     proveedorId: '',
+    proveedorNuevo: '',
     numeroDocumento: '',
     fecha: '',
     moneda: 'EUR',
@@ -55,8 +58,16 @@ export default function DocumentoDetalle() {
         setProveedores(listaProveedores)
 
         const extraccion = detalle.extraccion
+        const nombreDetectado = (extraccion?.proveedorNombre ?? '').trim()
+        const yaExiste =
+          nombreDetectado !== '' &&
+          listaProveedores.some(
+            (proveedor) => proveedor.nombre.trim().toLowerCase() === nombreDetectado.toLowerCase(),
+          )
+        const proponerNuevo = nombreDetectado !== '' && !yaExiste && !extraccion?.proveedorId
         setCabecera({
-          proveedorId: extraccion?.proveedorId ?? '',
+          proveedorId: proponerNuevo ? PROVEEDOR_NUEVO : (extraccion?.proveedorId ?? ''),
+          proveedorNuevo: proponerNuevo ? nombreDetectado : '',
           numeroDocumento: extraccion?.numeroDocumento ?? '',
           fecha: extraccion?.fecha ?? '',
           moneda: extraccion?.moneda ?? 'EUR',
@@ -88,12 +99,7 @@ export default function DocumentoDetalle() {
   const iva = Number(cabecera.iva || 0)
   const total = Math.round((neto + iva) * 100) / 100
 
-  const proveedorDetectado = documento?.extraccion?.proveedorNombre?.trim() ?? ''
-  const proveedorNuevo =
-    proveedorDetectado !== '' &&
-    !proveedores.some(
-      (proveedor) => proveedor.nombre.trim().toLowerCase() === proveedorDetectado.toLowerCase(),
-    )
+  const esProveedorNuevo = cabecera.proveedorId === PROVEEDOR_NUEVO
 
   const soloLectura =
     documento?.estado === 'confirmado' || documento?.estado === 'descartado'
@@ -119,8 +125,10 @@ export default function DocumentoDetalle() {
   function payload() {
     const proveedor = proveedores.find((p) => p.id === cabecera.proveedorId)
     return {
-      proveedorId: cabecera.proveedorId || null,
-      proveedorNombre: proveedor?.nombre ?? documento?.extraccion?.proveedorNombre ?? null,
+      proveedorId: esProveedorNuevo ? null : cabecera.proveedorId || null,
+      proveedorNombre: esProveedorNuevo
+        ? cabecera.proveedorNuevo.trim() || null
+        : (proveedor?.nombre ?? documento?.extraccion?.proveedorNombre ?? null),
       numeroDocumento: cabecera.numeroDocumento || null,
       fecha: cabecera.fecha || null,
       moneda: cabecera.moneda || 'EUR',
@@ -314,11 +322,19 @@ export default function DocumentoDetalle() {
                     {proveedor.nombre}
                   </option>
                 ))}
+                {!soloLectura && (
+                  <option value={PROVEEDOR_NUEVO}>Dar de alta un proveedor nuevo…</option>
+                )}
               </Select>
-              {proveedorNuevo && !cabecera.proveedorId && !soloLectura && (
-                <p className="mt-1 text-xs text-muted">
-                  «{proveedorDetectado}» no está en tu catálogo: se creará al confirmar.
-                </p>
+              {esProveedorNuevo && (
+                <Input
+                  className="mt-2"
+                  placeholder="Nombre del proveedor"
+                  aria-label="Nombre del proveedor nuevo"
+                  disabled={soloLectura}
+                  value={cabecera.proveedorNuevo}
+                  onChange={(event) => cambiarCabecera('proveedorNuevo', event.target.value)}
+                />
               )}
             </Field>
             <Field label="Número de documento" htmlFor="numero">

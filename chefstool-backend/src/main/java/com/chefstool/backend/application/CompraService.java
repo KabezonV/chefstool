@@ -30,6 +30,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,9 @@ public class CompraService {
     private static final BigDecimal UMBRAL_ALERTA = new BigDecimal("5.00");
     private static final BigDecimal UMBRAL_AVISO = new BigDecimal("10.00");
     private static final BigDecimal UMBRAL_CRITICO = new BigDecimal("20.00");
+
+    private static final Pattern NOMBRE_CON_FECHA =
+            Pattern.compile("\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{2,4}");
 
     private final CompraRepository compraRepository;
     private final LineaCompraRepository lineaCompraRepository;
@@ -257,7 +261,8 @@ public class CompraService {
 
     /**
      * Normaliza el nombre leido del albaran y descarta lo que no parece un proveedor real, para
-     * no llenar el catalogo con ruido del OCR ("1", "||", "N").
+     * no llenar el catalogo con ruido del OCR ("1", "||", "N") ni con cadenas contaminadas
+     * ("Muebles X S.L. Fecha 08/08/2024").
      */
     private String nombreDeProveedorUtilizable(String nombre) {
         if (nombre == null) {
@@ -265,7 +270,9 @@ public class CompraService {
         }
         String limpio = nombre.trim().replaceAll("\\s+", " ");
         boolean tieneLetras = limpio.chars().anyMatch(Character::isLetter);
-        return tieneLetras && limpio.length() >= 3 ? limpio : null;
+        boolean contaminado =
+                limpio.length() > 60 || NOMBRE_CON_FECHA.matcher(limpio).find();
+        return tieneLetras && limpio.length() >= 3 && !contaminado ? limpio : null;
     }
 
     private Proveedor crearProveedor(UUID organizacionId, String nombre) {

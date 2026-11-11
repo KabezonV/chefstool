@@ -131,6 +131,21 @@ class CompraServiceTest extends IntegracionBase {
         assertThat(proveedores()).hasSize((int) antes);
     }
 
+    @Test
+    void noCreaProveedorSiElNombreLlevaLaFechaPegada() {
+        Producto producto = producto();
+        long antes = proveedores().size();
+
+        CompraResponse compra =
+                compraService.crearDesdeDocumento(
+                        documento(),
+                        extraccionConNombre(
+                                "Muebles Salinas Rodriguez, S.L. Fecha08/08/2024", producto));
+
+        assertThat(compra.proveedorNombre()).isNull();
+        assertThat(proveedores()).hasSize((int) antes);
+    }
+
     private List<Proveedor> proveedores() {
         return proveedorRepository.findByOrganizacionIdAndDeletedAtIsNullOrderByNombreAsc(ORG);
     }
