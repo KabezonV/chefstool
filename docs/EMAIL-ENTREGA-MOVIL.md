@@ -9,10 +9,10 @@ días de lo que te dije.
 
 - **Repositorio completo (GitHub):** <https://github.com/KabezonV/chefstool>
   Es público, así que no necesitas invitación ni cuenta: lo abres y ya está.
-- **Descarga directa en ZIP (versión de esta entrega):**
-  <https://github.com/KabezonV/chefstool/archive/refs/tags/entrega-2026-11-06.zip>
+- **Descarga directa en ZIP (versión de esta entrega, 11/11/2026):**
+  <https://github.com/KabezonV/chefstool/archive/refs/tags/entrega-2026-11-11.zip>
 - **Página de la versión concreta** (por si prefieres revisar los cambios antes de descargar):
-  <https://github.com/KabezonV/chefstool/tree/entrega-2026-11-06>
+  <https://github.com/KabezonV/chefstool/tree/entrega-2026-11-11>
 
 **Cómo levantarlo (3 pasos)**
 
@@ -55,6 +55,12 @@ verdad empezaron a salir problemas que desde el ordenador no se ven:
 - **Zoom automático en iPhone**: al tocar un campo, Safari ampliaba la pantalla y ya no volvía.
 - **La plantilla de entorno del backend estaba desfasada** (apuntaba a un servicio que ya no se
   usa), justo lo que se nota cuando alguien intenta levantar el proyecto desde cero.
+- **La lectura de albaranes fallaba con fotos reales**: al probarla en el teléfono, con
+  albaranes de proveedores de verdad, el lector partía las columnas y no reconocía las líneas;
+  además, las fotos reenviadas por WhatsApp llegan comprimidas a 768 px, sin resolución
+  suficiente para el texto pequeño. Se ha corregido la forma de segmentar, se amplían las
+  imágenes pequeñas antes de leerlas, el lector entiende ya las filas con código, lote y % de
+  IVA, y la aplicación avisa cuando la foto no da para leerla.
 
 Cada uno de esos arreglos obligaba a volver a probar todo lo anterior, y de ahí el retraso: no
 era añadir trabajo nuevo, era que lo que ya estaba hecho dejaba de funcionar.
@@ -63,7 +69,10 @@ era añadir trabajo nuevo, era que lo que ya estaba hecho dejaba de funcionar.
 
 - Revisado en pantallas de 320 px y 390 px (móvil pequeño y habitual), en tema claro y oscuro,
   y en escritorio para confirmar que no cambia nada de lo que ya teníamos.
-- 32 pruebas automáticas en verde, revisión de código y compilación correctas.
+- **165 pruebas automáticas en verde** (133 del backend y 32 del frontend), revisión de código y
+  compilación correctas.
+- Para la lectura de albaranes he dejado **dos documentos de prueba en `docs/ejemplos/`**, con
+  escrito lo que debe salir, para que compruebes tú mismo el acierto.
 - He clonado el repositorio desde cero, como lo vas a hacer tú, y lo he levantado: base de datos,
   migraciones, API y web funcionando. No debería darte ninguna sorpresa.
 
