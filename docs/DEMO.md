@@ -90,6 +90,9 @@ El guion de arriba sirve igual; aquí está lo que cambia cuando no estás delan
 
 ## 30 minutos antes de la llamada
 
+0. Lanza `./scripts/preparar-demo.sh`: comprueba Docker, levanta los servicios, espera a que la
+   API esté sana, calienta la app y verifica el login de demostración. Si todo sale en verde,
+   no hay nada más que preparar.
 1. Si el portátil ha estado suspendido, **reiniciar Docker Desktop**: es la causa número uno
    de que la app no cargue en el momento clave.
 2. `docker compose up -d` y **calentar la app**: entrar, visitar Panel e Informes. La primera
