@@ -146,6 +146,61 @@ public class ExtractorVision {
     }
 
     private JsonNode llamarAlModelo(List<String> imagenesBase64) {
+        try {
+            String texto =
+                    esOpenAi()
+                            ? peticionOpenAi(imagenesBase64)
+                            : peticionGemini(imagenesBase64);
+            if (texto == null || texto.isBlank()) {
+                throw new DocumentoIlegibleException("La IA no devolvio texto para este documento");
+            }
+            return json.readTree(limpiarJson(texto));
+        } catch (DocumentoIlegibleException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn("Fallo la lectura con IA: {}", ex.getMessage());
+            throw new DocumentoIlegibleException(
+                    "No se pudo consultar el servicio de lectura con IA: " + ex.getMessage());
+        }
+    }
+
+    /** OpenAI usa /chat/completions con las imagenes como data URL. */
+    private boolean esOpenAi() {
+        return url.toLowerCase().contains("openai");
+    }
+
+    private String peticionOpenAi(List<String> imagenesBase64) {
+        List<Object> contenido = new ArrayList<>();
+        contenido.add(java.util.Map.of("type", "text", "text", INSTRUCCIONES));
+        for (String imagen : imagenesBase64) {
+            contenido.add(
+                    java.util.Map.of(
+                            "type",
+                            "image_url",
+                            "image_url",
+                            java.util.Map.of("url", "data:image/jpeg;base64," + imagen)));
+        }
+
+        var cuerpo =
+                java.util.Map.of(
+                        "model", modelo,
+                        "temperature", 0,
+                        "response_format", java.util.Map.of("type", "json_object"),
+                        "messages", List.of(java.util.Map.of("role", "user", "content", contenido)));
+
+        String respuesta =
+                cliente.post()
+                        .uri("/chat/completions")
+                        .header("Authorization", "Bearer " + clave)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(cuerpo)
+                        .retrieve()
+                        .body(String.class);
+
+        return json.readTree(respuesta).path("choices").path(0).path("message").path("content").asText();
+    }
+
+    private String peticionGemini(List<String> imagenesBase64) {
         List<Object> partes = new ArrayList<>();
         partes.add(java.util.Map.of("text", INSTRUCCIONES));
         for (String imagen : imagenesBase64) {
@@ -161,30 +216,19 @@ public class ExtractorVision {
                                 java.util.Map.of(
                                         "temperature", 0, "responseMimeType", "application/json"));
 
-        try {
-            String respuesta =
-                    cliente
-                            .post()
-                            .uri("/models/{modelo}:generateContent", modelo)
-                            .header("x-goog-api-key", clave)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .body(cuerpo)
-                            .retrieve()
-                            .body(String.class);
+        String respuesta =
+                cliente.post()
+                        .uri("/models/{modelo}:generateContent", modelo)
+                        .header("x-goog-api-key", clave)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(cuerpo)
+                        .retrieve()
+                        .body(String.class);
 
-            JsonNode raiz = json.readTree(respuesta);
-            JsonNode texto = raiz.path("candidates").path(0).path("content").path("parts").path(0).path("text");
-            if (texto.isMissingNode() || texto.asText().isBlank()) {
-                throw new DocumentoIlegibleException("La IA no devolvio texto para este documento");
-            }
-            return json.readTree(limpiarJson(texto.asText()));
-        } catch (DocumentoIlegibleException ex) {
-            throw ex;
-        } catch (RuntimeException ex) {
-            log.warn("Fallo la lectura con IA: {}", ex.getMessage());
-            throw new DocumentoIlegibleException(
-                    "No se pudo consultar el servicio de lectura con IA: " + ex.getMessage());
-        }
+        JsonNode raiz = json.readTree(respuesta);
+        JsonNode texto =
+                raiz.path("candidates").path(0).path("content").path("parts").path(0).path("text");
+        return texto.isMissingNode() ? null : texto.asText();
     }
 
     /** Los modelos a veces envuelven el JSON en ```json ... ```. */

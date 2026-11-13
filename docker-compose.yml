@@ -42,6 +42,7 @@ services:
       CHEFSTOOL_CORS: ${CHEFSTOOL_CORS:-http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,http://172.16.*:*}
       CHEFSTOOL_ENLACE_DIRECTO: ${CHEFSTOOL_ENLACE_DIRECTO:-false}
       CHEFSTOOL_ALMACEN: ${CHEFSTOOL_ALMACEN:-local}
+      CHEFSTOOL_OCR_VISION_URL: ${CHEFSTOOL_OCR_VISION_URL:-https://generativelanguage.googleapis.com/v1beta}
       CHEFSTOOL_OCR_VISION_CLAVE: ${CHEFSTOOL_OCR_VISION_CLAVE:-}
       CHEFSTOOL_OCR_VISION_MODELO: ${CHEFSTOOL_OCR_VISION_MODELO:-gemini-3.5-flash}
       # Almacen de albaranes en S3 (opcional; por defecto se usa el volumen local)
