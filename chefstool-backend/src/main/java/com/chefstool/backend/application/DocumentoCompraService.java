@@ -13,8 +13,18 @@ import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoDetalle;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoResumen;
 import com.chefstool.backend.domain.model.ExtraccionDocumento;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import javax.imageio.ImageIO;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -30,6 +40,9 @@ import tools.jackson.databind.ObjectMapper;
 public class DocumentoCompraService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentoCompraService.class);
+
+    /** Ancho de pagina del PDF que se genera al juntar varias hojas (A4 en puntos). */
+    private static final float ANCHO_PAGINA_PDF = 595f;
 
     private final DocumentoCompraRepository documentoRepository;
     private final OrganizacionService organizacionService;
@@ -54,31 +67,53 @@ public class DocumentoCompraService {
     }
 
     @Transactional
-    public DocumentoDetalle subir(MultipartFile archivo, String origen) {
+    public DocumentoDetalle subir(List<MultipartFile> archivos, String origen) {
         UUID organizacionId = organizacionService.organizacionActual();
-        boolean demo = archivo == null || archivo.isEmpty();
+        List<MultipartFile> utiles =
+                archivos == null
+                        ? List.of()
+                        : archivos.stream()
+                                .filter(archivo -> archivo != null && !archivo.isEmpty())
+                                .toList();
+        boolean demo = utiles.isEmpty();
 
         if (demo && !"demo".equalsIgnoreCase(origen)) {
             throw new IllegalArgumentException("Adjunta un albaran o usa el modo demostracion");
         }
 
+        String nombre;
+        String tipoMime;
+        byte[] contenido;
+        if (demo) {
+            nombre = "albaran-demo.pdf";
+            tipoMime = "application/pdf";
+            contenido = new byte[0];
+        } else if (utiles.size() == 1) {
+            MultipartFile archivo = utiles.getFirst();
+            nombre = archivo.getOriginalFilename();
+            tipoMime = archivo.getContentType();
+            contenido = leer(archivo);
+        } else {
+            // Varias hojas del mismo albaran: se juntan en un unico PDF para que la revision
+            // sea una sola compra y no una por foto.
+            nombre = nombreDeVariasHojas(utiles.getFirst().getOriginalFilename(), utiles.size());
+            tipoMime = "application/pdf";
+            contenido = juntarEnPdf(utiles);
+        }
+
         DocumentoCompra documento = new DocumentoCompra();
         documento.setOrganizacionId(organizacionId);
-        documento.setNombreOriginal(demo ? "albaran-demo.pdf" : archivo.getOriginalFilename());
-        documento.setTipoMime(demo ? "application/pdf" : archivo.getContentType());
+        documento.setNombreOriginal(nombre);
+        documento.setTipoMime(tipoMime);
         documento.setOrigen(demo ? "demo" : origen);
         documento.setEstado(DocumentoCompra.PENDIENTE_REVISION);
 
         DocumentoCompra guardado = documentoRepository.save(documento);
 
-        byte[] contenido = demo ? new byte[0] : leer(archivo);
         if (!demo) {
             guardado.setRutaAlmacenamiento(
                     almacenamiento.guardar(
-                            organizacionId,
-                            guardado.getId(),
-                            archivo.getOriginalFilename(),
-                            contenido));
+                            organizacionId, guardado.getId(), nombre, contenido));
         }
 
         try {
@@ -211,5 +246,39 @@ public class DocumentoCompraService {
             return null;
         }
         return objectMapper.readValue(json, ExtraccionDocumento.class);
+    }
+
+    private String nombreDeVariasHojas(String primero, int hojas) {
+        String base = primero == null ? "albaran" : primero.replaceAll("\\.[^.]+$", "");
+        return "%s-%d-hojas.pdf".formatted(base, hojas);
+    }
+
+    /** Convierte varias fotos en un PDF de varias paginas, una por hoja. */
+    private byte[] juntarEnPdf(List<MultipartFile> archivos) {
+        try (PDDocument pdf = new PDDocument()) {
+            for (MultipartFile archivo : archivos) {
+                BufferedImage imagen =
+                        ImageIO.read(new ByteArrayInputStream(leer(archivo)));
+                if (imagen == null) {
+                    throw new DocumentoIlegibleException(
+                            "El archivo " + archivo.getOriginalFilename() + " no es una imagen "
+                                    + "que se pueda leer. Usa JPG o PNG.");
+                }
+                float ancho = ANCHO_PAGINA_PDF;
+                float alto = ancho * imagen.getHeight() / imagen.getWidth();
+                PDPage pagina = new PDPage(new PDRectangle(ancho, alto));
+                pdf.addPage(pagina);
+                PDImageXObject imagenPdf = LosslessFactory.createFromImage(pdf, imagen);
+                try (PDPageContentStream contenido = new PDPageContentStream(pdf, pagina)) {
+                    contenido.drawImage(imagenPdf, 0, 0, ancho, alto);
+                }
+            }
+            ByteArrayOutputStream salida = new ByteArrayOutputStream();
+            pdf.save(salida);
+            return salida.toByteArray();
+        } catch (IOException ex) {
+            throw new DocumentoIlegibleException(
+                    "No se pudieron juntar las hojas del albaran: " + ex.getMessage());
+        }
     }
 }
