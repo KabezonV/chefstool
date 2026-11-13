@@ -1,4 +1,4 @@
-**Asunto:** Chefstool — entrega del 11/11: versión móvil y lectura de albaranes corregida
+**Asunto:** Chefstool — entrega del 13/11: versión móvil y lectura de albaranes corregida
 
 Hola Bernart:
 
@@ -10,10 +10,10 @@ los enlaces y luego el detalle.
 
 - **Repositorio completo (GitHub):** <https://github.com/KabezonV/chefstool>
   Es público: no necesitas invitación ni cuenta, lo abres y ya está.
-- **Descarga directa en ZIP (esta entrega, 11/11/2026):**
-  <https://github.com/KabezonV/chefstool/archive/refs/tags/entrega-2026-11-11.zip>
+- **Descarga directa en ZIP (esta entrega, 13/11/2026):**
+  <https://github.com/KabezonV/chefstool/archive/refs/tags/entrega-2026-11-13.zip>
 - **Página de la versión concreta** (por si quieres ver los cambios antes de descargar):
-  <https://github.com/KabezonV/chefstool/tree/entrega-2026-11-11>
+  <https://github.com/KabezonV/chefstool/tree/entrega-2026-11-13>
 
 **Cómo levantarlo (3 pasos)**
 
