@@ -94,6 +94,21 @@ public class LectorImagen {
     }
 
     /**
+     * Si la imagen se puede abrir. Java no entiende WebP ni HEIC, y el navegador deja elegirlos
+     * porque el selector acepta "image/*".
+     */
+    public boolean sePuedeDecodificar(byte[] imagen) {
+        if (imagen == null || imagen.length == 0) {
+            return false;
+        }
+        try {
+            return ImageIO.read(new ByteArrayInputStream(imagen)) != null;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    /**
      * Lee la imagen probando orientaciones: las fotos de movil llegan giradas muy a menudo
      * y Tesseract no las endereza solo. Se queda con la lectura que mas se parece a un albaran.
      */

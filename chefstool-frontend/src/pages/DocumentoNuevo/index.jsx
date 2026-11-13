@@ -140,7 +140,7 @@ export default function DocumentoNuevo() {
       <input
         ref={archivoRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/jpeg,image/png,application/pdf"
         multiple
         className="hidden"
         onChange={(event) => alElegir(event, 'subida')}

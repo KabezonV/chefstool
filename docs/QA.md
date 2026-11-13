@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 133 tests (unitarios, integración y seguridad)
+# Backend: 134 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 32 tests (Vitest + Testing Library)

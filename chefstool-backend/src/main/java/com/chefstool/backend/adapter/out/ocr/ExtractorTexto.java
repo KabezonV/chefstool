@@ -56,6 +56,12 @@ public class ExtractorTexto implements ExtractorDocumento {
                 texto = ocrDePdfEscaneado(contenido);
             }
         } else {
+            if (!lectorImagen.sePuedeDecodificar(contenido)) {
+                throw new DocumentoIlegibleException(
+                        "El archivo no es una imagen que se pueda leer (los formatos WebP y HEIC no "
+                                + "estan soportados). Sube la foto en JPG o PNG, o el PDF del "
+                                + "proveedor.");
+            }
             texto =
                     lectorImagen
                             .extraerTexto(contenido)

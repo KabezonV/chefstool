@@ -3,6 +3,8 @@ package com.chefstool.backend.adapter.out.ocr;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 
 class LectorImagenTest {
@@ -55,5 +57,18 @@ class LectorImagenTest {
         BufferedImage grande = new BufferedImage(4096, 3072, BufferedImage.TYPE_INT_RGB);
 
         assertThat(lector.rotaciones(grande).getFirst().getWidth()).isEqualTo(2200);
+    }
+    @Test
+    void distingueUnaImagenAbribleDeUnaQueNo() throws Exception {
+        ByteArrayOutputStream png = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB), "png", png);
+
+        byte[] webp = new byte[] {
+            'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P', 'V', 'P', '8', ' '
+        };
+
+        assertThat(lector.sePuedeDecodificar(png.toByteArray())).isTrue();
+        assertThat(lector.sePuedeDecodificar(webp)).isFalse();
+        assertThat(lector.sePuedeDecodificar(new byte[0])).isFalse();
     }
 }
