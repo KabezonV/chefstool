@@ -65,15 +65,14 @@ export default function DocumentoNuevo() {
 
       setAvisoCalidad(await imagenesPequenas(archivos))
 
-      const creados = []
-      for (const archivo of archivos) {
-        const datos = new FormData()
-        datos.append('archivo', archivo)
-        datos.append('origen', origen)
-        creados.push(await api.subir('/documentos', datos))
-      }
+      // Varias fotos van en una sola subida: el backend las junta en un PDF y la
+      // revision es una unica compra, no una por hoja.
+      const datos = new FormData()
+      for (const archivo of archivos) datos.append('archivo', archivo)
+      datos.append('origen', origen)
 
-      navigate(creados.length === 1 ? `/documentos/${creados[0].id}` : '/documentos')
+      const documento = await api.subir('/documentos', datos)
+      navigate(`/documentos/${documento.id}`)
     } catch (err) {
       setError(err.message)
     } finally {

@@ -6,6 +6,7 @@ import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoDetalle;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoResumen;
 import com.chefstool.backend.domain.model.ExtraccionDocumento;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,9 +51,9 @@ public class DocumentoController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public DocumentoDetalle subir(
-            @RequestParam(value = "archivo", required = false) MultipartFile archivo,
+            @RequestParam(value = "archivo", required = false) List<MultipartFile> archivos,
             @RequestParam(value = "origen", defaultValue = "subida") String origen) {
-        return documentoService.subir(archivo, origen);
+        return documentoService.subir(archivos, origen);
     }
 
     @PutMapping("/{id}")

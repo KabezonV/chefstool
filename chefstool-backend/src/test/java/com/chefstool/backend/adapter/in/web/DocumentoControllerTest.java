@@ -16,7 +16,10 @@ import com.chefstool.backend.domain.port.out.ProductoRepository;
 import com.chefstool.backend.domain.port.out.ProveedorRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import javax.imageio.ImageIO;
 import java.util.UUID;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -237,5 +240,26 @@ class DocumentoControllerTest extends IntegracionBase {
                 "lineas":[{"descripcion":"Lechuga","cantidad":1,"unidad":"kg",
                            "precioUnitario":10.00,"importe":10.00}]}
                """;
+    }
+
+    @Test
+    void juntaVariasFotosEnUnSoloDocumento() throws Exception {
+        MockMultipartFile hoja1 = png("hoja1.png");
+        MockMultipartFile hoja2 = png("hoja2.png");
+
+        mockMvc.perform(
+                        multipart("/api/documentos")
+                                .file(hoja1)
+                                .file(hoja2)
+                                .param("origen", "subida"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombreOriginal").value("hoja1-2-hojas.pdf"))
+                .andExpect(jsonPath("$.tieneArchivo").value(true));
+    }
+
+    private MockMultipartFile png(String nombre) throws Exception {
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(40, 60, BufferedImage.TYPE_INT_RGB), "png", salida);
+        return new MockMultipartFile("archivo", nombre, "image/png", salida.toByteArray());
     }
 }
