@@ -21,12 +21,12 @@ import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import Paginador, { Buscador } from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
-function Campo({ campo, valor, onChange, opciones }) {
+function Campo({ campo, valor, onChange, opciones, error }) {
   const id = `campo-${campo.name}`
 
   if (campo.type === 'select') {
     return (
-      <Field label={campo.label} htmlFor={id}>
+      <Field label={campo.label} htmlFor={id} error={error}>
         <Select
           id={id}
           value={valor ?? ''}
@@ -45,7 +45,7 @@ function Campo({ campo, valor, onChange, opciones }) {
 
   if (campo.type === 'textarea') {
     return (
-      <Field label={campo.label} htmlFor={id}>
+      <Field label={campo.label} htmlFor={id} error={error}>
         <Textarea
           id={id}
           value={valor ?? ''}
@@ -56,7 +56,7 @@ function Campo({ campo, valor, onChange, opciones }) {
   }
 
   return (
-    <Field label={campo.label} htmlFor={id}>
+    <Field label={campo.label} htmlFor={id} error={error}>
       <Input
         id={id}
         type={campo.type ?? 'text'}
@@ -96,6 +96,7 @@ export default function ResourcePage({ recurso }) {
   const [editando, setEditando] = useState(null)
   const [valores, setValores] = useState(() => valoresIniciales(campos))
   const [guardando, setGuardando] = useState(false)
+  const [errores, setErrores] = useState({})
   const [importando, setImportando] = useState(false)
   const [importacion, setImportacion] = useState(null)
   const [fuentes, setFuentes] = useState({})
@@ -208,6 +209,19 @@ export default function ResourcePage({ recurso }) {
 
   async function guardar(event) {
     event.preventDefault()
+
+    // Se marca cada campo que falta, en su sitio, antes de llamar al servidor.
+    const faltan = {}
+    for (const campo of campos) {
+      if (campo.required && String(valores[campo.name] ?? '').trim() === '') {
+        faltan[campo.name] = 'Este campo es obligatorio'
+      }
+    }
+    setErrores(faltan)
+    if (Object.keys(faltan).length > 0) {
+      return
+    }
+
     setGuardando(true)
     setError(null)
 
@@ -324,6 +338,7 @@ export default function ResourcePage({ recurso }) {
                     valor={valores[campo.name]}
                     onChange={cambiar}
                     opciones={fuentes[campo.name] ?? []}
+                    error={errores[campo.name]}
                   />
                 ))}
               </div>

@@ -58,11 +58,16 @@ export function Label({ className, ...props }) {
   )
 }
 
-export function Field({ label, htmlFor, children }) {
+export function Field({ label, htmlFor, error, children }) {
   return (
     <div>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
+      {error && (
+        <p role="alert" className="mt-1 text-xs font-medium text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

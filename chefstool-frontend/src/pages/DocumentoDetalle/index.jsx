@@ -42,6 +42,7 @@ export default function DocumentoDetalle() {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  const [errores, setErrores] = useState({})
 
   useEffect(() => {
     let activo = true
@@ -106,6 +107,8 @@ export default function DocumentoDetalle() {
 
   function cambiarCabecera(campo, valor) {
     setCabecera((previos) => ({ ...previos, [campo]: valor }))
+    const clave = campo === 'proveedorNuevo' ? 'proveedor' : campo
+    setErrores((previos) => ({ ...previos, [clave]: undefined }))
   }
 
   function cambiarLinea(indice, campo, valor) {
@@ -162,6 +165,20 @@ export default function DocumentoDetalle() {
   }
 
   async function confirmar() {
+    const faltan = {}
+    if (!cabecera.proveedorId) {
+      faltan.proveedor = 'Elige un proveedor de la lista o da uno de alta'
+    } else if (esProveedorNuevo && cabecera.proveedorNuevo.trim() === '') {
+      faltan.proveedor = 'Escribe el nombre del proveedor'
+    }
+    if (!cabecera.fecha) {
+      faltan.fecha = 'Indica la fecha del albarán'
+    }
+    setErrores(faltan)
+    if (Object.keys(faltan).length > 0) {
+      return
+    }
+
     setGuardando(true)
     setError(null)
     try {
@@ -309,7 +326,7 @@ export default function DocumentoDetalle() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Proveedor" htmlFor="proveedor">
+            <Field label="Proveedor" htmlFor="proveedor" error={errores.proveedor}>
               <Select
                 id="proveedor"
                 disabled={soloLectura}
@@ -347,7 +364,7 @@ export default function DocumentoDetalle() {
                 }
               />
             </Field>
-            <Field label="Fecha" htmlFor="fecha">
+            <Field label="Fecha" htmlFor="fecha" error={errores.fecha}>
               <Input
                 id="fecha"
                 type="date"

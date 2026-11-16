@@ -18,12 +18,17 @@ export function borrarToken() {
 
 async function manejar(respuesta, path) {
   if (respuesta.status === 401) {
+    // Al entrar, un 401 son credenciales incorrectas, no una sesion caducada.
+    if (path.startsWith('/auth/login') || path.startsWith('/auth/registro')) {
+      const cuerpo = await respuesta.json().catch(() => null)
+      throw new Error(cuerpo?.error ?? 'Correo o contraseña incorrectos')
+    }
     borrarToken()
     localStorage.removeItem(CLAVE_SESION)
     if (window.location.pathname !== '/auth') {
       window.location.href = '/auth'
     }
-    throw new Error('Sesión caducada')
+    throw new Error('Tu sesión ha caducado. Vuelve a entrar.')
   }
 
   if (!respuesta.ok) {
