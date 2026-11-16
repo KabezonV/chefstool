@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 // Utils
 import { fechaCorta, moneda } from '@/lib/formato'
-import { avisosDeImportes } from '@/lib/importes'
+import { avisosDeImportes, lineasDescuadradas } from '@/lib/importes'
 import { importeLinea, lineaVacia } from './utils/lineas'
 
 // Enumerations
@@ -81,6 +81,7 @@ export default function DocumentoDetalle() {
             unidad: linea.unidad ?? '',
             precioUnitario: String(linea.precioUnitario ?? 0),
             productoId: linea.productoId ?? '',
+            importeLeido: linea.importe ?? null,
           })),
         )
         setError(null)
@@ -221,10 +222,19 @@ export default function DocumentoDetalle() {
 
   const estado =
     ESTADOS_DOCUMENTO[documento.estado] ?? ESTADOS_DOCUMENTO.pendiente_revision
+  // En un documento por revisar los importes de la cabecera aún no existen: los leídos
+  // están en la extracción, que es contra lo que hay que comparar las líneas.
+  const leidos = documento.extraccion ?? {}
   const avisosImportes = avisosDeImportes(
-    { importeNeto: documento.importeNeto, importeIva: documento.importeIva, importeTotal: documento.importeTotal },
+    {
+      importeNeto: documento.importeNeto ?? leidos.importeNeto,
+      importeIva: documento.importeIva ?? leidos.importeIva,
+      importeTotal: documento.importeTotal ?? leidos.importeTotal,
+    },
     lineas,
   )
+  const descuadres = lineasDescuadradas(lineas)
+  const descuadrePorLinea = new Map(descuadres.map((descuadre) => [descuadre.indice, descuadre]))
   const confianzaBaja =
     documento.confianzaExtraccion === null ||
     Number(documento.confianzaExtraccion) < 0.5
@@ -282,19 +292,32 @@ export default function DocumentoDetalle() {
         </div>
       )}
 
-      {avisosImportes.length > 0 && documento.estado === 'pendiente_revision' && (
-        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
-          <p className="font-medium">Los importes no cuadran</p>
-          <ul className="mt-1 list-disc pl-5">
-            {avisosImportes.map((aviso) => (
-              <li key={aviso}>{aviso}</li>
-            ))}
-          </ul>
-          <p className="mt-1">
-            Puede ser una línea que no se ha leído. Revísalo antes de confirmar la compra.
-          </p>
-        </div>
-      )}
+      {(avisosImportes.length > 0 || descuadres.length > 0) &&
+        documento.estado === 'pendiente_revision' && (
+          <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
+            <p className="font-medium">Los importes no cuadran</p>
+            {avisosImportes.length > 0 && (
+              <ul className="mt-1 list-disc pl-5">
+                {avisosImportes.map((aviso) => (
+                  <li key={aviso}>{aviso}</li>
+                ))}
+              </ul>
+            )}
+            {descuadres.length > 0 && (
+              <ul className="mt-1 list-disc pl-5">
+                {descuadres.map(({ indice, leido, calculado, cantidad, precio }) => (
+                  <li key={`linea-${indice}`}>
+                    Línea {indice + 1}: el documento dice {moneda(leido)} y{' '}
+                    {cantidad} × {moneda(precio)} son {moneda(calculado)}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1">
+              Puede ser una línea que no se ha leído. Revísalo antes de confirmar la compra.
+            </p>
+          </div>
+        )}
 
       {!documento.errorExtraccion &&
         confianzaBaja &&
@@ -406,7 +429,14 @@ export default function DocumentoDetalle() {
               </thead>
               <tbody>
                 {lineas.map((linea, indice) => (
-                  <tr key={indice} className="border-b border-border/60 last:border-0">
+                  <tr
+                    key={indice}
+                    className={
+                      descuadrePorLinea.has(indice)
+                        ? 'border-b border-border/60 bg-warning-soft last:border-0'
+                        : 'border-b border-border/60 last:border-0'
+                    }
+                  >
                     <Celda etiqueta="Descripción" className="px-4 py-2 sm:px-5 sm:py-2">
                       <Input
                         disabled={soloLectura}
@@ -452,6 +482,11 @@ export default function DocumentoDetalle() {
                       className="px-4 py-2 tabular-nums sm:px-2 sm:py-2"
                     >
                       {moneda(importeLinea(linea))}
+                      {descuadrePorLinea.has(indice) && (
+                        <span className="mt-0.5 block text-xs font-normal text-warning">
+                          dice {moneda(descuadrePorLinea.get(indice).leido)}
+                        </span>
+                      )}
                     </Celda>
                     <Celda etiqueta="Producto" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Select

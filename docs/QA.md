@@ -6,7 +6,7 @@
 # Backend: 134 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 32 tests (Vitest + Testing Library)
+# Frontend: 37 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -49,7 +49,7 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q`, orden asc/desc y orden no permitido |
 | Ficha en PDF | `FichaPdfServiceTest` | Genera un PDF válido con el nombre y el coste de la ficha |
 | RGPD / baja de cuenta | `BajaCuentaServiceTest` | Contraseña obligatoria, borrado de la organización si está solo, bloqueo si es el último propietario con equipo, exportación de datos personales |
-| Frontend | `formato`, `importes`, `utils`, `barras`, `documentos`, `ResourcePage`, `Auth` | Formateo de números y fechas, avisos de importes que no cuadran (líneas frente a base imponible, base más IVA frente a total, tolerancia de céntimos), utilidades, gráfico de barras, traducción de estados de documento, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido) y pantalla de acceso |
+| Frontend | `formato`, `importes`, `utils`, `barras`, `documentos`, `ResourcePage`, `Auth` | Formateo de números y fechas, avisos de importes que no cuadran (líneas frente a base imponible, base más IVA frente a total, tolerancia de céntimos, línea cuyo importe no sale de cantidad por precio y líneas del formulario que solo traen cantidad y precio), utilidades, gráfico de barras, traducción de estados de documento, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido) y pantalla de acceso |
 
 ## Pasada de QA en navegador
 
@@ -113,6 +113,25 @@ repartidas en 6 meses y mide los listados. Resultado del 22/10/2026:
 
 Los tiempos de esa medición incluían la latencia hasta una base alojada externa; con el
 PostgreSQL local del `docker-compose` son bastante menores.
+
+## Robustez con fotos malas (16/11/2026)
+
+Cuatro fotos generadas a propósito con los mismos defectos de un móvil de gama baja o de
+una foto hecha con prisa (la misma tabla de 6 artículos, total 41,58 €). Todas con la
+lectura por IA configurada:
+
+| Foto | Defecto | Líneas | Proveedor, fecha y total |
+| --- | --- | --- | --- |
+| Torcida 12° | hoja inclinada sobre la mesa | 6 de 6 | Correctos |
+| Perspectiva fuerte | foto en ángulo, hoja en trapecio | 6 de 6 | Correctos |
+| Gama baja | 2 MP, ruido, desenfoque y JPEG calidad 35 | 6 de 6 | Correctos |
+| Contraluz | sombra lateral dura y 8° de inclinación | 6 de 6 | Correctos |
+
+Las descripciones se leen bien; el punto débil son las columnas de cantidad y precio, que
+a veces se cruzan (por ejemplo 2 × 1,20 € donde el papel dice 3 × 1,20 €). Como el importe
+que devuelve la lectura sí es coherente con esos dos números, la comprobación por línea no
+lo detecta: lo detecta el aviso global, porque la suma de las líneas ya no coincide con la
+base imponible del documento. Ese aviso es el que se ve en la pantalla de revisión.
 
 ## Pendiente de verificar a mano
 

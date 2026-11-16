@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 
 // Utils
-import { avisosDeImportes } from '@/lib/importes'
+import { avisosDeImportes, lineasDescuadradas } from '@/lib/importes'
 
 const lineas = (...importes) => importes.map((importe) => ({ importe }))
 
@@ -39,10 +39,51 @@ describe('avisosDeImportes', () => {
     expect(avisos).toEqual([])
   })
 
+  it('cuenta las líneas del formulario, que solo traen cantidad y precio', () => {
+    const avisos = avisosDeImportes({ importeNeto: 10 }, [
+      { cantidad: '2', precioUnitario: '2.5' },
+      { cantidad: '1', precioUnitario: '3' },
+    ])
+    expect(avisos.some((aviso) => aviso.includes('Las líneas suman'))).toBe(true)
+  })
+
   it('no avisa si faltan datos', () => {
     expect(avisosDeImportes({}, [])).toEqual([])
     expect(avisosDeImportes({ importeNeto: 0, importeIva: 0, importeTotal: 0 }, lineas(10))).toEqual(
       [],
     )
+  })
+})
+
+describe('lineasDescuadradas', () => {
+  it('no avisa cuando cantidad por precio da el importe del documento', () => {
+    expect(
+      lineasDescuadradas([
+        { cantidad: '2', precioUnitario: '2.5', importeLeido: 5 },
+        { cantidad: '10', precioUnitario: '0.95', importeLeido: 9.5 },
+      ]),
+    ).toEqual([])
+  })
+
+  it('señala la línea cuyo importe no sale de la cantidad y el precio', () => {
+    const descuadres = lineasDescuadradas([
+      { cantidad: '2', precioUnitario: '2.5', importeLeido: 5 },
+      { cantidad: '2', precioUnitario: '1.2', importeLeido: 3.6 },
+    ])
+    expect(descuadres).toHaveLength(1)
+    expect(descuadres[0]).toMatchObject({ indice: 1, leido: 3.6, calculado: 2.4 })
+  })
+
+  it('ignora las líneas escritas a mano, que no traen importe leído', () => {
+    expect(lineasDescuadradas([{ cantidad: '3', precioUnitario: '1.2' }])).toEqual([])
+    expect(
+      lineasDescuadradas([{ cantidad: '3', precioUnitario: '1.2', importeLeido: null }]),
+    ).toEqual([])
+  })
+
+  it('tolera céntimos de redondeo', () => {
+    expect(
+      lineasDescuadradas([{ cantidad: '3', precioUnitario: '0.3333', importeLeido: 1 }]),
+    ).toEqual([])
   })
 })

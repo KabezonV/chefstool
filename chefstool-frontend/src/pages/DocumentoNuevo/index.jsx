@@ -104,6 +104,10 @@ export default function DocumentoNuevo() {
           Elige cómo quieres incorporar el albarán. El texto se extrae automáticamente
           y podrás revisarlo antes de confirmar.
         </p>
+        <p className="mt-2 text-xs text-muted">
+          Para que se lea bien: apoya el móvil, haz la foto recta y que se vea la hoja
+          entera con buena luz.
+        </p>
       </div>
 
       {error && (
