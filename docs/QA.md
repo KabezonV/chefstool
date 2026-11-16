@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 134 tests (unitarios, integración y seguridad)
+# Backend: 135 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 37 tests (Vitest + Testing Library)
@@ -29,7 +29,7 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | --- | --- | --- |
 | Modelo de datos | `ChefstoolBackendApplicationTests` | Arranque, Flyway y validación del esquema |
 | Productos | `ProductoServiceTest`, `ProductoControllerTest` | Alta, duplicados, borrado lógico, reciclado de nombres |
-| Parser de albaranes | `ParserAlbaranTest` | Proveedor (incluido el caso en que el OCR le pega la fecha), fecha, número (también si llega cortado), líneas, filas con columnas de más (código, lote, %IVA), líneas de totales que no deben convertirse en artículos, importes con coma y miles |
+| Parser de albaranes | `ParserAlbaranTest` | Proveedor (incluido el caso en que el OCR le pega la fecha), fecha, número (también si llega cortado), líneas, filas con columnas de más (código, lote, %IVA), líneas de totales que no deben convertirse en artículos, cargos que sí son líneas (portes, envases retornables, recargo de combustible), importes con coma y miles |
 | Extracción real | `DocumentoControllerTest` | Sube un PDF y comprueba los datos extraídos; imagen sin OCR no inventa datos |
 | OCR con IA | `ExtractorVisionTest` | Interpretación del JSON del modelo, importes en formato español, bloques markdown y respuesta vacía |
 | OCR híbrido | `ExtractorHibridoTest` | Usa la IA si está configurada y cae a Tesseract si falla o no hay clave |
@@ -126,6 +126,11 @@ lectura por IA configurada:
 | Perspectiva fuerte | foto en ángulo, hoja en trapecio | 6 de 6 | Correctos |
 | Gama baja | 2 MP, ruido, desenfoque y JPEG calidad 35 | 6 de 6 | Correctos |
 | Contraluz | sombra lateral dura y 8° de inclinación | 6 de 6 | Correctos |
+
+Un albarán de bebidas con **portes, envases retornables y recargo de combustible** se
+lee con las seis líneas (los tres cargos incluidos) y la suma coincide con la base
+imponible, así que no salta ningún aviso. Si el cargo no llega como línea, la revisión
+avisa de que falta y ofrece añadirlo con un botón.
 
 Las descripciones se leen bien; el punto débil son las columnas de cantidad y precio, que
 a veces se cruzan (por ejemplo 2 × 1,20 € donde el papel dice 3 × 1,20 €). Como el importe

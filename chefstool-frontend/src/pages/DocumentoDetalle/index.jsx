@@ -126,6 +126,21 @@ export default function DocumentoDetalle() {
     setLineas((previas) => [...previas, lineaVacia()])
   }
 
+  /** Cargo del documento (portes, envases retornables, tasas) que no ha llegado como línea. */
+  function anadirGasto(importe) {
+    setLineas((previas) => [
+      ...previas,
+      {
+        descripcion: 'Portes',
+        cantidad: '1',
+        unidad: '',
+        precioUnitario: String(importe),
+        productoId: '',
+        importeLeido: null,
+      },
+    ])
+  }
+
   function payload() {
     const proveedor = proveedores.find((p) => p.id === cabecera.proveedorId)
     return {
@@ -235,6 +250,13 @@ export default function DocumentoDetalle() {
   )
   const descuadres = lineasDescuadradas(lineas)
   const descuadrePorLinea = new Map(descuadres.map((descuadre) => [descuadre.indice, descuadre]))
+  // Diferencia entre lo que dice el documento y lo que suman las líneas: si es positiva,
+  // lo normal es que falte un cargo (portes, envases retornables, tasas) sin anotar.
+  const baseDocumento = Number(
+    documento.importeNeto ?? documento.extraccion?.importeNeto ?? 0,
+  )
+  const falta = baseDocumento > 0 ? Math.round((baseDocumento - neto) * 100) / 100 : 0
+  const faltaUnCargo = falta > 0.02
   const confianzaBaja =
     documento.confianzaExtraccion === null ||
     Number(documento.confianzaExtraccion) < 0.5
@@ -295,7 +317,9 @@ export default function DocumentoDetalle() {
       {(avisosImportes.length > 0 || descuadres.length > 0) &&
         documento.estado === 'pendiente_revision' && (
           <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
-            <p className="font-medium">Los importes no cuadran</p>
+            <p className="font-medium">
+              {faltaUnCargo ? 'Falta por anotar un cargo' : 'Los importes no cuadran'}
+            </p>
             {avisosImportes.length > 0 && (
               <ul className="mt-1 list-disc pl-5">
                 {avisosImportes.map((aviso) => (
@@ -313,9 +337,28 @@ export default function DocumentoDetalle() {
                 ))}
               </ul>
             )}
-            <p className="mt-1">
-              Puede ser una línea que no se ha leído. Revísalo antes de confirmar la compra.
-            </p>
+            {faltaUnCargo ? (
+              <p className="mt-1">
+                Suele ser transporte, envases o botes retornables, una tasa o gastos
+                varios. Si está en el documento, añádelo como línea para que las cuentas
+                cuadren.
+              </p>
+            ) : (
+              <p className="mt-1">
+                Puede ser una línea que no se ha leído. Revísalo antes de confirmar la
+                compra.
+              </p>
+            )}
+            {faltaUnCargo && !soloLectura && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => anadirGasto(falta)}
+              >
+                Añadir {moneda(falta)} como gasto
+              </Button>
+            )}
           </div>
         )}
 

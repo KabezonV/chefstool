@@ -46,6 +46,41 @@ class ParserAlbaranTest {
             """;
 
     @Test
+    void conservaLosCargosDelDocumentoComoLineas() {
+        stubProveedores(proveedor("Bebidas Norte"));
+        stubCatalogo();
+
+        String conCargos =
+                """
+                BEBIDAS NORTE S.L.
+                ALBARAN: ALB-2201
+                Fecha: 12/11/2026
+
+                Descripcion Cantidad Precio Importe
+                AGUA MINERAL 1,5L 6 0,60 3,60
+                PORTES 1 4,50 4,50
+                ENVASES RETORNABLES 6 0,10 0,60
+                RECARGO COMBUSTIBLE 1 1,20 1,20
+
+                Base imponible 9,90
+                IVA 21% 2,08
+                TOTAL 11,98
+                """;
+
+        ResultadoExtraccion resultado = parser.interpretar(conCargos, ORG);
+        List<String> descripciones =
+                resultado.extraccion().lineas().stream().map(LineaExtraccion::descripcion).toList();
+
+        assertThat(descripciones).contains("PORTES", "ENVASES RETORNABLES", "RECARGO COMBUSTIBLE");
+        assertThat(resultado.extraccion().lineas())
+                .anySatisfy(
+                        linea -> {
+                            assertThat(linea.descripcion()).isEqualTo("PORTES");
+                            assertThat(linea.importe()).isEqualByComparingTo("4.50");
+                        });
+    }
+
+    @Test
     void interpretaUnAlbaranCompleto() {
         stubProveedores(proveedor("Frutas Garcia"));
         stubCatalogo(producto("Tomate pera"), producto("Cebolla"));

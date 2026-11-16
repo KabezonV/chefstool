@@ -49,7 +49,10 @@ public class ExtractorVision {
              "importeNeto":0,"importeIva":0,"importeTotal":0,
              "lineas":[{"descripcion":"","cantidad":0,"unidad":"","precioUnitario":0,"importe":0}]}
             Reglas: usa null si el dato no aparece; importes con punto decimal y sin simbolo;
-            una entrada por linea de articulo; no inventes lineas que no esten en el documento.
+            una entrada por linea de articulo; incluye tambien como linea cualquier cargo con
+            importe (portes, transporte, envases o botes retornables, tasas, recargos, gastos
+            varios) y los descuentos con importe negativo; no inventes lineas que no esten en
+            el documento y no incluyas como linea la base imponible, el IVA ni el total.
             """;
 
     private final String url;
