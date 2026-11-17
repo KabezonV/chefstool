@@ -138,6 +138,29 @@ que devuelve la lectura sí es coherente con esos dos números, la comprobación
 lo detecta: lo detecta el aviso global, porque la suma de las líneas ya no coincide con la
 base imponible del documento. Ese aviso es el que se ve en la pantalla de revisión.
 
+## Albaranes reales de móvil (17/11/2026)
+
+24 fotos reales de albaranes y tickets de proveedor, tal y como llegan por mensajería
+(768 px de ancho). Se pasaron tres veces por la aplicación completa:
+
+| Versión | Líneas leídas | Base + IVA = total |
+| --- | --- | --- |
+| Imagen tal cual | 216 | 14 de 24 |
+| Imagen ampliada a 1600 px y JPEG de calidad 95 | 205 | 17 de 24 |
+| Lo anterior + autocomprobación en el prompt | 201 | 19 de 24 |
+
+Lo que sí sale bien: **nunca** hubo un documento sin leer, el proveedor y la fecha se
+reconocen en la mayoría, y la coherencia de los totales mejora con las dos correcciones.
+
+Lo que no: en los tickets densos (20-30 líneas) la lectura se deja líneas por el camino,
+así que la suma no coincide con la base imponible. Esos documentos son justo los que
+enseñan el aviso de la pantalla de revisión. En 2 de las 24 fotos no se reconoció la base
+imponible (quedó a 0), y en varias la fecha salió con el año cambiado.
+
+Conclusión práctica: para un ticket largo y borroso hay que repasar líneas a mano; para un
+albarán normal de una hoja la lectura es buena. Si hace falta afinar más, la vía es usar un
+modelo mayor solo cuando la primera lectura no cuadra, en vez de para todos.
+
 ## Pendiente de verificar a mano
 
 - Albaranes reales de proveedores concretos (formatos y descuentos).

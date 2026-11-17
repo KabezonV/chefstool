@@ -7,6 +7,7 @@ import com.chefstool.backend.domain.model.ResultadoExtraccion;
 import com.chefstool.backend.domain.port.out.ExtractorDocumento;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +44,12 @@ public class ExtractorVision {
 
     private static final int ANCHO_MAXIMO = 1600;
 
+    /**
+     * Las fotos que llegan por mensajeria rondan los 768 px de ancho y el texto de un ticket
+     * a ese tamano no se distingue: se amplian antes de mandarlas al modelo.
+     */
+    private static final int ANCHO_MINIMO = 1400;
+
     private static final String INSTRUCCIONES =
             """
             Eres un asistente que lee albaranes y facturas de proveedores de hosteleria.
@@ -53,6 +62,9 @@ public class ExtractorVision {
             importe (portes, transporte, envases o botes retornables, tasas, recargos, gastos
             varios) y los descuentos con importe negativo; no inventes lineas que no esten en
             el documento y no incluyas como linea la base imponible, el IVA ni el total.
+            Antes de responder comprueba que la suma de los importes de las lineas coincide con
+            la base imponible: si no coincide, vuelve a leer el documento y corrige las lineas
+            que falten o que esten mal leidas.
             """;
 
     private final String url;
@@ -131,17 +143,41 @@ public class ExtractorVision {
     private byte[] imagenesDelPng(BufferedImage original) {
         int ancho = original.getWidth();
         int alto = original.getHeight();
-        BufferedImage destino = original;
+        int nuevoAncho = ancho;
         if (ancho > ANCHO_MAXIMO) {
-            int nuevoAlto = Math.max((int) ((long) alto * ANCHO_MAXIMO / ancho), 1);
-            destino = new BufferedImage(ANCHO_MAXIMO, nuevoAlto, BufferedImage.TYPE_INT_RGB);
+            nuevoAncho = ANCHO_MAXIMO;
+        } else if (ancho < ANCHO_MINIMO) {
+            nuevoAncho = (int) Math.round(ancho * Math.min(ANCHO_MAXIMO / (double) ancho, 3.0));
+        }
+
+        BufferedImage destino = original;
+        if (nuevoAncho != ancho) {
+            int nuevoAlto = Math.max((int) Math.round((double) alto * nuevoAncho / ancho), 1);
+            destino = new BufferedImage(nuevoAncho, nuevoAlto, BufferedImage.TYPE_INT_RGB);
             var g = destino.createGraphics();
-            g.drawImage(original, 0, 0, ANCHO_MAXIMO, nuevoAlto, null);
+            g.setRenderingHint(
+                    RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.drawImage(original, 0, 0, nuevoAncho, nuevoAlto, null);
             g.dispose();
         }
-        try {
-            ByteArrayOutputStream salida = new ByteArrayOutputStream();
-            ImageIO.write(destino, "jpeg", salida);
+
+        return aJpeg(destino);
+    }
+
+    /** JPEG con calidad alta: recomprimir otra vez lo que ya venia comprimido se nota. */
+    private byte[] aJpeg(BufferedImage imagen) {
+        try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            var escritor = ImageIO.getImageWritersByFormatName("jpeg").next();
+            var salidaImagen = ImageIO.createImageOutputStream(salida);
+            escritor.setOutput(salidaImagen);
+            var parametros = escritor.getDefaultWriteParam();
+            parametros.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            parametros.setCompressionQuality(0.95f);
+            escritor.write(null, new IIOImage(imagen, null, null), parametros);
+            escritor.dispose();
+            salidaImagen.close();
             return salida.toByteArray();
         } catch (IOException ex) {
             throw new DocumentoIlegibleException("No se pudo convertir la imagen");
