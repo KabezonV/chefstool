@@ -41,6 +41,11 @@ Si intentas borrar algo y no te deja, es por este motivo: pídeselo a un adminis
 > de las líneas puede no leerse: pide la **foto original** o, mejor, el **PDF del
 > proveedor**. Un PDF con texto se lee sin errores porque no hay que interpretar píxeles.
 
+> **Si el albarán es largo** (un ticket con muchas líneas que no cabe en una foto sin perder
+> detalle), haz **varias fotos**: la primera de la parte de arriba y otra de la de abajo,
+> solapando un poco. Al elegir archivo puedes seleccionar las dos a la vez y la aplicación
+> las junta en un solo documento antes de leerlo.
+
 ### Opción B — Archivo (PDF o imagen)
 
 1. **Documentos → Añadir documento → Elegir archivo**.
