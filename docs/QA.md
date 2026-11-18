@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 137 tests (unitarios, integración y seguridad)
+# Backend: 138 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 37 tests (Vitest + Testing Library)
@@ -165,6 +165,21 @@ imponible (quedó a 0), y en varias la fecha salió con el año cambiado.
 Conclusión práctica: para un ticket largo y borroso hay que repasar líneas a mano; para un
 albarán normal de una hoja la lectura es buena. La segunda pasada con un modelo mayor solo se
 paga en los documentos que no cuadran (13 de 24 en esta muestra), no en todos.
+
+## Varias fotos para un mismo albarán (18/11/2026)
+
+Un ticket largo no cabe en una foto sin perder detalle. La pantalla de subida acepta varias
+fotos y las junta en un único PDF de varias hojas antes de leerlas.
+
+Prueba con un albarán de 19 líneas partido en dos fotos (mitad de arriba y mitad de abajo):
+
+| Subida | Líneas | Base imponible | Suma de líneas |
+| --- | --- | --- | --- |
+| Albarán completo en una foto | 19 de 19 | 593,30 € | 593,30 € |
+| Dos fotos en una sola subida | 19 de 19 | 593,30 € | 593,30 € |
+
+En los dos casos el IVA (59,33 €) y el total (652,63 €) cuadran, y la línea de portes entra
+como una línea más. Es la vía para los tickets densos que con una sola foto se quedan cortos.
 
 ## Pendiente de verificar a mano
 
