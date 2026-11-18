@@ -148,9 +148,14 @@ base imponible del documento. Ese aviso es el que se ve en la pantalla de revisi
 | Imagen tal cual | 216 | 14 de 24 |
 | Imagen ampliada a 1600 px y JPEG de calidad 95 | 205 | 17 de 24 |
 | Lo anterior + autocomprobación en el prompt | 201 | 19 de 24 |
+| Lo anterior + segunda pasada con `gpt-4o` si no cuadra | 215 | 23 de 24 |
+
+Con la segunda pasada, además, el número de documentos cuya suma de líneas coincide con la
+base imponible sube de 7 a 11 de 24 (por ejemplo, un ticket de 31 líneas pasó de no tener
+base imponible a leerla, y otro pasó de 0 € en las líneas a cuadrar al céntimo).
 
 Lo que sí sale bien: **nunca** hubo un documento sin leer, el proveedor y la fecha se
-reconocen en la mayoría, y la coherencia de los totales mejora con las dos correcciones.
+reconocen en la mayoría, y la coherencia de los totales mejora con cada corrección.
 
 Lo que no: en los tickets densos (20-30 líneas) la lectura se deja líneas por el camino,
 así que la suma no coincide con la base imponible. Esos documentos son justo los que
@@ -158,8 +163,8 @@ enseñan el aviso de la pantalla de revisión. En 2 de las 24 fotos no se recono
 imponible (quedó a 0), y en varias la fecha salió con el año cambiado.
 
 Conclusión práctica: para un ticket largo y borroso hay que repasar líneas a mano; para un
-albarán normal de una hoja la lectura es buena. Si hace falta afinar más, la vía es usar un
-modelo mayor solo cuando la primera lectura no cuadra, en vez de para todos.
+albarán normal de una hoja la lectura es buena. La segunda pasada con un modelo mayor solo se
+paga en los documentos que no cuadran (13 de 24 en esta muestra), no en todos.
 
 ## Pendiente de verificar a mano
 

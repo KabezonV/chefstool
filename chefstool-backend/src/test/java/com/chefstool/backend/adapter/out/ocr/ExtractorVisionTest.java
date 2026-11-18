@@ -18,6 +18,7 @@ class ExtractorVisionTest {
                 "https://generativelanguage.googleapis.com/v1beta",
                 clave,
                 "gemini-3.5-flash",
+                "",
                 json,
                 new LectorPdf());
     }
@@ -102,5 +103,62 @@ class ExtractorVisionTest {
                                 extractor("clave")
                                         .interpretar(json.readTree(respuesta), UUID.randomUUID()))
                 .isInstanceOf(DocumentoIlegibleException.class);
+    }
+
+    @Test
+    void reintentaCuandoLaSumaNoCuadra() {
+        ExtractorVision extractor = extractor("clave");
+
+        assertThat(extractor.hayQueReintentar(extraccion("45.11", "27.63"))).isTrue();
+        assertThat(extractor.hayQueReintentar(extraccion("32.78", "32.78"))).isFalse();
+        // Las cuentas cuadran y aun asi no hay ni una linea: hay que releer.
+        assertThat(extractor.hayQueReintentar(extraccion("32.78"))).isTrue();
+        // Sin base imponible no hay con que comparar: se reintenta por si no se leyo.
+        assertThat(extractor.hayQueReintentar(extraccion("0", "12.00"))).isTrue();
+    }
+
+    @Test
+    void seQuedaConLaLecturaQueCuadra() {
+        ExtractorVision extractor = extractor("clave");
+        ResultadoExtraccion mala = resultado(extraccion("45.11", "27.63"));
+        ResultadoExtraccion buena = resultado(extraccion("45.11", "45.11"));
+
+        assertThat(extractor.elegir(mala, buena)).isSameAs(buena);
+        assertThat(extractor.elegir(buena, mala)).isSameAs(buena);
+        // Si la segunda no trae nada, se queda la primera.
+        assertThat(extractor.elegir(mala, resultado(extraccion("45.11")))).isSameAs(mala);
+    }
+
+    private com.chefstool.backend.domain.model.ExtraccionDocumento extraccion(
+            String neto, String... importes) {
+        java.util.List<com.chefstool.backend.domain.model.LineaExtraccion> lineas =
+                java.util.Arrays.stream(importes)
+                        .map(
+                                importe ->
+                                        new com.chefstool.backend.domain.model.LineaExtraccion(
+                                                "Articulo",
+                                                java.math.BigDecimal.ONE,
+                                                "ud",
+                                                new java.math.BigDecimal(importe),
+                                                new java.math.BigDecimal(importe),
+                                                null,
+                                                null,
+                                                null))
+                        .toList();
+        return new com.chefstool.backend.domain.model.ExtraccionDocumento(
+                null,
+                null,
+                null,
+                null,
+                "EUR",
+                new java.math.BigDecimal(neto),
+                java.math.BigDecimal.ZERO,
+                java.math.BigDecimal.ZERO,
+                lineas);
+    }
+
+    private ResultadoExtraccion resultado(
+            com.chefstool.backend.domain.model.ExtraccionDocumento extraccion) {
+        return new ResultadoExtraccion(extraccion, new java.math.BigDecimal("0.9"));
     }
 }

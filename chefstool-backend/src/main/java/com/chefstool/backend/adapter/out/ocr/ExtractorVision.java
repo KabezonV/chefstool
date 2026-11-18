@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -50,6 +51,8 @@ public class ExtractorVision {
      */
     private static final int ANCHO_MINIMO = 1400;
 
+    private static final BigDecimal TOLERANCIA = new BigDecimal("0.02");
+
     private static final String INSTRUCCIONES =
             """
             Eres un asistente que lee albaranes y facturas de proveedores de hosteleria.
@@ -70,6 +73,10 @@ public class ExtractorVision {
     private final String url;
     private final String clave;
     private final String modelo;
+
+    /** Modelo mas capaz que se usa solo cuando la primera lectura no cuadra (opcional). */
+    private final String modeloCorreccion;
+
     private final ObjectMapper json;
     private final RestClient cliente;
     private final LectorPdf lectorPdf;
@@ -79,11 +86,13 @@ public class ExtractorVision {
                     String url,
             @Value("${chefstool.ocr.vision.clave:}") String clave,
             @Value("${chefstool.ocr.vision.modelo:gemini-3.5-flash}") String modelo,
+            @Value("${chefstool.ocr.vision.modelo.correccion:}") String modeloCorreccion,
             ObjectMapper json,
             LectorPdf lectorPdf) {
         this.url = url.replaceAll("/+$", "");
         this.clave = clave;
         this.modelo = modelo;
+        this.modeloCorreccion = modeloCorreccion == null ? "" : modeloCorreccion.trim();
         this.json = json;
         this.lectorPdf = lectorPdf;
         this.cliente = RestClient.builder().baseUrl(this.url).build();
@@ -107,8 +116,58 @@ public class ExtractorVision {
             throw new DocumentoIlegibleException("No se pudo preparar el documento para la IA");
         }
 
-        JsonNode respuesta = llamarAlModelo(imagenes);
-        return interpretar(respuesta, organizacionId);
+        ResultadoExtraccion primera = interpretar(llamarAlModelo(imagenes, modelo), organizacionId);
+        if (!hayQueReintentar(primera.extraccion())) {
+            return primera;
+        }
+        if (modeloCorreccion.isBlank() || modeloCorreccion.equals(modelo)) {
+            log.debug("La lectura no cuadra y no hay modelo de correccion configurado");
+            return primera;
+        }
+
+        log.info(
+                "La lectura no cuadra ({} lineas); se reintenta con {}",
+                primera.extraccion().lineas().size(),
+                modeloCorreccion);
+        ResultadoExtraccion segunda =
+                interpretar(llamarAlModelo(imagenes, modeloCorreccion), organizacionId);
+        return elegir(primera, segunda);
+    }
+
+    /** Se queda con la lectura que menos se aleja de la base imponible del documento. */
+    ResultadoExtraccion elegir(ResultadoExtraccion primera, ResultadoExtraccion segunda) {
+        if (segunda.extraccion().lineas().isEmpty()) {
+            return primera;
+        }
+        return desvio(segunda.extraccion()) <= desvio(primera.extraccion()) ? segunda : primera;
+    }
+
+    /** Solo se paga una segunda lectura cuando la primera no cuadra o no trae lineas. */
+    boolean hayQueReintentar(ExtraccionDocumento extraccion) {
+        if (extraccion == null || extraccion.lineas().isEmpty()) {
+            return true;
+        }
+        BigDecimal neto = extraccion.importeNeto();
+        if (neto == null || neto.signum() <= 0) {
+            return true;
+        }
+        return sumaDeLineas(extraccion).subtract(neto).abs().compareTo(TOLERANCIA) > 0;
+    }
+
+    /** Cuanto se aleja la suma de las lineas de la base imponible: cuanto menos, mejor. */
+    double desvio(ExtraccionDocumento extraccion) {
+        BigDecimal neto = extraccion.importeNeto();
+        if (neto != null && neto.signum() > 0) {
+            return sumaDeLineas(extraccion).subtract(neto).abs().doubleValue();
+        }
+        return 1_000_000 - extraccion.lineas().size();
+    }
+
+    private BigDecimal sumaDeLineas(ExtraccionDocumento extraccion) {
+        return extraccion.lineas().stream()
+                .map(LineaExtraccion::importe)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /** Devuelve las imagenes en base64: la foto tal cual o las paginas del PDF. */
@@ -184,12 +243,12 @@ public class ExtractorVision {
         }
     }
 
-    private JsonNode llamarAlModelo(List<String> imagenesBase64) {
+    private JsonNode llamarAlModelo(List<String> imagenesBase64, String modelo) {
         try {
             String texto =
                     esOpenAi()
-                            ? peticionOpenAi(imagenesBase64)
-                            : peticionGemini(imagenesBase64);
+                            ? peticionOpenAi(imagenesBase64, modelo)
+                            : peticionGemini(imagenesBase64, modelo);
             if (texto == null || texto.isBlank()) {
                 throw new DocumentoIlegibleException("La IA no devolvio texto para este documento");
             }
@@ -208,7 +267,7 @@ public class ExtractorVision {
         return url.toLowerCase().contains("openai");
     }
 
-    private String peticionOpenAi(List<String> imagenesBase64) {
+    private String peticionOpenAi(List<String> imagenesBase64, String modelo) {
         List<Object> contenido = new ArrayList<>();
         contenido.add(java.util.Map.of("type", "text", "text", INSTRUCCIONES));
         for (String imagen : imagenesBase64) {
@@ -239,7 +298,7 @@ public class ExtractorVision {
         return json.readTree(respuesta).path("choices").path(0).path("message").path("content").asText();
     }
 
-    private String peticionGemini(List<String> imagenesBase64) {
+    private String peticionGemini(List<String> imagenesBase64, String modelo) {
         List<Object> partes = new ArrayList<>();
         partes.add(java.util.Map.of("text", INSTRUCCIONES));
         for (String imagen : imagenesBase64) {
