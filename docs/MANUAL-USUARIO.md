@@ -41,6 +41,11 @@ Si intentas borrar algo y no te deja, es por este motivo: pídeselo a un adminis
 > de las líneas puede no leerse: pide la **foto original** o, mejor, el **PDF del
 > proveedor**. Un PDF con texto se lee sin errores porque no hay que interpretar píxeles.
 
+> **Si el albarán es largo** (un ticket con muchas líneas que no cabe en una foto sin perder
+> detalle), haz **varias fotos**: la primera de la parte de arriba y otra de la de abajo,
+> solapando un poco. Al elegir archivo puedes seleccionar las dos a la vez y la aplicación
+> las junta en un solo documento antes de leerlo.
+
 ### Opción B — Archivo (PDF o imagen)
 
 1. **Documentos → Añadir documento → Elegir archivo**.
@@ -62,8 +67,15 @@ La pantalla de revisión es la más importante: **nada se guarda sin tu confirma
   aparece **"Dar de alta un proveedor nuevo…"** con el nombre detectado escrito debajo:
   corrígelo ahí y se dará de alta al confirmar. También puedes elegir **"Sin asignar"** o
   cualquier proveedor de la lista.
-- **Aviso "Los importes no cuadran"**: si aparece, significa que las líneas no suman
-  lo mismo que el total. Suele ser una línea que no se ha leído.
+- **Aviso "Falta por anotar un cargo"**: las líneas suman menos que la base imponible.
+  Casi siempre es **transporte, portes, envases o botes retornables, una tasa o gastos
+  varios** que el albarán cobra aparte. Si es el caso, pulsa **"Añadir X € como gasto"**
+  y aparecerá una línea nueva (ponle el nombre que use el proveedor); si no lo es, mira
+  si se ha perdido una línea.
+- **Aviso "Los importes no cuadran"**: las líneas suman más que el documento o la base
+  más el IVA no da el total. Suele ser una línea leída dos veces o un importe mal leído.
+- **Aviso por línea**: si una fila sale resaltada con **"dice X €"** bajo el importe,
+  la cantidad por el precio no coincide con lo que trae el papel. Corrige esa cifra.
 - **Aviso "No se han reconocido las líneas"**: la foto no era buena o el formato es
   raro. Puedes escribir las líneas a mano; el original queda guardado.
 

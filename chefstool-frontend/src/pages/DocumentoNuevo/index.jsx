@@ -65,15 +65,14 @@ export default function DocumentoNuevo() {
 
       setAvisoCalidad(await imagenesPequenas(archivos))
 
-      const creados = []
-      for (const archivo of archivos) {
-        const datos = new FormData()
-        datos.append('archivo', archivo)
-        datos.append('origen', origen)
-        creados.push(await api.subir('/documentos', datos))
-      }
+      // Varias fotos van en una sola subida: el backend las junta en un PDF y la
+      // revision es una unica compra, no una por hoja.
+      const datos = new FormData()
+      for (const archivo of archivos) datos.append('archivo', archivo)
+      datos.append('origen', origen)
 
-      navigate(creados.length === 1 ? `/documentos/${creados[0].id}` : '/documentos')
+      const documento = await api.subir('/documentos', datos)
+      navigate(`/documentos/${documento.id}`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -103,6 +102,10 @@ export default function DocumentoNuevo() {
         <p className="mt-1 text-sm text-muted">
           Elige cómo quieres incorporar el albarán. El texto se extrae automáticamente
           y podrás revisarlo antes de confirmar.
+        </p>
+        <p className="mt-2 text-xs text-muted">
+          Para que se lea bien: apoya el móvil, haz la foto recta y que se vea la hoja
+          entera con buena luz.
         </p>
       </div>
 

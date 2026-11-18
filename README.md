@@ -229,8 +229,14 @@ la API `generateContent` (por ejemplo Google AI Studio, con plan gratuito):
 
 ```bash
 CHEFSTOOL_OCR_VISION_CLAVE=<clave>
-CHEFSTOOL_OCR_VISION_MODELO=gemini-3.5-flash
+CHEFSTOOL_OCR_VISION_MODELO=gpt-4o-mini
+# Opcional: modelo mayor para reintentar solo los documentos cuya lectura no cuadra
+CHEFSTOOL_OCR_VISION_MODELO_CORRECCION=gpt-4o
 ```
+
+La lectura se da por buena si las líneas suman la base imponible; cuando no cuadra (tickets
+densos, fotos movidas) se repite una vez con el modelo de corrección y se queda la lectura
+que más se acerca al documento. Esa segunda pasada solo se paga en esos casos.
 
 Para otro proveedor (OpenAI, Mindee, Amazon Textract…) se añade otra implementación
 de `ExtractorDocumento` y se elige en `ExtractorHibrido`. Ni los casos de uso ni la
@@ -301,8 +307,8 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 134 tests (necesita Docker: usa Testcontainers)
-cd chefstool-frontend && npm test                  # 32 tests
+cd chefstool-backend && ./mvnw clean test          # 138 tests (necesita Docker: usa Testcontainers)
+cd chefstool-frontend && npm test                  # 37 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
 ```

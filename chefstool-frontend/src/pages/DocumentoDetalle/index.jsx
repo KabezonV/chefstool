@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 // Utils
 import { fechaCorta, moneda } from '@/lib/formato'
-import { avisosDeImportes } from '@/lib/importes'
+import { avisosDeImportes, lineasDescuadradas } from '@/lib/importes'
 import { importeLinea, lineaVacia } from './utils/lineas'
 
 // Enumerations
@@ -81,6 +81,7 @@ export default function DocumentoDetalle() {
             unidad: linea.unidad ?? '',
             precioUnitario: String(linea.precioUnitario ?? 0),
             productoId: linea.productoId ?? '',
+            importeLeido: linea.importe ?? null,
           })),
         )
         setError(null)
@@ -123,6 +124,21 @@ export default function DocumentoDetalle() {
 
   function anadirLinea() {
     setLineas((previas) => [...previas, lineaVacia()])
+  }
+
+  /** Cargo del documento (portes, envases retornables, tasas) que no ha llegado como línea. */
+  function anadirGasto(importe) {
+    setLineas((previas) => [
+      ...previas,
+      {
+        descripcion: 'Portes',
+        cantidad: '1',
+        unidad: '',
+        precioUnitario: String(importe),
+        productoId: '',
+        importeLeido: null,
+      },
+    ])
   }
 
   function payload() {
@@ -221,10 +237,26 @@ export default function DocumentoDetalle() {
 
   const estado =
     ESTADOS_DOCUMENTO[documento.estado] ?? ESTADOS_DOCUMENTO.pendiente_revision
+  // En un documento por revisar los importes de la cabecera aún no existen: los leídos
+  // están en la extracción, que es contra lo que hay que comparar las líneas.
+  const leidos = documento.extraccion ?? {}
   const avisosImportes = avisosDeImportes(
-    { importeNeto: documento.importeNeto, importeIva: documento.importeIva, importeTotal: documento.importeTotal },
+    {
+      importeNeto: documento.importeNeto ?? leidos.importeNeto,
+      importeIva: documento.importeIva ?? leidos.importeIva,
+      importeTotal: documento.importeTotal ?? leidos.importeTotal,
+    },
     lineas,
   )
+  const descuadres = lineasDescuadradas(lineas)
+  const descuadrePorLinea = new Map(descuadres.map((descuadre) => [descuadre.indice, descuadre]))
+  // Diferencia entre lo que dice el documento y lo que suman las líneas: si es positiva,
+  // lo normal es que falte un cargo (portes, envases retornables, tasas) sin anotar.
+  const baseDocumento = Number(
+    documento.importeNeto ?? documento.extraccion?.importeNeto ?? 0,
+  )
+  const falta = baseDocumento > 0 ? Math.round((baseDocumento - neto) * 100) / 100 : 0
+  const faltaUnCargo = falta > 0.02
   const confianzaBaja =
     documento.confianzaExtraccion === null ||
     Number(documento.confianzaExtraccion) < 0.5
@@ -282,19 +314,53 @@ export default function DocumentoDetalle() {
         </div>
       )}
 
-      {avisosImportes.length > 0 && documento.estado === 'pendiente_revision' && (
-        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
-          <p className="font-medium">Los importes no cuadran</p>
-          <ul className="mt-1 list-disc pl-5">
-            {avisosImportes.map((aviso) => (
-              <li key={aviso}>{aviso}</li>
-            ))}
-          </ul>
-          <p className="mt-1">
-            Puede ser una línea que no se ha leído. Revísalo antes de confirmar la compra.
-          </p>
-        </div>
-      )}
+      {(avisosImportes.length > 0 || descuadres.length > 0) &&
+        documento.estado === 'pendiente_revision' && (
+          <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
+            <p className="font-medium">
+              {faltaUnCargo ? 'Falta por anotar un cargo' : 'Los importes no cuadran'}
+            </p>
+            {avisosImportes.length > 0 && (
+              <ul className="mt-1 list-disc pl-5">
+                {avisosImportes.map((aviso) => (
+                  <li key={aviso}>{aviso}</li>
+                ))}
+              </ul>
+            )}
+            {descuadres.length > 0 && (
+              <ul className="mt-1 list-disc pl-5">
+                {descuadres.map(({ indice, leido, calculado, cantidad, precio }) => (
+                  <li key={`linea-${indice}`}>
+                    Línea {indice + 1}: el documento dice {moneda(leido)} y{' '}
+                    {cantidad} × {moneda(precio)} son {moneda(calculado)}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {faltaUnCargo ? (
+              <p className="mt-1">
+                Suele ser transporte, envases o botes retornables, una tasa o gastos
+                varios. Si está en el documento, añádelo como línea para que las cuentas
+                cuadren.
+              </p>
+            ) : (
+              <p className="mt-1">
+                Puede ser una línea que no se ha leído. Revísalo antes de confirmar la
+                compra.
+              </p>
+            )}
+            {faltaUnCargo && !soloLectura && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => anadirGasto(falta)}
+              >
+                Añadir {moneda(falta)} como gasto
+              </Button>
+            )}
+          </div>
+        )}
 
       {!documento.errorExtraccion &&
         confianzaBaja &&
@@ -406,7 +472,14 @@ export default function DocumentoDetalle() {
               </thead>
               <tbody>
                 {lineas.map((linea, indice) => (
-                  <tr key={indice} className="border-b border-border/60 last:border-0">
+                  <tr
+                    key={indice}
+                    className={
+                      descuadrePorLinea.has(indice)
+                        ? 'border-b border-border/60 bg-warning-soft last:border-0'
+                        : 'border-b border-border/60 last:border-0'
+                    }
+                  >
                     <Celda etiqueta="Descripción" className="px-4 py-2 sm:px-5 sm:py-2">
                       <Input
                         disabled={soloLectura}
@@ -452,6 +525,11 @@ export default function DocumentoDetalle() {
                       className="px-4 py-2 tabular-nums sm:px-2 sm:py-2"
                     >
                       {moneda(importeLinea(linea))}
+                      {descuadrePorLinea.has(indice) && (
+                        <span className="mt-0.5 block text-xs font-normal text-warning">
+                          dice {moneda(descuadrePorLinea.get(indice).leido)}
+                        </span>
+                      )}
                     </Celda>
                     <Celda etiqueta="Producto" className="px-4 py-2 sm:px-2 sm:py-2">
                       <Select

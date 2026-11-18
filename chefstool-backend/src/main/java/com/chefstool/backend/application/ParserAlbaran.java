@@ -301,7 +301,7 @@ public class ParserAlbaran {
     private static final Pattern LINEA_NO_ARTICULO =
             Pattern.compile(
                     "(?i)^(total|base|iva|dto|descuento|subtotal|suma|importe|neto|cuenta"
-                            + "|abono|cuota|recargo|vencimiento|forma de pago)\\b");
+                            + "|abono|cuota|vencimiento|forma de pago)\\b");
 
     /**
      * Filas de albaranes con mas columnas de las habituales: codigo, lote, cantidad pedida y
@@ -367,7 +367,7 @@ public class ParserAlbaran {
             Pattern.compile(
                     "(?i)\\b(tel|telefono|teléfono|cif|nif|iban|fecha|cliente|proveedor"
                             + "|direccion|dirección|calle|poligono|polígono|email|web|pedido"
-                            + "|albaran|albarán|transporte|observaciones|firma)\\b");
+                            + "|albaran|albarán|observaciones|firma)\\b");
 
     /** Una cantidad de mas de 999 unidades casi siempre es una referencia mal leida. */
     private boolean cantidadPlausible(BigDecimal cantidad) {
