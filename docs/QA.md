@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 135 tests (unitarios, integración y seguridad)
+# Backend: 137 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 37 tests (Vitest + Testing Library)
@@ -31,7 +31,7 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | Productos | `ProductoServiceTest`, `ProductoControllerTest` | Alta, duplicados, borrado lógico, reciclado de nombres |
 | Parser de albaranes | `ParserAlbaranTest` | Proveedor (incluido el caso en que el OCR le pega la fecha), fecha, número (también si llega cortado), líneas, filas con columnas de más (código, lote, %IVA), líneas de totales que no deben convertirse en artículos, cargos que sí son líneas (portes, envases retornables, recargo de combustible), importes con coma y miles |
 | Extracción real | `DocumentoControllerTest` | Sube un PDF y comprueba los datos extraídos; imagen sin OCR no inventa datos |
-| OCR con IA | `ExtractorVisionTest` | Interpretación del JSON del modelo, importes en formato español, bloques markdown y respuesta vacía |
+| OCR con IA | `ExtractorVisionTest` | Interpretación del JSON del modelo, importes en formato español, bloques markdown, respuesta vacía, cuándo se reintenta con el modelo de corrección y elección de la mejor lectura |
 | OCR híbrido | `ExtractorHibridoTest` | Usa la IA si está configurada y cae a Tesseract si falla o no hay clave |
 | OCR de fotos | `LectorImagenTest` | La segmentación por bloques mantiene cada fila del albarán en una línea, puntúa mejor que las columnas partidas, amplía las imágenes pequeñas y reduce las enormes |
 | PDF escaneado | `LectorPdfTest` | Detecta que no hay texto y rasteriza las páginas (máx. 3) para pasarlas por OCR; aviso claro si el OCR no está disponible |
