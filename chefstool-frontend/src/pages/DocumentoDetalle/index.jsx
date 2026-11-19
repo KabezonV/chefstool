@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 // Utils
 import { fechaCorta, moneda } from '@/lib/formato'
-import { avisosDeImportes, lineasDescuadradas } from '@/lib/importes'
+import { avisosDeImportes, ivaDe, lineasDescuadradas, tipoDeIva } from '@/lib/importes'
 import { importeLinea, lineaVacia } from './utils/lineas'
 
 // Enumerations
@@ -43,6 +43,7 @@ export default function DocumentoDetalle() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [errores, setErrores] = useState({})
+  const [ivaManual, setIvaManual] = useState(false)
 
   useEffect(() => {
     let activo = true
@@ -98,8 +99,24 @@ export default function DocumentoDetalle() {
     () => lineas.reduce((total, linea) => total + importeLinea(linea), 0),
     [lineas],
   )
-  const iva = Number(cabecera.iva || 0)
+  const leido = documento?.extraccion ?? {}
+  const tipoIva = tipoDeIva(leido)
+  // El importe de IVA del OCR depende de una base imponible que a veces se lee mal; si se
+  // conoce el tipo del documento se recalcula sobre lo que suman las líneas.
+  const ivaSugerido = tipoIva ? ivaDe(neto, tipoIva) : null
+  const iva = ivaSugerido !== null ? ivaSugerido : Number(cabecera.iva || 0)
   const total = Math.round((neto + iva) * 100) / 100
+
+  const importesDelDocumento =
+    Number(leido.importeTotal) > 0
+      ? [
+          Number(leido.importeNeto) > 0 ? `base ${moneda(leido.importeNeto)}` : null,
+          Number(leido.importeIva) > 0 ? `IVA ${moneda(leido.importeIva)}` : null,
+          `total ${moneda(leido.importeTotal)}`,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : null
 
   const esProveedorNuevo = cabecera.proveedorId === PROVEEDOR_NUEVO
 
@@ -131,7 +148,7 @@ export default function DocumentoDetalle() {
     setLineas((previas) => [
       ...previas,
       {
-        descripcion: 'Portes',
+        descripcion: 'Gastos del albarán',
         cantidad: '1',
         unidad: '',
         precioUnitario: String(importe),
@@ -585,8 +602,11 @@ export default function DocumentoDetalle() {
                     type="number"
                     step="0.01"
                     className="h-7 w-20 text-right"
-                    value={cabecera.iva}
-                    onChange={(event) => cambiarCabecera('iva', event.target.value)}
+                    value={ivaManual ? cabecera.iva : String(iva)}
+                    onChange={(event) => {
+                      setIvaManual(true)
+                      cambiarCabecera('iva', event.target.value)
+                    }}
                   />
                 )}
               </span>
@@ -595,6 +615,16 @@ export default function DocumentoDetalle() {
               <span className="border-t border-border pt-1 text-right font-semibold tabular-nums">
                 {moneda(total)}
               </span>
+              {importesDelDocumento && (
+                <p className="col-span-2 mt-1 text-xs text-muted">
+                  En el documento: {importesDelDocumento}
+                </p>
+              )}
+              {tipoIva && !ivaManual && (
+                <p className="col-span-2 text-xs text-muted">
+                  IVA del {Math.round(tipoIva * 100)} % calculado sobre las líneas
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

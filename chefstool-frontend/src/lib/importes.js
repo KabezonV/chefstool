@@ -10,6 +10,31 @@ export function euros(valor) {
 }
 
 /**
+ * Tipo de IVA que aplica el documento (0,10 para el 10 %), deducido de sus propios importes.
+ * Devuelve null si no hay datos suficientes para deducirlo.
+ */
+/** Tipos de IVA habituales en España; si el documento se ha leído mal, se ajusta al más cercano. */
+const TIPOS_HABITUALES = [0.04, 0.05, 0.1, 0.21]
+
+export function tipoDeIva(cabecera = {}) {
+  const neto = numero(cabecera.importeNeto)
+  const iva = numero(cabecera.importeIva)
+  if (neto <= 0 || iva <= 0) return null
+  const tipo = Math.round((iva / neto) * 10000) / 10000
+  if (!(tipo > 0 && tipo < 0.5)) return null
+  const cercano = TIPOS_HABITUALES.reduce((mejor, habitual) =>
+    Math.abs(habitual - tipo) < Math.abs(mejor - tipo) ? habitual : mejor,
+  )
+  return Math.abs(cercano - tipo) <= 0.015 ? cercano : tipo
+}
+
+/** IVA que corresponde a un importe con un tipo dado, redondeado a céntimos. */
+export function ivaDe(importe, tipo) {
+  if (!tipo) return 0
+  return Math.round(numero(importe) * tipo * 100) / 100
+}
+
+/**
  * Líneas en las que la cantidad por el precio no da el importe que traía el documento.
  * Es la señal más fina de un fallo de lectura: dice exactamente qué renglón revisar.
  */

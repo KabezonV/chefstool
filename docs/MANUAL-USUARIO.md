@@ -76,6 +76,11 @@ La pantalla de revisión es la más importante: **nada se guarda sin tu confirma
   más el IVA no da el total. Suele ser una línea leída dos veces o un importe mal leído.
 - **Aviso por línea**: si una fila sale resaltada con **"dice X €"** bajo el importe,
   la cantidad por el precio no coincide con lo que trae el papel. Corrige esa cifra.
+- **Resumen de importes**: la base imponible es lo que suman las líneas y el IVA se calcula
+  con el tipo que trae el documento (4, 5, 10 o 21 %), así que aunque la lectura se equivoque
+  en los totales, las cuentas cuadran con lo que hay en pantalla. Debajo aparece **"En el
+  documento"** con lo que dice el papel: si no coincide, corrige el IVA a mano o añade la
+  línea que falte.
 - **Aviso "No se han reconocido las líneas"**: la foto no era buena o el formato es
   raro. Puedes escribir las líneas a mano; el original queda guardado.
 

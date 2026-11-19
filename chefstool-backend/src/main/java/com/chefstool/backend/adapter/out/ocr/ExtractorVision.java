@@ -61,6 +61,8 @@ public class ExtractorVision {
              "importeNeto":0,"importeIva":0,"importeTotal":0,
              "lineas":[{"descripcion":"","cantidad":0,"unidad":"","precioUnitario":0,"importe":0}]}
             Reglas: usa null si el dato no aparece; importes con punto decimal y sin simbolo;
+            las fechas van en dia/mes/anio (por ejemplo 04/07/2026 es el 4 de julio) y se
+            devuelven como AAAA-MM-DD;
             una entrada por linea de articulo; incluye tambien como linea cualquier cargo con
             importe (portes, transporte, envases o botes retornables, tasas, recargos, gastos
             varios) y los descuentos con importe negativo; no inventes lineas que no esten en
