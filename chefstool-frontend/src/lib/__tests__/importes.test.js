@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 
 // Utils
-import { avisosDeImportes, lineasDescuadradas } from '@/lib/importes'
+import { avisosDeImportes, ivaDe, lineasDescuadradas, tipoDeIva } from '@/lib/importes'
 
 const lineas = (...importes) => importes.map((importe) => ({ importe }))
 
@@ -85,5 +85,37 @@ describe('lineasDescuadradas', () => {
     expect(
       lineasDescuadradas([{ cantidad: '3', precioUnitario: '0.3333', importeLeido: 1 }]),
     ).toEqual([])
+  })
+})
+
+describe('tipoDeIva', () => {
+  it('deduce el tipo de los importes del documento', () => {
+    expect(tipoDeIva({ importeNeto: 37.8, importeIva: 3.78 })).toBeCloseTo(0.1, 4)
+    expect(tipoDeIva({ importeNeto: 142.5, importeIva: 7.13 })).toBeCloseTo(0.05, 4)
+    expect(tipoDeIva({ importeNeto: 100, importeIva: 21 })).toBeCloseTo(0.21, 4)
+  })
+
+  it('ajusta al tipo habitual mas cercano si la base viene mal leida', () => {
+    expect(tipoDeIva({ importeNeto: 152.8, importeIva: 8.92 })).toBeCloseTo(0.05, 4)
+    expect(tipoDeIva({ importeNeto: 152.8, importeIva: 15.5 })).toBeCloseTo(0.1, 4)
+    expect(tipoDeIva({ importeNeto: 100, importeIva: 21.4 })).toBeCloseTo(0.21, 4)
+  })
+
+  it('no inventa un tipo si faltan importes o no tienen sentido', () => {
+    expect(tipoDeIva({ importeNeto: 0, importeIva: 0 })).toBeNull()
+    expect(tipoDeIva({ importeNeto: 100 })).toBeNull()
+    expect(tipoDeIva({ importeNeto: 10, importeIva: 90 })).toBeNull()
+  })
+})
+
+describe('ivaDe', () => {
+  it('aplica el tipo sobre la base de las líneas', () => {
+    expect(ivaDe(114, 0.1)).toBe(11.4)
+    expect(ivaDe(113.8, 0.1)).toBe(11.38)
+    expect(ivaDe(142.5, 0.05)).toBe(7.13)
+  })
+
+  it('sin tipo no calcula nada', () => {
+    expect(ivaDe(100, null)).toBe(0)
   })
 })
