@@ -211,6 +211,163 @@ class AuthControllerTest extends IntegracionBase {
     }
 
     @Test
+    void unaPersonaAutenticadaPuedeSolicitarPeroNoAprobarSuPropiaCompra() throws Exception {
+        String email = "solicitud-" + UUID.randomUUID() + "@chefstool.es";
+        MvcResult registro =
+                mockMvc.perform(
+                                post("/api/auth/registro")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                """
+                                                {"email":"%s","password":"secreto123",
+                                                 "nombre":"Chef Solicitante","organizacion":"Cocina Solicitudes"}
+                                                """
+                                                        .formatted(email)))
+                        .andExpect(status().isCreated())
+                        .andReturn();
+        String token =
+                objectMapper
+                        .readTree(registro.getResponse().getContentAsString())
+                        .get("token")
+                        .asString();
+
+        MvcResult solicitud =
+                mockMvc.perform(
+                                post("/api/solicitudes-compra")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                """
+                                                {"concepto":"Horno","importe":1200.00,
+                                                 "proveedor":"Proveedor de prueba"}
+                                                """))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.estado").value("PENDIENTE"))
+                        .andExpect(jsonPath("$.solicitanteNombre").value("Chef Solicitante"))
+                        .andReturn();
+        String solicitudId =
+                objectMapper
+                        .readTree(solicitud.getResponse().getContentAsString())
+                        .get("id")
+                        .asString();
+
+        mockMvc.perform(
+                        post("/api/solicitudes-compra/{id}/aprobar", solicitudId)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void administradorApruebaSolicitudDeUnMiembroYEsteNoPuedeDecidirla() throws Exception {
+        String propietarioEmail = "jefa-" + UUID.randomUUID() + "@chefstool.es";
+        String miembroEmail = "miembro-" + UUID.randomUUID() + "@chefstool.es";
+        String propietarioToken =
+                registrarYObtenerToken(
+                        propietarioEmail, "Jefa Cocina", "Cocina Aprobaciones");
+
+        mockMvc.perform(
+                        post("/api/usuarios/invitar")
+                                .header("Authorization", "Bearer " + propietarioToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"email":"%s","rol":"miembro"}
+                                        """
+                                                .formatted(miembroEmail)))
+                .andExpect(status().isCreated());
+
+        String miembroToken =
+                registrarYObtenerToken(miembroEmail, "Miembro Cocina", null);
+        MvcResult solicitud =
+                mockMvc.perform(
+                                post("/api/solicitudes-compra")
+                                        .header("Authorization", "Bearer " + miembroToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                """
+                                                {"concepto":"Batidora industrial","importe":350.00}
+                                                """))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.estado").value("PENDIENTE"))
+                        .andReturn();
+        String solicitudId =
+                objectMapper
+                        .readTree(solicitud.getResponse().getContentAsString())
+                        .get("id")
+                        .asString();
+
+        mockMvc.perform(
+                        get("/api/solicitudes-compra")
+                                .header("Authorization", "Bearer " + miembroToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(solicitudId));
+
+        mockMvc.perform(
+                        post("/api/solicitudes-compra/{id}/aprobar", solicitudId)
+                                .header("Authorization", "Bearer " + miembroToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(
+                        post("/api/solicitudes-compra/{id}/aprobar", solicitudId)
+                                .header("Authorization", "Bearer " + propietarioToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("APROBADA"))
+                .andExpect(jsonPath("$.revisadaPorNombre").value("Jefa Cocina"));
+
+        MvcResult segundaSolicitud =
+                mockMvc.perform(
+                                post("/api/solicitudes-compra")
+                                        .header("Authorization", "Bearer " + miembroToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                """
+                                                {"concepto":"Horno adicional","importe":2000.00}
+                                                """))
+                        .andExpect(status().isCreated())
+                        .andReturn();
+        String segundaSolicitudId =
+                objectMapper
+                        .readTree(segundaSolicitud.getResponse().getContentAsString())
+                        .get("id")
+                        .asString();
+
+        mockMvc.perform(
+                        post("/api/solicitudes-compra/{id}/rechazar", segundaSolicitudId)
+                                .header("Authorization", "Bearer " + propietarioToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"motivo\":\"No hay presupuesto aprobado\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("RECHAZADA"))
+                .andExpect(jsonPath("$.motivoRechazo").value("No hay presupuesto aprobado"));
+    }
+
+    private String registrarYObtenerToken(String email, String nombre, String organizacion)
+            throws Exception {
+        String cuerpo =
+                organizacion == null
+                        ? """
+                          {"email":"%s","password":"secreto123","nombre":"%s"}
+                          """
+                                .formatted(email, nombre)
+                        : """
+                          {"email":"%s","password":"secreto123","nombre":"%s",
+                           "organizacion":"%s"}
+                          """
+                                .formatted(email, nombre, organizacion);
+        MvcResult registro =
+                mockMvc.perform(
+                                post("/api/auth/registro")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(cuerpo))
+                        .andExpect(status().isCreated())
+                        .andReturn();
+        return objectMapper
+                .readTree(registro.getResponse().getContentAsString())
+                .get("token")
+                .asString();
+    }
+
+    @Test
     void ignoraLosEspaciosQueAnadeElTeclado() throws Exception {
         String email = "espacios-" + UUID.randomUUID() + "@chefstool.es";
 

@@ -3,10 +3,10 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 155 tests (unitarios, integración y seguridad)
+# Backend: 163 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 42 tests (Vitest + Testing Library)
+# Frontend: 46 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -36,6 +36,7 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | OCR de fotos | `LectorImagenTest` | La segmentación por bloques mantiene cada fila del albarán en una línea, puntúa mejor que las columnas partidas, amplía las imágenes pequeñas y reduce las enormes |
 | PDF escaneado | `LectorPdfTest` | Detecta que no hay texto y rasteriza las páginas (máx. 3) para pasarlas por OCR; aviso claro si el OCR no está disponible |
 | Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral, alta del proveedor leído del albarán cuando no existe, reutilización del existente sin duplicar y descarte de nombres contaminados |
+| Solicitudes de compra | `SolicitudCompraServiceTest`, `AuthControllerTest`, `SolicitudesCompra.test.jsx` | Solicitud sin crear gasto confirmado, aprobación/rechazo auditados, aislamiento por organización/local, prohibición de autoaprobación y controles de rol en la interfaz |
 | Fichas | `FichaServiceTest`, `FichaControllerTest` | Coste con el mejor precio, productos sin precio, margen (incluido negativo) |
 | Equipo | `EquipoServiceTest`, `EquipoControllerTest` | Invitaciones, duplicados, último propietario, permisos por rol |
 | Recuperación de contraseña | `RecuperacionPasswordServiceTest` | Enlace de un solo uso, caducidad, enlace nuevo anula el anterior, correo desconocido |
@@ -49,7 +50,7 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | Productos (paginación) | `ProductoControllerTest` | Envoltorio `contenido/totalElementos`, búsqueda por `q`, orden asc/desc y orden no permitido |
 | Ficha en PDF | `FichaPdfServiceTest` | Genera un PDF válido con el nombre y el coste de la ficha |
 | RGPD / baja de cuenta | `BajaCuentaServiceTest` | Contraseña obligatoria, borrado de la organización si está solo, bloqueo si es el último propietario con equipo, exportación de datos personales |
-| Frontend | `formato`, `importes`, `utils`, `barras`, `documentos`, `ResourcePage`, `Auth` | Formateo de números y fechas, avisos de importes que no cuadran (líneas frente a base imponible, base más IVA frente a total, tolerancia de céntimos, línea cuyo importe no sale de cantidad por precio, líneas del formulario que solo traen cantidad y precio, deducción del tipo de IVA del documento y cálculo del IVA sobre las líneas), utilidades, gráfico de barras, traducción de estados de documento, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido) y pantalla de acceso |
+| Frontend | `formato`, `importes`, `utils`, `barras`, `documentos`, `ResourcePage`, `Auth`, `SolicitudesCompra` | Formateo de números y fechas, avisos de importes que no cuadran (líneas frente a base imponible, base más IVA frente a total, tolerancia de céntimos, línea cuyo importe no sale de cantidad por precio, líneas del formulario que solo traen cantidad y precio, deducción del tipo de IVA del documento y cálculo del IVA sobre las líneas), utilidades, gráfico de barras, traducción de estados de documento, tabla genérica con alta, paginación, búsqueda, orden por cabecera, exportación CSV y Excel (firma zip + contenido), pantalla de acceso y flujo de autorización de compra |
 
 ## Pasada de QA en navegador
 

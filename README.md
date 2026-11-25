@@ -31,6 +31,7 @@ probar. La primera vez tarda unos minutos porque compila el backend y el fronten
 | --- | --- |
 | Documentos | Foto o archivo del albarán → extracción → revisión → compra confirmada |
 | Compras | Histórico de compras con filtros y detalle de líneas |
+| Solicitudes de compra | Solicitud de autorización y decisión de propietario/admin, separada de compras confirmadas |
 | Productos | Catálogo normalizado con histórico de precios, comparativa por proveedor e importación masiva CSV/Excel |
 | Proveedores / Clientes / Eventos | Imputación de compras y costes por servicio |
 | Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta, exportables a PDF A4 |
@@ -39,6 +40,10 @@ probar. La primera vez tarda unos minutos porque compila el backend y el fronten
 | Dashboard e informes | Gasto mensual, coste histórico por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
 | Datos de ejemplo | Rellena una organización nueva con catálogo, albaranes y fichas para probar |
+
+Las solicitudes de compra quedan pendientes hasta que un propietario o administrador
+distinto de quien la creó las apruebe o rechace. La aprobación se registra en auditoría,
+pero no genera un pedido, pago ni compra contable automáticamente.
 
 ## Arranque en local
 
@@ -286,6 +291,7 @@ Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 | Eventos | `/api/eventos` |
 | Documentos | `/api/documentos` (+ `/confirmar`, `/archivo`) |
 | Compras | `/api/compras` |
+| Solicitudes de compra | `/api/solicitudes-compra` (solo propietario/admin puede aprobar o rechazar) |
 | Alertas de precio | `/api/alertas` |
 | Fichas técnicas | `/api/fichas` |
 | Panel e informes | `/api/informes/panel`, `/api/informes/proveedores` |
