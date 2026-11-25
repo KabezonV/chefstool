@@ -16,4 +16,7 @@ public interface DocumentoCompraRepository extends JpaRepository<DocumentoCompra
 
     org.springframework.data.domain.Page<DocumentoCompra> findByOrganizacionId(
             UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<DocumentoCompra> findByOrganizacionIdAndLocalId(
+            UUID organizacionId, UUID localId, org.springframework.data.domain.Pageable pageable);
 }

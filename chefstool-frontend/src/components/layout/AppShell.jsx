@@ -8,6 +8,10 @@ import { cn } from '@/lib/utils'
 
 // Enumerations
 import { navItems } from '@/config/navigation'
+import { CLAVE_REFRESH, CLAVE_SESION } from '@/constants/claves'
+
+// Handlers
+import { api, guardarToken } from '@/lib/api'
 
 // Hooks
 import { useAuth } from '@/lib/auth-context'
@@ -18,6 +22,7 @@ import BotonTema from '@/components/ui/tema'
 
 export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [locales, setLocales] = useState([])
   const { sesion, salir } = useAuth()
 
   useEffect(() => {
@@ -37,6 +42,26 @@ export default function AppShell() {
       window.removeEventListener('keydown', cerrarConEscape)
     }
   }, [menuOpen])
+
+  useEffect(() => {
+    let activo = true
+    api.get('/locales')
+      .then((filas) => activo && setLocales(filas))
+      .catch(() => activo && setLocales([]))
+    return () => { activo = false }
+  }, [])
+
+  async function cambiarLocal(id) {
+    try {
+      const datos = await api.post(`/locales/${id}/seleccionar`, {})
+      guardarToken(datos.token)
+      localStorage.setItem(CLAVE_REFRESH, datos.refreshToken)
+      localStorage.setItem(CLAVE_SESION, JSON.stringify(datos))
+      window.location.reload()
+    } catch {
+      // Se conserva el local actual si no se puede cambiar.
+    }
+  }
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
@@ -112,6 +137,18 @@ export default function AppShell() {
           <p className="truncate text-xs text-muted">
             {sesion?.organizacion ?? 'Sin organizacion'} · {sesion?.rol ?? ''}
           </p>
+          {locales.length > 0 && (
+            <select
+              className="mt-2 h-8 w-full rounded-lg border border-border bg-card px-2 text-xs"
+              value={sesion?.localId ?? ''}
+              onChange={(event) => cambiarLocal(event.target.value)}
+              aria-label="Local activo"
+            >
+              {locales.map((local) => (
+                <option key={local.id} value={local.id}>{local.nombre}</option>
+              ))}
+            </select>
+          )}
           <div className="mt-2 flex items-center justify-between gap-2">
             <BotonTema variante="texto" />
             <button

@@ -7,14 +7,22 @@ import com.chefstool.backend.adapter.in.web.dto.RegistroRequest;
 import com.chefstool.backend.adapter.in.web.dto.SesionResponse;
 import com.chefstool.backend.domain.model.Invitacion;
 import com.chefstool.backend.domain.model.MiembroOrganizacion;
+import com.chefstool.backend.domain.model.SesionRefresh;
 import com.chefstool.backend.domain.model.Organizacion;
 import com.chefstool.backend.domain.model.Usuario;
 import com.chefstool.backend.domain.port.out.InvitacionRepository;
 import com.chefstool.backend.domain.port.out.MiembroOrganizacionRepository;
 import com.chefstool.backend.domain.port.out.OrganizacionRepository;
+import com.chefstool.backend.domain.port.out.SesionRefreshRepository;
+import com.chefstool.backend.domain.port.out.LocalRepository;
 import com.chefstool.backend.domain.port.out.UsuarioRepository;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +44,11 @@ public class AuthService {
     private final InvitacionRepository invitacionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
+    private final SesionRefreshRepository refreshRepository;
+    private final LocalRepository localRepository;
     private final long horasToken;
+    private final long accessMinutos;
+    private final long refreshDias;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
@@ -45,14 +57,22 @@ public class AuthService {
             InvitacionRepository invitacionRepository,
             PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
-            @Value("${chefstool.seguridad.jwt-horas:12}") long horasToken) {
+            SesionRefreshRepository refreshRepository,
+            LocalRepository localRepository,
+            @Value("${chefstool.seguridad.jwt-horas:12}") long horasToken,
+            @Value("${chefstool.seguridad.access-minutos:15}") long accessMinutos,
+            @Value("${chefstool.seguridad.refresh-dias:30}") long refreshDias) {
         this.usuarioRepository = usuarioRepository;
         this.organizacionRepository = organizacionRepository;
         this.miembroRepository = miembroRepository;
         this.invitacionRepository = invitacionRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
+        this.refreshRepository = refreshRepository;
+        this.localRepository = localRepository;
         this.horasToken = horasToken;
+        this.accessMinutos = accessMinutos;
+        this.refreshDias = refreshDias;
     }
 
     @Transactional
@@ -190,32 +210,142 @@ public class AuthService {
         return password == null ? "" : password.trim();
     }
 
-    private SesionResponse sesion(Usuario usuario, Organizacion organizacion, String rol) {
-        Instant ahora = Instant.now();
+    @Transactional
+    public SesionResponse refrescar(String refreshToken) {
+        String hash = hash(refreshToken);
+        SesionRefresh sesion = refreshRepository.findByTokenHashAndRevocadoAtIsNull(hash)
+                .orElseThrow(CredencialesInvalidasException::new);
+        if (sesion.getExpiraAt().isBefore(OffsetDateTime.now())) {
+            sesion.setRevocadoAt(OffsetDateTime.now());
+            refreshRepository.save(sesion);
+            throw new CredencialesInvalidasException();
+        }
 
-        JwtClaimsSet claims =
-                JwtClaimsSet.builder()
-                        .subject(usuario.getId().toString())
-                        .claim("email", usuario.getEmail())
-                        .claim("nombre", usuario.getNombre())
-                        .claim("organizacionId", organizacion.getId().toString())
-                        .claim("organizacion", organizacion.getNombre())
-                        .claim("rol", rol)
-                        .issuedAt(ahora)
-                        .expiresAt(ahora.plus(Duration.ofHours(horasToken)))
-                        .build();
+        Usuario usuario = usuarioRepository.findById(sesion.getUsuarioId())
+                .orElseThrow(CredencialesInvalidasException::new);
+        Organizacion organizacion = organizacionRepository.findById(sesion.getOrganizacionId())
+                .orElseThrow(CredencialesInvalidasException::new);
+        MiembroOrganizacion miembro = miembroRepository
+                .findByOrganizacionIdAndUsuarioId(organizacion.getId(), usuario.getId())
+                .orElseThrow(CredencialesInvalidasException::new);
+
+        sesion.setRevocadoAt(OffsetDateTime.now());
+        refreshRepository.save(sesion);
+        return sesion(usuario, organizacion, miembro.getRol(), sesion.getLocalId());
+    }
+
+    @Transactional
+    public void cerrarSesion(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        refreshRepository.findByTokenHashAndRevocadoAtIsNull(hash(refreshToken))
+                .ifPresent(sesion -> {
+                    sesion.setRevocadoAt(OffsetDateTime.now());
+                    refreshRepository.save(sesion);
+                });
+    }
+
+    @Transactional
+    public SesionResponse cambiarLocal(UUID usuarioId, UUID localId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(CredencialesInvalidasException::new);
+        MiembroOrganizacion miembro = miembroRepository
+                .findFirstByUsuarioIdOrderByCreatedAtAsc(usuarioId)
+                .orElseThrow(CredencialesInvalidasException::new);
+        Organizacion organizacion = organizacionRepository.findById(miembro.getOrganizacionId())
+                .orElseThrow(CredencialesInvalidasException::new);
+        com.chefstool.backend.domain.model.Local local = localRepository
+                .findByIdAndOrganizacionIdAndDeletedAtIsNull(localId, organizacion.getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Local no encontrado"));
+        return sesion(usuario, organizacion, miembro.getRol(), local.getId());
+    }
+
+    private SesionResponse sesion(Usuario usuario, Organizacion organizacion, String rol) {
+        return sesion(usuario, organizacion, rol, localPrincipal(organizacion.getId()));
+    }
+
+    private SesionResponse sesion(
+            Usuario usuario, Organizacion organizacion, String rol, UUID localId) {
+        if (localId == null) {
+            localId = localPrincipal(organizacion.getId());
+        }
+
+        Instant ahora = Instant.now();
+        Instant expiraAccess = ahora.plus(Duration.ofMinutes(accessMinutos));
+
+        var claimsBuilder = JwtClaimsSet.builder()
+                .subject(usuario.getId().toString())
+                .claim("email", usuario.getEmail())
+                .claim("nombre", usuario.getNombre())
+                .claim("organizacionId", organizacion.getId().toString())
+                .claim("organizacion", organizacion.getNombre())
+                .claim("rol", rol)
+                .issuedAt(ahora)
+                .expiresAt(expiraAccess);
+        if (localId != null) {
+            claimsBuilder.claim("localId", localId.toString());
+        }
+        JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader cabecera = JwsHeader.with(MacAlgorithm.HS256).build();
         String token =
                 jwtEncoder.encode(JwtEncoderParameters.from(cabecera, claims)).getTokenValue();
 
+        String refreshToken = refreshToken();
+        SesionRefresh sesionRefresh = new SesionRefresh();
+        sesionRefresh.setUsuarioId(usuario.getId());
+        sesionRefresh.setOrganizacionId(organizacion.getId());
+        sesionRefresh.setLocalId(localId);
+        sesionRefresh.setTokenHash(hash(refreshToken));
+        sesionRefresh.setExpiraAt(OffsetDateTime.now().plusDays(refreshDias));
+        refreshRepository.save(sesionRefresh);
+
         return new SesionResponse(
                 token,
+                refreshToken,
+                expiraAccess,
                 usuario.getId(),
                 usuario.getEmail(),
                 usuario.getNombre(),
                 organizacion.getId(),
                 organizacion.getNombre(),
+                localId,
                 rol);
+    }
+
+    private UUID localPrincipal(UUID organizacionId) {
+        java.util.List<com.chefstool.backend.domain.model.Local> locales =
+                localRepository.findByOrganizacionIdAndDeletedAtIsNullAndActivoTrueOrderByNombreAsc(
+                        organizacionId);
+        if (!locales.isEmpty()) {
+            return locales.getFirst().getId();
+        }
+        com.chefstool.backend.domain.model.Local principal =
+                new com.chefstool.backend.domain.model.Local();
+        principal.setOrganizacionId(organizacionId);
+        principal.setNombre("Principal");
+        principal.setActivo(true);
+        return localRepository.save(principal).getId();
+    }
+
+    private String refreshToken() {
+        byte[] bytes = new byte[48];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hash(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte value : bytes) {
+                hex.append(String.format("%02x", value));
+            }
+            return hex.toString();
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 no disponible", ex);
+        }
     }
 }

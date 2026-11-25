@@ -129,7 +129,7 @@ Lo que no haría es meter datos reales de compras ahí.
 
 | Tema | Qué falta | Dónde está el detalle |
 | --- | --- | --- |
-| **Correo transaccional** | Contratar proveedor (Resend, SES o SendGrid) y verificar el dominio. Hoy las invitaciones y la recuperación generan el enlace, pero no envían correo | `INFORME-BERNART.md` → Decisión 2 |
+| **Correo transaccional** | Contratar proveedor y completar las credenciales SMTP. El backend ya admite SMTP genérico, Resend/SES/SendGrid y alertas semanales preparadas | `INFORME-BERNART.md` → Decisión 2 |
 | **Contratos RGPD (art. 28)** | Firmar el encargo del tratamiento con el proveedor de alojamiento y con el de OCR si se activa | `RGPD.md` → punto 2 |
 | **Copias de seguridad** | Snapshot y **prueba de restauración** hecha de verdad, no solo programada | `DESPLIEGUE.md` → checklist |
 | **Plazo de conservación** | Definir cuántos años se guardan albaranes y compras (fiscal: 4 años) | `RGPD.md` → punto 2 |
@@ -146,8 +146,9 @@ Lo que no haría es meter datos reales de compras ahí.
 - Productos con histórico de precios, proveedores, clientes y eventos.
 - Fichas técnicas con coste por ración, margen y exportación a PDF A4.
 - Panel, informes de coste por proveedor, variaciones de precio, alertas y exportación a Excel.
+- Importación masiva CSV, XLS y XLSX, auditoría básica, refresh tokens y varios locales.
 - RGPD: aviso de privacidad, descarga de datos y baja de cuenta con borrado en cascada.
-- **118 pruebas de backend** (con su propio PostgreSQL en Testcontainers) y **30 de frontend**,
+- **155 pruebas de backend** (con su propio PostgreSQL en Testcontainers) y **42 de frontend**,
   todas en verde.
 - Documentación completa en `docs/` (ver índice en el `README.md`).
 

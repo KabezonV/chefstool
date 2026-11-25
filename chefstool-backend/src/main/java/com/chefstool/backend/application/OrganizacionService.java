@@ -1,5 +1,6 @@
 package com.chefstool.backend.application;
 
+import com.chefstool.backend.domain.port.out.LocalRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
@@ -17,12 +18,32 @@ public class OrganizacionService {
     private static final UUID ORGANIZACION_POR_DEFECTO =
             UUID.fromString("00000000-0000-0000-0000-000000000001");
 
+    private final LocalRepository localRepository;
+
+    public OrganizacionService(LocalRepository localRepository) {
+        this.localRepository = localRepository;
+    }
+
     public UUID organizacionActual() {
         return jwt()
                 .map(jwt -> jwt.getClaimAsString("organizacionId"))
                 .filter(valor -> valor != null && !valor.isBlank())
                 .map(UUID::fromString)
                 .orElse(ORGANIZACION_POR_DEFECTO);
+    }
+
+    public UUID localActual() {
+        Optional<String> claim = jwt().map(jwt -> jwt.getClaimAsString("localId"));
+        if (claim.isPresent() && claim.get() != null && !claim.get().isBlank()) {
+            return UUID.fromString(claim.get());
+        }
+        return localRepository
+                .findByOrganizacionIdAndDeletedAtIsNullAndActivoTrueOrderByNombreAsc(
+                        organizacionActual())
+                .stream()
+                .findFirst()
+                .map(local -> local.getId())
+                .orElse(null);
     }
 
     public Optional<UUID> usuarioActual() {

@@ -56,6 +56,7 @@ public class CompraService {
     private final ProveedorProductoRepository proveedorProductoRepository;
     private final AlertaPrecioRepository alertaPrecioRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
     public CompraService(
             CompraRepository compraRepository,
@@ -66,7 +67,8 @@ public class CompraService {
             EventoRepository eventoRepository,
             ProveedorProductoRepository proveedorProductoRepository,
             AlertaPrecioRepository alertaPrecioRepository,
-            OrganizacionService organizacionService) {
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.compraRepository = compraRepository;
         this.lineaCompraRepository = lineaCompraRepository;
         this.proveedorRepository = proveedorRepository;
@@ -76,6 +78,7 @@ public class CompraService {
         this.proveedorProductoRepository = proveedorProductoRepository;
         this.alertaPrecioRepository = alertaPrecioRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -100,6 +103,7 @@ public class CompraService {
         return Pagina.desde(
                         compraRepository.buscarPaginado(
                                 organizacionService.organizacionActual(),
+                                organizacionService.localActual(),
                                 proveedorId,
                                 desde,
                                 hasta,
@@ -126,6 +130,7 @@ public class CompraService {
             DocumentoCompra documento, ExtraccionDocumento extraccion) {
         Compra compra = new Compra();
         compra.setOrganizacionId(documento.getOrganizacionId());
+        compra.setLocalId(documento.getLocalId());
         compra.setDocumento(documento);
         compra.setProveedor(resolverProveedor(documento.getOrganizacionId(), extraccion));
         compra.setNumeroDocumento(extraccion.numeroDocumento());
@@ -160,6 +165,10 @@ public class CompraService {
             actualizarPrecioYAlertas(guardada, lineaGuardada, producto);
         }
 
+        if (auditoriaService != null) auditoriaService.registrar(
+                "CONFIRMAR", "COMPRA", guardada.getId(),
+                guardada.getNumeroDocumento() == null ? guardada.getId().toString()
+                        : guardada.getNumeroDocumento());
         return CompraResponse.from(guardada, lineas.size());
     }
 

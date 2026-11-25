@@ -35,6 +35,11 @@ public class ParserAlbaran {
     private static final Pattern FECHA =
             Pattern.compile("(\\d{1,2})[/\\-.]{1}(\\d{1,2})[/\\-.]{1}(\\d{2,4})");
 
+    private static final Pattern FECHA_ETIQUETADA =
+            Pattern.compile(
+                    "(?i)\\b(?:fecha|emitido(?: el)?|documento)\\b\\s*[:.]?\\s*"
+                            + "(\\d{1,2})[/\\-.]{1}(\\d{1,2})[/\\-.]{1}(\\d{2,4})");
+
     private static final int NOMBRE_PROVEEDOR_MAX = 60;
 
     /** Etiquetas que marcan el final del nombre: lo que venga despues ya no es el proveedor. */
@@ -170,8 +175,11 @@ public class ParserAlbaran {
                                         .filter(
                                                 proveedor ->
                                                         mencionaNombreCompleto(
-                                                                primerasLineas,
-                                                                normalizar(proveedor.getNombre())))
+                                                                        primerasLineas,
+                                                                        normalizar(proveedor.getNombre()))
+                                                                || mencionaNombreOcrFuzzy(
+                                                                        primerasLineas,
+                                                                        normalizar(proveedor.getNombre())))
                                         .findFirst());
     }
 
@@ -186,6 +194,65 @@ public class ParserAlbaran {
         return !palabras.isEmpty() && palabrasTexto.containsAll(palabras);
     }
 
+    /** Busca nombres aunque el OCR haya cambiado una letra de una palabra larga. */
+    private boolean mencionaNombreOcrFuzzy(String texto, String objetivo) {
+        List<String> palabrasTexto = Arrays.asList(texto.split("\\s+"));
+        List<String> palabras = palabrasSignificativas(objetivo);
+        if (palabras.isEmpty()) {
+            return false;
+        }
+
+        int encontradas = 0;
+        for (String palabraObjetivo : palabras) {
+            boolean coincide = palabrasTexto.stream().anyMatch(
+                    palabraTexto -> {
+                        int tolerancia = palabraObjetivo.length() >= 8 ? 1 : 0;
+                        if (distanciaLevenshtein(palabraTexto, palabraObjetivo) <= tolerancia) {
+                            return true;
+                        }
+                        if (palabraTexto.length() >= palabraObjetivo.length()) {
+                            for (int i = 0;
+                                    i <= palabraTexto.length() - palabraObjetivo.length();
+                                    i++) {
+                                String ventana = palabraTexto.substring(
+                                        i, i + palabraObjetivo.length());
+                                if (distanciaLevenshtein(ventana, palabraObjetivo)
+                                        <= tolerancia) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    });
+            if (coincide) {
+                encontradas++;
+            }
+        }
+        return palabras.size() == 1 ? encontradas == 1 : encontradas == palabras.size();
+    }
+
+    private int distanciaLevenshtein(String izquierda, String derecha) {
+        int[] anterior = new int[derecha.length() + 1];
+        int[] actual = new int[derecha.length() + 1];
+        for (int j = 0; j <= derecha.length(); j++) {
+            anterior[j] = j;
+        }
+        for (int i = 1; i <= izquierda.length(); i++) {
+            actual[0] = i;
+            for (int j = 1; j <= derecha.length(); j++) {
+                int coste = izquierda.charAt(i - 1) == derecha.charAt(j - 1) ? 0 : 1;
+                actual[j] =
+                        Math.min(
+                                Math.min(actual[j - 1] + 1, anterior[j] + 1),
+                                anterior[j - 1] + coste);
+            }
+            int[] intercambio = anterior;
+            anterior = actual;
+            actual = intercambio;
+        }
+        return anterior[derecha.length()];
+    }
+
     private static List<String> palabrasSignificativas(String nombre) {
         return Arrays.stream(nombre.split("\\s+"))
                 .filter(palabra -> palabra.length() >= 3)
@@ -195,14 +262,31 @@ public class ParserAlbaran {
     }
 
     private Optional<LocalDate> buscarFecha(String texto) {
-        Matcher matcher = FECHA.matcher(texto);
-        if (!matcher.find()) {
-            return Optional.empty();
+        Matcher etiquetada = FECHA_ETIQUETADA.matcher(texto);
+        while (etiquetada.find()) {
+            Optional<LocalDate> fecha = parsearFecha(
+                    etiquetada.group(1), etiquetada.group(2), etiquetada.group(3));
+            if (fecha.isPresent()) {
+                return fecha;
+            }
         }
+
+        Matcher matcher = FECHA.matcher(texto);
+        while (matcher.find()) {
+            Optional<LocalDate> fecha =
+                    parsearFecha(matcher.group(1), matcher.group(2), matcher.group(3));
+            if (fecha.isPresent()) {
+                return fecha;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<LocalDate> parsearFecha(String diaTexto, String mesTexto, String anioTexto) {
         try {
-            int dia = Integer.parseInt(matcher.group(1));
-            int mes = Integer.parseInt(matcher.group(2));
-            int anio = Integer.parseInt(matcher.group(3));
+            int dia = Integer.parseInt(diaTexto);
+            int mes = Integer.parseInt(mesTexto);
+            int anio = Integer.parseInt(anioTexto);
             if (anio < 100) {
                 anio += 2000;
             }
@@ -223,7 +307,15 @@ public class ParserAlbaran {
         while (fin > 0 && (numero.charAt(fin - 1) == '-' || numero.charAt(fin - 1) == '/')) {
             fin--;
         }
-        return numero.substring(0, fin);
+        String recortado = numero.substring(0, fin);
+        java.util.regex.Matcher sinSeparador =
+                Pattern.compile("(?i)^([A-Z]+-)?(20\\d{2})(\\d{3,6})$").matcher(recortado);
+        if (sinSeparador.matches()) {
+            return sinSeparador.group(1) == null
+                    ? sinSeparador.group(2) + "/" + sinSeparador.group(3)
+                    : sinSeparador.group(1) + sinSeparador.group(2) + "/" + sinSeparador.group(3);
+        }
+        return recortado;
     }
 
     private List<LineaExtraccion> buscarLineas(List<String> lineas, UUID organizacionId) {
@@ -555,6 +647,9 @@ public class ParserAlbaran {
         if (limpia.length() > NOMBRE_PROVEEDOR_MAX) {
             limpia = limpia.substring(0, NOMBRE_PROVEEDOR_MAX).trim();
         }
+        limpia = limpia.replaceAll(
+                "(?iu)HORTO(?:FUTICOLAS|FRRTICOLAS|FRUTICOLAS|FRUTÍCOLAS)",
+                "HORTOFRUTICOLAS");
         return limpia;
     }
 

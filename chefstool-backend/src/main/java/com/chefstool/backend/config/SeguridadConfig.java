@@ -119,6 +119,8 @@ public class SeguridadConfig {
                             .requestMatchers(
                                     "/api/auth/login",
                                     "/api/auth/registro",
+                                    "/api/auth/refrescar",
+                                    "/api/auth/logout",
                                     "/api/auth/recuperar",
                                     "/api/auth/restablecer",
                                     "/error")

@@ -10,7 +10,10 @@ import static org.mockito.Mockito.when;
 
 import com.chefstool.backend.adapter.in.web.dto.ProductoRequest;
 import com.chefstool.backend.adapter.in.web.dto.ProductoResponse;
+import java.io.ByteArrayOutputStream;
 import java.util.UUID;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.mock.web.MockMultipartFile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +84,32 @@ class ImportacionProductosServiceTest {
         var resumen = servicio.importar("\uFEFFTomate;;\n\n   \nCebolla;;\n");
 
         assertThat(resumen.creados()).isEqualTo(2);
+    }
+
+    @Test
+    void importaUnArchivoXlsx() throws Exception {
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        try (XSSFWorkbook libro = new XSSFWorkbook()) {
+            var hoja = libro.createSheet("Productos");
+            var cabecera = hoja.createRow(0);
+            cabecera.createCell(0).setCellValue("Nombre");
+            cabecera.createCell(1).setCellValue("Categoria");
+            cabecera.createCell(2).setCellValue("UnidadBase");
+            var producto = hoja.createRow(1);
+            producto.createCell(0).setCellValue("Harina");
+            producto.createCell(1).setCellValue("Secos");
+            producto.createCell(2).setCellValue("kg");
+            libro.write(salida);
+        }
+
+        var archivo = new MockMultipartFile(
+                "archivo", "productos.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                salida.toByteArray());
+        var resumen = servicio.importar(archivo);
+
+        assertThat(resumen.creados()).isEqualTo(1);
+        verify(productos).crear(new ProductoRequest("Harina", "Secos", "kg"));
     }
 
     @Test

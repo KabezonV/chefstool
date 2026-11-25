@@ -8,6 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,9 +42,63 @@ public class ImportacionProductosService {
      */
     public Resumen importar(MultipartFile archivo) {
         if (archivo == null || archivo.isEmpty()) {
-            throw new IllegalArgumentException("Adjunta un archivo CSV");
+            throw new IllegalArgumentException("Adjunta un archivo CSV o Excel");
+        }
+
+        String nombre = archivo.getOriginalFilename() == null
+                ? ""
+                : archivo.getOriginalFilename().toLowerCase(Locale.ROOT);
+        if (nombre.endsWith(".xlsx") || nombre.endsWith(".xls")) {
+            return importarFilasExcel(archivo, nombre.endsWith(".xls"));
         }
         return importar(leer(archivo));
+    }
+
+    private Resumen importarFilasExcel(MultipartFile archivo, boolean xls) {
+        try (java.io.InputStream entrada = archivo.getInputStream();
+                Workbook libro = xls ? new HSSFWorkbook(entrada) : new XSSFWorkbook(entrada)) {
+            StringBuilder contenido = new StringBuilder();
+            for (int s = 0; s < libro.getNumberOfSheets(); s++) {
+                Sheet hoja = libro.getSheetAt(s);
+                for (Row fila : hoja) {
+                    if (fila == null) {
+                        continue;
+                    }
+                    List<String> campos = new ArrayList<>();
+                    int ultima = Math.max(fila.getLastCellNum(), 0);
+                    for (int c = 0; c < ultima; c++) {
+                        campos.add(valorCelda(fila.getCell(c)));
+                    }
+                    contenido.append(String.join(";", campos)).append('\n');
+                }
+                if (s + 1 < libro.getNumberOfSheets()) {
+                    contenido.append('\n');
+                }
+            }
+            if (contenido.isEmpty()) {
+                throw new IllegalArgumentException("El archivo Excel está vacío");
+            }
+            return importar(contenido.toString());
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("No se pudo leer el archivo Excel: " + ex.getMessage());
+        } catch (org.apache.poi.EmptyFileException ex) {
+            throw new IllegalArgumentException("El archivo Excel está vacío o no es válido");
+        }
+    }
+
+    private String valorCelda(Cell celda) {
+        if (celda == null) {
+            return "";
+        }
+        return switch (celda.getCellType()) {
+            case STRING -> celda.getStringCellValue();
+            case NUMERIC -> new java.text.DecimalFormat("0.################",
+                            java.text.DecimalFormatSymbols.getInstance(Locale.ROOT))
+                    .format(celda.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(celda.getBooleanCellValue());
+            case FORMULA -> celda.toString();
+            default -> "";
+        };
     }
 
     /** Separado para poder probarlo sin MultipartFile. */

@@ -208,6 +208,69 @@ class ParserAlbaranTest {
                 .isEqualTo("DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.");
     }
 
+    @Test
+    void reconoceProveedorCuandoUnaPalabraTieneUnCaracterOcrErroneo() {
+        stubProveedores(proveedor("Distribuciones HortoFruticolas S.L."));
+        stubCatalogo();
+
+        String texto = """
+            DISTRIBUCIONES HORTOFRTICOLAS EJEMPLO S.L.
+            Albaran: A-2026/0457
+            Fecha: 08/11/2026
+            TOMATE PERA 4 1,85 7,40
+            TOTAL: 7,40
+            """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.proveedorId()).isNotNull();
+        assertThat(extraccion.proveedorNombre()).isEqualTo("Distribuciones HortoFruticolas S.L.");
+    }
+
+    @Test
+    void priorizaLaFechaEtiquetadaFrenteAFechasDeOtrosDatos() {
+        String texto = """
+            FRUTAS GARCIA SL
+            Serie lote 15/10/2024 2026040882
+            Fecha: 08/11/2026
+            ALBARAN: A-77
+            TOMATE PERA 4 1,85 7,40
+            TOTAL: 7,40
+            """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.fecha()).isEqualTo(LocalDate.of(2026, 11, 8));
+    }
+
+    @Test
+    void restauraElSeparadorDeUnNumeroSinBarrasAlLeerLaFoto() {
+        String texto = """
+            DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.
+            Albaran: A-20260457
+            Fecha: 08/11/2026
+            TOTAL: 41,58
+            """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.numeroDocumento()).isEqualTo("A-2026/0457");
+    }
+
+    @Test
+    void corrigeElNombreDelProveedorSiElOcrPierdeUnaLetra() {
+        String texto = """
+            DISTRIBUCIONES HORTOFUTICOLAS EJEMPLO S.L.
+            Albaran: A-2026/0457
+            Fecha: 08/11/2026
+            TOTAL: 41,58
+            """;
+
+        ExtraccionDocumento extraccion = parser.interpretar(texto, ORG).extraccion();
+
+        assertThat(extraccion.proveedorNombre()).isEqualTo("DISTRIBUCIONES HORTOFRUTICOLAS EJEMPLO S.L.");
+    }
+
     private Proveedor proveedor(String nombre) {
         Proveedor proveedor = new Proveedor();
         proveedor.setId(UUID.randomUUID());

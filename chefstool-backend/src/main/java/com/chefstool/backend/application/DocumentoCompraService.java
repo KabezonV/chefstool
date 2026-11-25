@@ -22,6 +22,8 @@ import javax.imageio.ImageIO;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -50,6 +52,7 @@ public class DocumentoCompraService {
     private final ExtractorDocumento extractor;
     private final CompraService compraService;
     private final ObjectMapper objectMapper;
+    private final AuditoriaService auditoriaService;
 
     public DocumentoCompraService(
             DocumentoCompraRepository documentoRepository,
@@ -57,13 +60,15 @@ public class DocumentoCompraService {
             AlmacenamientoArchivos almacenamiento,
             ExtractorDocumento extractor,
             CompraService compraService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            AuditoriaService auditoriaService) {
         this.documentoRepository = documentoRepository;
         this.organizacionService = organizacionService;
         this.almacenamiento = almacenamiento;
         this.extractor = extractor;
         this.compraService = compraService;
         this.objectMapper = objectMapper;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -98,11 +103,19 @@ public class DocumentoCompraService {
             // sea una sola compra y no una por foto.
             nombre = nombreDeVariasHojas(utiles.getFirst().getOriginalFilename(), utiles.size());
             tipoMime = "application/pdf";
-            contenido = juntarEnPdf(utiles);
+            if (todosSonPdf(utiles)) {
+                contenido = juntarPdf(utiles);
+            } else if (todosSonImagen(utiles)) {
+                contenido = juntarEnPdf(utiles);
+            } else {
+                throw new DocumentoIlegibleException(
+                        "No mezcles fotos y PDFs en una misma subida. Sube varias fotos o varios PDFs.");
+            }
         }
 
         DocumentoCompra documento = new DocumentoCompra();
         documento.setOrganizacionId(organizacionId);
+        documento.setLocalId(organizacionService.localActual());
         documento.setNombreOriginal(nombre);
         documento.setTipoMime(tipoMime);
         documento.setOrigen(demo ? "demo" : origen);
@@ -131,7 +144,12 @@ public class DocumentoCompraService {
             guardado.setErrorExtraccion("No se pudo leer el documento: " + ex.getMessage());
         }
 
-        return detalle(documentoRepository.saveAndFlush(guardado));
+        DocumentoCompra guardadoFinal = documentoRepository.saveAndFlush(guardado);
+        if (!demo && auditoriaService != null) {
+            auditoriaService.registrar(
+                    "SUBIR", "DOCUMENTO", guardadoFinal.getId(), guardadoFinal.getNombreOriginal());
+        }
+        return detalle(guardadoFinal);
     }
 
     @Transactional(readOnly = true)
@@ -147,9 +165,13 @@ public class DocumentoCompraService {
                                 Sort.by("createdAt").descending(),
                                 "createdAt", "nombreOriginal", "estado", "confianzaExtraccion"));
 
-        return Pagina.desde(
-                        documentoRepository.findByOrganizacionId(
-                                organizacionService.organizacionActual(), pageable))
+        UUID localId = organizacionService.localActual();
+        var documentos = localId == null
+                ? documentoRepository.findByOrganizacionId(
+                        organizacionService.organizacionActual(), pageable)
+                : documentoRepository.findByOrganizacionIdAndLocalId(
+                        organizacionService.organizacionActual(), localId, pageable);
+        return Pagina.desde(documentos)
                 .map(DocumentoResumen::from);
     }
 
@@ -174,6 +196,8 @@ public class DocumentoCompraService {
         documento.setExtraccionJson(serializar(extraccion));
         documento.setEstado(DocumentoCompra.CONFIRMADO);
         documentoRepository.save(documento);
+        if (auditoriaService != null) auditoriaService.registrar(
+                "CONFIRMAR", "DOCUMENTO", documento.getId(), documento.getNombreOriginal());
 
         return compra;
     }
@@ -183,6 +207,8 @@ public class DocumentoCompraService {
         DocumentoCompra documento = buscarEditable(id);
         documento.setEstado(DocumentoCompra.DESCARTADO);
         documentoRepository.save(documento);
+        if (auditoriaService != null) auditoriaService.registrar(
+                "DESCARTAR", "DOCUMENTO", documento.getId(), documento.getNombreOriginal());
     }
 
     @Transactional(readOnly = true)
@@ -251,6 +277,50 @@ public class DocumentoCompraService {
     private String nombreDeVariasHojas(String primero, int hojas) {
         String base = primero == null ? "albaran" : primero.replaceAll("\\.[^.]+$", "");
         return "%s-%d-hojas.pdf".formatted(base, hojas);
+    }
+
+    private boolean todosSonPdf(List<MultipartFile> archivos) {
+        return archivos.stream().allMatch(
+                archivo -> {
+                    byte[] contenido = leer(archivo);
+                    return (archivo.getContentType() != null
+                                    && archivo.getContentType().toLowerCase().startsWith("application/pdf"))
+                            || (contenido.length >= 4
+                                    && contenido[0] == '%'
+                                    && contenido[1] == 'P'
+                                    && contenido[2] == 'D'
+                                    && contenido[3] == 'F');
+                });
+    }
+
+    private boolean todosSonImagen(List<MultipartFile> archivos) {
+        return archivos.stream().allMatch(
+                archivo -> {
+                    String tipo = archivo.getContentType();
+                    if (tipo != null && tipo.toLowerCase().startsWith("image/")) {
+                        return true;
+                    }
+                    try {
+                        return ImageIO.read(new ByteArrayInputStream(leer(archivo))) != null;
+                    } catch (IOException ex) {
+                        return false;
+                    }
+                });
+    }
+
+    private byte[] juntarPdf(List<MultipartFile> archivos) {
+        try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+            PDFMergerUtility mezclador = new PDFMergerUtility();
+            for (MultipartFile archivo : archivos) {
+                mezclador.addSource(new RandomAccessReadBuffer(leer(archivo)));
+            }
+            mezclador.setDestinationStream(salida);
+            mezclador.mergeDocuments(null);
+            return salida.toByteArray();
+        } catch (IOException ex) {
+            throw new DocumentoIlegibleException(
+                    "No se pudieron juntar los PDFs del albaran: " + ex.getMessage());
+        }
     }
 
     /** Convierte varias fotos en un PDF de varias paginas, una por hoja. */

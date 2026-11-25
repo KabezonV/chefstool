@@ -59,7 +59,8 @@ public class InformeService {
     @Transactional(readOnly = true)
     public PanelInforme panel() {
         UUID organizacionId = organizacionService.organizacionActual();
-        List<Compra> compras = compraRepository.buscar(organizacionId, null, null, null);
+        List<Compra> compras = compraRepository.buscar(
+                organizacionId, organizacionService.localActual(), null, null, null);
 
         YearMonth mesActual = YearMonth.now();
         YearMonth mesAnterior = mesActual.minusMonths(1);
@@ -131,7 +132,8 @@ public class InformeService {
     @Transactional(readOnly = true)
     public List<ResumenProveedor> porProveedor() {
         UUID organizacionId = organizacionService.organizacionActual();
-        List<Compra> compras = compraRepository.buscar(organizacionId, null, null, null);
+        List<Compra> compras = compraRepository.buscar(
+                organizacionId, organizacionService.localActual(), null, null, null);
         List<LineaCompra> lineas = lineaCompraRepository.lineasDeOrganizacion(organizacionId);
 
         BigDecimal gastoGlobal =

@@ -176,7 +176,7 @@ public class ExtractorVision {
     private List<String> imagenesDelDocumento(byte[] contenido) {
         if (lectorPdf.esPdf(contenido)) {
             List<String> imagenes = new ArrayList<>();
-            for (byte[] pagina : lectorPdf.paginasComoPng(contenido, 2, 200)) {
+            for (byte[] pagina : lectorPdf.paginasComoPng(contenido, 10, 200)) {
                 imagenes.add(Base64.getEncoder().encodeToString(imagenesDelPng(pagina)));
             }
             return imagenes;
@@ -365,14 +365,30 @@ public class ExtractorVision {
         if (articulos.isArray()) {
             for (JsonNode articulo : articulos) {
                 String descripcion = texto(articulo, "descripcion");
-                if (descripcion == null || descripcion.isBlank()) {
+                if (descripcion == null || descripcion.isBlank()
+                        || esCabeceraOtotal(descripcion)) {
                     continue;
                 }
                 BigDecimal cantidad = decimal(articulo, "cantidad");
                 BigDecimal precio = decimal(articulo, "precioUnitario");
                 BigDecimal importe = decimal(articulo, "importe");
+
                 if (importe == null && cantidad != null && precio != null) {
                     importe = cantidad.multiply(precio).setScale(2, RoundingMode.HALF_UP);
+                } else if (importe != null && cantidad == null && precio == null) {
+                    cantidad = BigDecimal.ONE;
+                    precio = importe;
+                } else if (importe != null && cantidad == null && precio != null
+                        && precio.signum() != 0) {
+                    cantidad = importe.divide(precio, 3, RoundingMode.HALF_UP);
+                } else if (importe != null && cantidad != null && precio == null
+                        && cantidad.signum() != 0) {
+                    precio = importe.divide(cantidad, 3, RoundingMode.HALF_UP)
+                            .setScale(2, RoundingMode.HALF_UP);
+                }
+
+                if (importe == null || importe.signum() == 0) {
+                    continue;
                 }
                 lineas.add(
                         new LineaExtraccion(
@@ -424,6 +440,11 @@ public class ExtractorVision {
         return new ResultadoExtraccion(extraccion, confianza(proveedor, fecha, numero, lineas, total));
     }
 
+    private boolean esCabeceraOtotal(String descripcion) {
+        String normalizada = descripcion.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalizada.matches("(?i)^.*\\b(?:base imponible|subtotal|iva|total|importe total|suma)\\b.*$");
+    }
+
     private BigDecimal confianza(
             String proveedor,
             LocalDate fecha,
@@ -470,7 +491,8 @@ public class ExtractorVision {
         if (texto.isEmpty() || "null".equalsIgnoreCase(texto)) {
             return null;
         }
-        // "1.234,56" o "1,234.56" o "12,50"
+        // "1.234,56" o "1,234.56" o "12,50". Sin coma, un punto con tres
+        // decimales se interpreta como separador de miles español; con dos, como decimal.
         if (texto.contains(",") && texto.contains(".")) {
             texto =
                     texto.lastIndexOf(',') > texto.lastIndexOf('.')
@@ -478,6 +500,8 @@ public class ExtractorVision {
                             : texto.replace(",", "");
         } else if (texto.contains(",")) {
             texto = texto.replace(",", ".");
+        } else if (texto.matches("\\d{1,3}\\.\\d{3}")) {
+            texto = texto.replace(".", "");
         }
         try {
             return new BigDecimal(texto);
@@ -490,10 +514,25 @@ public class ExtractorVision {
         if (texto == null) {
             return null;
         }
+        String limpio = texto.trim();
         try {
-            return LocalDate.parse(texto.trim());
+            return LocalDate.parse(limpio);
         } catch (RuntimeException ex) {
-            return null;
+            try {
+                String[] partes = limpio.split("[/\\-.]");
+                if (partes.length != 3) {
+                    return null;
+                }
+                int dia = Integer.parseInt(partes[0]);
+                int mes = Integer.parseInt(partes[1]);
+                int anio = Integer.parseInt(partes[2]);
+                if (anio < 100) {
+                    anio += 2000;
+                }
+                return LocalDate.of(anio, mes, dia);
+            } catch (RuntimeException ignorado) {
+                return null;
+            }
         }
     }
 }

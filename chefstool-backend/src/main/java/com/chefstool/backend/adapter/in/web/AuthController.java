@@ -6,6 +6,7 @@ import com.chefstool.backend.adapter.in.web.dto.RecuperacionResponse;
 import com.chefstool.backend.adapter.in.web.dto.RecuperarRequest;
 import com.chefstool.backend.adapter.in.web.dto.RegistroRequest;
 import com.chefstool.backend.adapter.in.web.dto.RestablecerRequest;
+import com.chefstool.backend.adapter.in.web.dto.RefreshRequest;
 import com.chefstool.backend.adapter.in.web.dto.SesionResponse;
 import com.chefstool.backend.application.AuthService;
 import com.chefstool.backend.application.BajaCuentaService;
@@ -65,6 +66,17 @@ public class AuthController {
             limitador.fallo(clave);
             throw ex;
         }
+    }
+
+    @PostMapping("/refrescar")
+    public SesionResponse refrescar(@Valid @RequestBody RefreshRequest peticion) {
+        return authService.refrescar(peticion.refreshToken());
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@Valid @RequestBody RefreshRequest peticion) {
+        authService.cerrarSesion(peticion.refreshToken());
     }
 
     @PostMapping("/recuperar")

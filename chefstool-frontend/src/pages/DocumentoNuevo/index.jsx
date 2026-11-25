@@ -13,7 +13,7 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-const ANCHO_MINIMO_AVISO = 1200
+const ANCHO_MINIMO_AVISO = 1600
 
 /** Ancho en pixeles del archivo, o null si no es una imagen que se pueda medir. */
 async function anchoDeImagen(archivo) {
@@ -135,7 +135,7 @@ export default function DocumentoNuevo() {
       <input
         ref={camaraRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png"
         capture="environment"
         className="hidden"
         onChange={(event) => alElegir(event, 'camara')}

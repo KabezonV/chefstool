@@ -39,6 +39,8 @@ class AuthControllerTest extends IntegracionBase {
                                                 .formatted(email)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.localId").isNotEmpty())
                 .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.rol").value("propietario"))
                 .andExpect(jsonPath("$.organizacion").value("Cocina Prueba"));
@@ -91,6 +93,43 @@ class AuthControllerTest extends IntegracionBase {
                                 .content(
                                         "{\"email\":\"%s\",\"password\":\"otra-cosa\"}"
                                                 .formatted(email)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refrescaYRevocaLaSesion() throws Exception {
+        String email = "refresh-" + UUID.randomUUID() + "@chefstool.es";
+        String registro = mockMvc.perform(
+                        post("/api/auth/registro")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"email\":\"%s\",\"password\":\"secreto123\"}"
+                                                .formatted(email)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String refreshToken = objectMapper.readTree(registro).get("refreshToken").asText();
+
+        mockMvc.perform(
+                        post("/api/auth/refrescar")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"refreshToken\":\"%s\"}".formatted(refreshToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+
+        mockMvc.perform(
+                        post("/api/auth/logout")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"refreshToken\":\"%s\"}".formatted(refreshToken)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                        post("/api/auth/refrescar")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"refreshToken\":\"%s\"}".formatted(refreshToken)))
                 .andExpect(status().isUnauthorized());
     }
 

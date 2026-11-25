@@ -33,6 +33,9 @@ public class Compra {
     @Column(name = "organizacion_id", nullable = false)
     private UUID organizacionId;
 
+    @Column(name = "local_id")
+    private UUID localId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "documento_id")
     private DocumentoCompra documento;

@@ -36,6 +36,9 @@ public class DocumentoCompra {
     @Column(name = "organizacion_id", nullable = false)
     private UUID organizacionId;
 
+    @Column(name = "local_id")
+    private UUID localId;
+
     @Column(name = "nombre_original", nullable = false)
     private String nombreOriginal;
 

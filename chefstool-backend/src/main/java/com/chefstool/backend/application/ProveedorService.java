@@ -20,11 +20,15 @@ public class ProveedorService {
 
     private final ProveedorRepository proveedorRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
     public ProveedorService(
-            ProveedorRepository proveedorRepository, OrganizacionService organizacionService) {
+            ProveedorRepository proveedorRepository,
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.proveedorRepository = proveedorRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +66,9 @@ public class ProveedorService {
         proveedor.setOrganizacionId(organizacionId);
         proveedor.setNombre(nombre);
         aplicar(proveedor, request);
-        return ProveedorResponse.from(proveedorRepository.save(proveedor));
+        Proveedor guardado = proveedorRepository.save(proveedor);
+        if (auditoriaService != null) auditoriaService.registrar("CREAR", "PROVEEDOR", guardado.getId(), guardado.getNombre());
+        return ProveedorResponse.from(guardado);
     }
 
     @Transactional
@@ -76,12 +82,17 @@ public class ProveedorService {
 
         proveedor.setNombre(nombre);
         aplicar(proveedor, request);
-        return ProveedorResponse.from(proveedorRepository.save(proveedor));
+        Proveedor guardado = proveedorRepository.save(proveedor);
+        if (auditoriaService != null) auditoriaService.registrar("ACTUALIZAR", "PROVEEDOR", guardado.getId(), guardado.getNombre());
+        return ProveedorResponse.from(guardado);
     }
 
     @Transactional
     public void eliminar(UUID id) {
-        buscar(id).setDeletedAt(OffsetDateTime.now());
+        Proveedor proveedor = buscar(id);
+        proveedor.setDeletedAt(OffsetDateTime.now());
+        proveedorRepository.save(proveedor);
+        if (auditoriaService != null) auditoriaService.registrar("ELIMINAR", "PROVEEDOR", proveedor.getId(), proveedor.getNombre());
     }
 
     private void aplicar(Proveedor proveedor, ProveedorRequest request) {

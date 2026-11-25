@@ -129,6 +129,52 @@ class ExtractorVisionTest {
         assertThat(extractor.elegir(mala, resultado(extraccion("45.11")))).isSameAs(mala);
     }
 
+    @Test
+    void filtraTotalesEImponeUnaDescripcionRealEnLaLinea() {
+        String respuesta = """
+            {"proveedor":"Proveedor","importeNeto":13.00,"importeIva":1.30,
+             "importeTotal":14.30,"lineas":[
+               {"descripcion":"Aceite","cantidad":2,"precioUnitario":6.50,"importe":13.00},
+               {"descripcion":"IVA 10%","cantidad":1,"precioUnitario":1.30,"importe":1.30},
+               {"descripcion":"TOTAL","cantidad":1,"precioUnitario":14.30,"importe":14.30}]}
+            """;
+
+        ResultadoExtraccion resultado =
+                extractor("clave").interpretar(json.readTree(respuesta), UUID.randomUUID());
+
+        assertThat(resultado.extraccion().lineas()).hasSize(1);
+        assertThat(resultado.extraccion().lineas().getFirst().descripcion()).isEqualTo("Aceite");
+    }
+
+    @Test
+    void completaPrecioYCantidadCuandoLaIASoloTraeElImporte() {
+        String respuesta = """
+            {"proveedor":"Proveedor","importeTotal":"14,30","lineas":[
+              {"descripcion":"Aceite","importe":"14,30"}]}
+            """;
+
+        ResultadoExtraccion resultado =
+                extractor("clave").interpretar(json.readTree(respuesta), UUID.randomUUID());
+        var linea = resultado.extraccion().lineas().getFirst();
+
+        assertThat(linea.cantidad()).isEqualByComparingTo("1");
+        assertThat(linea.precioUnitario()).isEqualByComparingTo("14.30");
+        assertThat(linea.importe()).isEqualByComparingTo("14.30");
+    }
+
+    @Test
+    void aceptaFechasDeAlbaranEnFormatoEspañol() {
+        String respuesta = """
+            {"proveedor":"Proveedor","fecha":"08/11/2026","importeTotal":10,
+             "lineas":[{"descripcion":"Producto","cantidad":1,"precioUnitario":10,"importe":10}]}
+            """;
+
+        ResultadoExtraccion resultado =
+                extractor("clave").interpretar(json.readTree(respuesta), UUID.randomUUID());
+
+        assertThat(resultado.extraccion().fecha()).isEqualTo(java.time.LocalDate.of(2026, 11, 8));
+    }
+
     private com.chefstool.backend.domain.model.ExtraccionDocumento extraccion(
             String neto, String... importes) {
         java.util.List<com.chefstool.backend.domain.model.LineaExtraccion> lineas =
