@@ -109,4 +109,48 @@ class LectorImagenTest {
         assertThat(lector.sePuedeDecodificar(webp)).isFalse();
         assertThat(lector.sePuedeDecodificar(new byte[0])).isFalse();
     }
+
+    @Test
+    void elContrasteLocalIgualaLaZonaEnSombraConLaZonaIluminada() {
+        // Foto con la sombra de la mano: la mitad izquierda a 60 de gris y la derecha a 200
+        BufferedImage conSombra = new BufferedImage(400, 200, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 200; y++) {
+            for (int x = 0; x < 400; x++) {
+                int gris = x < 200 ? 60 : 200;
+                conSombra.setRGB(x, y, (gris << 16) | (gris << 8) | gris);
+            }
+        }
+
+        BufferedImage normalizada = lector.contrasteLocal(conSombra);
+
+        assertThat(normalizada.getWidth()).isEqualTo(400);
+        assertThat(normalizada.getHeight()).isEqualTo(200);
+        // El estiramiento global dejaria 60 y 200; el local lleva las dos zonas al gris medio
+        int izquierda = normalizada.getRGB(50, 100) & 0xff;
+        int derecha = normalizada.getRGB(350, 100) & 0xff;
+        assertThat(Math.abs(izquierda - derecha)).isLessThan(30);
+        assertThat(izquierda).isBetween(100, 160);
+    }
+
+    @Test
+    void elContrasteLocalMantieneElTextoOscuroSobreFondoClaro() {
+        BufferedImage hoja = new BufferedImage(300, 60, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 60; y++) {
+            for (int x = 0; x < 300; x++) {
+                hoja.setRGB(x, y, (250 << 16) | (250 << 8) | 250);
+            }
+        }
+        // Un trazo fino, como el de una linea de texto impresa
+        for (int y = 29; y <= 31; y++) {
+            for (int x = 20; x < 280; x++) {
+                hoja.setRGB(x, y, 0);
+            }
+        }
+
+        BufferedImage normalizada = lector.contrasteLocal(hoja);
+
+        assertThat(normalizada.getRGB(150, 30) & 0xff).isLessThan(80);
+        // El fondo liso queda en el gris medio, sin ruido inventado
+        assertThat(normalizada.getRGB(20, 10) & 0xff).isBetween(100, 160);
+    }
 }

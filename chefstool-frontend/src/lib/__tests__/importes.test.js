@@ -2,7 +2,13 @@
 import { describe, expect, it } from 'vitest'
 
 // Utils
-import { avisosDeImportes, ivaDe, lineasDescuadradas, tipoDeIva } from '@/lib/importes'
+import {
+  avisosDeImportes,
+  importeDeLinea,
+  ivaDe,
+  lineasDescuadradas,
+  tipoDeIva,
+} from '@/lib/importes'
 
 const lineas = (...importes) => importes.map((importe) => ({ importe }))
 
@@ -85,6 +91,35 @@ describe('lineasDescuadradas', () => {
     expect(
       lineasDescuadradas([{ cantidad: '3', precioUnitario: '0.3333', importeLeido: 1 }]),
     ).toEqual([])
+  })
+
+  it('deja de avisar cuando el usuario escribe el importe que dice el documento', () => {
+    const lineas = [
+      { cantidad: '2', precioUnitario: '1.2', importeLeido: 3.6, importeManual: '3.6' },
+    ]
+    expect(lineasDescuadradas(lineas)).toEqual([])
+    expect(importeDeLinea(lineas[0])).toBe(3.6)
+  })
+})
+
+describe('importeDeLinea', () => {
+  it('usa el importe escrito a mano aunque no salga de cantidad por precio', () => {
+    expect(
+      importeDeLinea({ cantidad: '2', precioUnitario: '10', importeManual: '17.5' }),
+    ).toBe(17.5)
+  })
+
+  it('si no hay importe a mano usa el del documento', () => {
+    expect(importeDeLinea({ cantidad: '2', precioUnitario: '10', importe: 18 })).toBe(18)
+  })
+
+  it('si no hay nada calcula cantidad por precio', () => {
+    expect(importeDeLinea({ cantidad: '3', precioUnitario: '1.2' })).toBe(3.6)
+    expect(importeDeLinea({})).toBe(0)
+  })
+
+  it('con el campo vacío vuelve a calcular', () => {
+    expect(importeDeLinea({ cantidad: '2', precioUnitario: '10', importeManual: '' })).toBe(20)
   })
 })
 

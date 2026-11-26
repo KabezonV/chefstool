@@ -1,12 +1,13 @@
 // Vendors
-import { ArrowLeft, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, Download, ExternalLink, Loader2, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 // Utils
+import { descargarArchivo } from '@/lib/descargas'
 import { fechaCorta, moneda } from '@/lib/formato'
 import { avisosDeImportes, ivaDe, lineasDescuadradas, tipoDeIva } from '@/lib/importes'
-import { importeLinea, lineaVacia } from './utils/lineas'
+import { importeCalculado, importeLinea, lineaVacia } from './utils/lineas'
 
 // Enumerations
 import { ESTADOS_DOCUMENTO } from '@/constants/documentos'
@@ -44,6 +45,43 @@ export default function DocumentoDetalle() {
   const [error, setError] = useState(null)
   const [errores, setErrores] = useState({})
   const [ivaManual, setIvaManual] = useState(false)
+  const [hojasPendientes, setHojasPendientes] = useState([])
+  const [anexando, setAnexando] = useState(false)
+  const [descargando, setDescargando] = useState(false)
+  const hojasRef = useRef(null)
+
+  /** Vuelca en el formulario lo que ha leído el OCR (al abrir y al añadir hojas). */
+  function aplicarDetalle(detalle, listaProveedores) {
+    setDocumento(detalle)
+
+    const extraccion = detalle.extraccion
+    const nombreDetectado = (extraccion?.proveedorNombre ?? '').trim()
+    const yaExiste =
+      nombreDetectado !== '' &&
+      listaProveedores.some(
+        (proveedor) => proveedor.nombre.trim().toLowerCase() === nombreDetectado.toLowerCase(),
+      )
+    const proponerNuevo = nombreDetectado !== '' && !yaExiste && !extraccion?.proveedorId
+    setCabecera({
+      proveedorId: proponerNuevo ? PROVEEDOR_NUEVO : (extraccion?.proveedorId ?? ''),
+      proveedorNuevo: proponerNuevo ? nombreDetectado : '',
+      numeroDocumento: extraccion?.numeroDocumento ?? '',
+      fecha: extraccion?.fecha ?? '',
+      moneda: extraccion?.moneda ?? 'EUR',
+      iva: String(extraccion?.importeIva ?? 0),
+    })
+    setLineas(
+      (extraccion?.lineas ?? []).map((linea) => ({
+        descripcion: linea.descripcion ?? '',
+        cantidad: String(linea.cantidad ?? 1),
+        unidad: linea.unidad ?? '',
+        precioUnitario: String(linea.precioUnitario ?? 0),
+        productoId: linea.productoId ?? '',
+        importeLeido: linea.importe ?? null,
+      })),
+    )
+    setError(null)
+  }
 
   useEffect(() => {
     let activo = true
@@ -55,37 +93,9 @@ export default function DocumentoDetalle() {
     ])
       .then(([detalle, catalogo, listaProveedores]) => {
         if (!activo) return
-        setDocumento(detalle)
         setProductos(catalogo)
         setProveedores(listaProveedores)
-
-        const extraccion = detalle.extraccion
-        const nombreDetectado = (extraccion?.proveedorNombre ?? '').trim()
-        const yaExiste =
-          nombreDetectado !== '' &&
-          listaProveedores.some(
-            (proveedor) => proveedor.nombre.trim().toLowerCase() === nombreDetectado.toLowerCase(),
-          )
-        const proponerNuevo = nombreDetectado !== '' && !yaExiste && !extraccion?.proveedorId
-        setCabecera({
-          proveedorId: proponerNuevo ? PROVEEDOR_NUEVO : (extraccion?.proveedorId ?? ''),
-          proveedorNuevo: proponerNuevo ? nombreDetectado : '',
-          numeroDocumento: extraccion?.numeroDocumento ?? '',
-          fecha: extraccion?.fecha ?? '',
-          moneda: extraccion?.moneda ?? 'EUR',
-          iva: String(extraccion?.importeIva ?? 0),
-        })
-        setLineas(
-          (extraccion?.lineas ?? []).map((linea) => ({
-            descripcion: linea.descripcion ?? '',
-            cantidad: String(linea.cantidad ?? 1),
-            unidad: linea.unidad ?? '',
-            precioUnitario: String(linea.precioUnitario ?? 0),
-            productoId: linea.productoId ?? '',
-            importeLeido: linea.importe ?? null,
-          })),
-        )
-        setError(null)
+        aplicarDetalle(detalle, listaProveedores)
       })
       .catch((err) => activo && setError(err.message))
       .finally(() => activo && setCargando(false))
@@ -93,7 +103,39 @@ export default function DocumentoDetalle() {
     return () => {
       activo = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  /** Descarga el original con un nombre claro en vez de abrirlo en el visor. */
+  async function descargarOriginal() {
+    setDescargando(true)
+    setError(null)
+    try {
+      const blob = await api.descargar(`/documentos/${id}/descarga`)
+      descargarArchivo(blob, documento.nombreOriginal)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDescargando(false)
+    }
+  }
+
+  /** Añade la segunda (o tercera) hoja y relee el albarán entero con los totales. */
+  async function anexarHojas() {
+    setAnexando(true)
+    setError(null)
+    try {
+      const datos = new FormData()
+      for (const archivo of hojasPendientes) datos.append('archivo', archivo)
+      const actualizado = await api.subir(`/documentos/${id}/hojas`, datos)
+      aplicarDetalle(actualizado, proveedores)
+      setHojasPendientes([])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setAnexando(false)
+    }
+  }
 
   const neto = useMemo(
     () => lineas.reduce((total, linea) => total + importeLinea(linea), 0),
@@ -131,7 +173,13 @@ export default function DocumentoDetalle() {
 
   function cambiarLinea(indice, campo, valor) {
     setLineas((previas) =>
-      previas.map((linea, i) => (i === indice ? { ...linea, [campo]: valor } : linea)),
+      previas.map((linea, i) => {
+        if (i !== indice) return linea
+        // Si cambia la cantidad o el precio, el importe escrito a mano deja de valer:
+        // se vuelve a calcular para no arrastrar una cifra que ya no corresponde.
+        const reiniciarImporte = campo === 'cantidad' || campo === 'precioUnitario'
+        return { ...linea, [campo]: valor, ...(reiniciarImporte ? { importeManual: undefined } : {}) }
+      }),
     )
   }
 
@@ -302,15 +350,26 @@ export default function DocumentoDetalle() {
             </Badge>
           )}
           {documento.tieneArchivo && (
-            <a
-              href={`/api/documentos/${documento.id}/archivo`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground"
-            >
-              <ExternalLink className="size-3.5" />
-              Abrir original
-            </a>
+            <>
+              <a
+                href={`/api/documentos/${documento.id}/archivo`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground"
+              >
+                <ExternalLink className="size-3.5" />
+                Abrir original
+              </a>
+              <button
+                type="button"
+                onClick={descargarOriginal}
+                disabled={descargando}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground disabled:opacity-50"
+              >
+                <Download className="size-3.5" />
+                {descargando ? 'Descargando…' : 'Descargar'}
+              </button>
+            </>
           )}
         </div>
         <p className="mt-1 text-sm text-muted">
@@ -328,6 +387,68 @@ export default function DocumentoDetalle() {
       {error && (
         <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
+        </div>
+      )}
+
+      {documento.estado === 'pendiente_revision' && documento.tieneArchivo && (
+        <div className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
+          <p className="font-medium">¿El albarán tiene más de una hoja?</p>
+          <p className="mt-1 text-muted">
+            Haz la foto de la página que falta y se añadirá a este mismo albarán. Se volverá
+            a leer entero, porque los totales suelen estar en la última hoja.
+          </p>
+
+          {hojasPendientes.length === 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => hojasRef.current?.click()}
+            >
+              Añadir otra hoja
+            </Button>
+          ) : (
+            <>
+              <p className="mt-2 text-warning">
+                Se añadirán {hojasPendientes.length}{' '}
+                {hojasPendientes.length === 1 ? 'hoja' : 'hojas'} y se reemplazarán las líneas
+                actuales por la lectura nueva.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={anexando}
+                  onClick={() => setHojasPendientes([])}
+                >
+                  Cancelar
+                </Button>
+                <Button size="sm" disabled={anexando} onClick={anexarHojas}>
+                  {anexando ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Leyendo de nuevo…
+                    </>
+                  ) : (
+                    'Añadir y releer'
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+
+          <input
+            ref={hojasRef}
+            type="file"
+            accept="image/jpeg,image/png,application/pdf"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              const archivos = Array.from(event.target.files ?? [])
+              event.target.value = ''
+              if (archivos.length > 0) setHojasPendientes(archivos)
+            }}
+          />
         </div>
       )}
 
@@ -539,9 +660,25 @@ export default function DocumentoDetalle() {
                     </Celda>
                     <Celda
                       etiqueta="Importe"
-                      className="px-4 py-2 tabular-nums sm:px-2 sm:py-2"
+                      className="px-4 py-2 sm:px-2 sm:py-2"
                     >
-                      {moneda(importeLinea(linea))}
+                      <Input
+                        type="number"
+                        step="0.01"
+                        disabled={soloLectura}
+                        aria-label={`Importe de la línea ${indice + 1}`}
+                        value={linea.importeManual ?? String(importeCalculado(linea))}
+                        onChange={(event) =>
+                          cambiarLinea(indice, 'importeManual', event.target.value)
+                        }
+                      />
+                      {linea.importeManual !== undefined &&
+                        linea.importeManual !== '' &&
+                        Number(linea.importeManual) !== importeCalculado(linea) && (
+                          <span className="mt-0.5 block text-xs font-normal text-muted">
+                            calculado {moneda(importeCalculado(linea))}
+                          </span>
+                        )}
                       {descuadrePorLinea.has(indice) && (
                         <span className="mt-0.5 block text-xs font-normal text-warning">
                           dice {moneda(descuadrePorLinea.get(indice).leido)}

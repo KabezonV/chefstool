@@ -30,6 +30,33 @@ export default function Configuracion() {
   const [passwordBaja, setPasswordBaja] = useState('')
   const [bajaAbierta, setBajaAbierta] = useState(false)
   const [dandoBaja, setDandoBaja] = useState(false)
+  const [correo, setCorreo] = useState(null)
+  const [probandoCorreo, setProbandoCorreo] = useState(false)
+  const [resultadoCorreo, setResultadoCorreo] = useState(null)
+
+  useEffect(() => {
+    if (!puedeEditar) return undefined
+    let activo = true
+    api
+      .get('/correo/estado')
+      .then((datos) => activo && setCorreo(datos))
+      .catch(() => activo && setCorreo(null))
+    return () => {
+      activo = false
+    }
+  }, [puedeEditar])
+
+  async function probarCorreo() {
+    setProbandoCorreo(true)
+    setResultadoCorreo(null)
+    try {
+      setResultadoCorreo(await api.post('/correo/prueba', {}))
+    } catch (err) {
+      setResultadoCorreo({ enviado: false, mensaje: err.message })
+    } finally {
+      setProbandoCorreo(false)
+    }
+  }
 
   useEffect(() => {
     let activo = true
@@ -148,6 +175,52 @@ export default function Configuracion() {
           </form>
         </CardContent>
       </Card>
+
+      {puedeEditar && correo && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Correo saliente</CardTitle>
+            <Badge tone={correo.disponible ? 'success' : 'warning'}>
+              {correo.disponible ? 'Configurado' : 'Sin configurar'}
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="text-muted">
+              Con esto salen las alertas de precio y el enlace para recuperar la contraseña.
+            </p>
+            {correo.disponible ? (
+              <p>
+                Servidor <span className="font-medium">{correo.host}</span> · remitente{' '}
+                <span className="font-medium">{correo.remitente}</span>
+              </p>
+            ) : (
+              <ul className="list-disc pl-5 text-muted">
+                {(correo.falta ?? []).map((dato) => (
+                  <li key={dato}>Falta {dato}</li>
+                ))}
+              </ul>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={probarCorreo}
+              disabled={probandoCorreo}
+            >
+              {probandoCorreo ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+              Enviar correo de prueba
+            </Button>
+            {resultadoCorreo && (
+              <p
+                className={
+                  resultadoCorreo.enviado ? 'text-sm text-success' : 'text-sm text-warning'
+                }
+              >
+                {resultadoCorreo.mensaje}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

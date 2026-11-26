@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
 // Utils
+import { esGestor } from '@/lib/permisos'
 import { cn } from '@/lib/utils'
 
 // Enumerations
@@ -110,7 +111,9 @@ export default function AppShell() {
 
         <nav className="flex-1 overflow-y-auto px-2 pb-4">
           <ul className="space-y-0.5">
-            {navItems.map(({ to, label, icon: Icon }) => (
+            {navItems
+              .filter(({ soloGestores }) => !soloGestores || esGestor(sesion?.rol))
+              .map(({ to, label, icon: Icon }) => (
               <li key={to}>
                 <NavLink
                   to={to}

@@ -27,6 +27,57 @@ public class CorreoService {
         return habilitado && host != null && !host.isBlank();
     }
 
+    /** Explica que falta para que el correo funcione (sin ensenar contrasenas). */
+    public EstadoCorreo estado() {
+        java.util.List<String> falta = new java.util.ArrayList<>();
+        if (host == null || host.isBlank()) {
+            falta.add("CHEFSTOOL_SMTP_HOST (servidor de correo del proveedor)");
+        }
+        if (!habilitado) {
+            falta.add("CHEFSTOOL_ALERTAS_CORREO=true (avisos por correo)");
+        }
+        return new EstadoCorreo(
+                disponible(), habilitado, host, remitente, java.util.List.copyOf(falta));
+    }
+
+    /** Envia un correo de prueba y devuelve el motivo exacto si algo falla. */
+    public ResultadoEnvio probar(String destinatario) {
+        if (!disponible()) {
+            return new ResultadoEnvio(
+                    false,
+                    destinatario,
+                    "El correo no esta configurado: falta "
+                            + String.join(", ", estado().falta()));
+        }
+        try {
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom(remitente);
+            mensaje.setTo(destinatario);
+            mensaje.setSubject("Chefstool: correo de prueba");
+            mensaje.setText(
+                    "Este es un correo de prueba enviado desde Chefstool.\n"
+                            + "Si lo estas leyendo, las alertas de precio y la recuperacion "
+                            + "de contrasena ya pueden salir por correo.");
+            mailSender.send(mensaje);
+            return new ResultadoEnvio(true, destinatario, "Correo de prueba enviado");
+        } catch (RuntimeException ex) {
+            return new ResultadoEnvio(
+                    false,
+                    destinatario,
+                    "No se pudo enviar: " + mensajeDeError(ex));
+        }
+    }
+
+    private String mensajeDeError(RuntimeException ex) {
+        String texto = ex.getMessage();
+        if (texto == null || texto.isBlank()) {
+            return ex.getClass().getSimpleName();
+        }
+        // Los servidores SMTP incluyen la contestacion; con eso se sabe si es usuario,
+        // contrasena, puerto o TLS.
+        return texto.length() > 300 ? texto.substring(0, 300) : texto;
+    }
+
     public boolean enviar(String destinatario, String asunto, String texto) {
         if (!disponible() || destinatario == null || destinatario.isBlank()) {
             return false;

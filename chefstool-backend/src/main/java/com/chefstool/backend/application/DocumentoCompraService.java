@@ -27,10 +27,15 @@ import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -45,6 +50,9 @@ public class DocumentoCompraService {
 
     /** Ancho de pagina del PDF que se genera al juntar varias hojas (A4 en puntos). */
     private static final float ANCHO_PAGINA_PDF = 595f;
+
+    /** Tope de albaranes en una sola descarga, para no montar archivos enormes. */
+    private static final int MAXIMO_DOCUMENTOS_ZIP = 300;
 
     private final DocumentoCompraRepository documentoRepository;
     private final OrganizacionService organizacionService;
@@ -180,6 +188,71 @@ public class DocumentoCompraService {
         return detalle(buscar(id));
     }
 
+    /**
+     * Añade hojas a un albarán que aún está en revisión: se fotografía la primera página, se
+     * revisa y, al ver que faltan líneas, se hace la foto de la segunda sin empezar de cero.
+     *
+     * <p>Las hojas se unen en un único PDF (junto con lo ya subido) y el documento se vuelve a
+     * leer entero, porque los totales solo aparecen en la última página.
+     */
+    @Transactional
+    public DocumentoDetalle anexarHojas(UUID id, List<MultipartFile> archivos) {
+        DocumentoCompra documento = buscarEditable(id);
+
+        List<MultipartFile> utiles =
+                archivos == null
+                        ? List.of()
+                        : archivos.stream()
+                                .filter(archivo -> archivo != null && !archivo.isEmpty())
+                                .toList();
+        if (utiles.isEmpty()) {
+            throw new IllegalArgumentException("Adjunta la hoja que falta del albaran");
+        }
+        if (documento.getRutaAlmacenamiento() == null) {
+            throw new IllegalArgumentException(
+                    "Este documento no tiene archivo: sube el albaran completo en Documentos");
+        }
+
+        List<byte[]> hojas = new ArrayList<>();
+        hojas.add(leerGuardado(documento));
+        for (MultipartFile archivo : utiles) {
+            hojas.add(leer(archivo));
+        }
+
+        // Se comprueba que todo se puede unir antes de tocar el documento guardado
+        byte[] combinado = combinarHojas(hojas);
+        String nombre = nombreDeVariasHojas(documento.getNombreOriginal(), hojas.size());
+
+        String rutaAnterior = documento.getRutaAlmacenamiento();
+        String ruta = almacenamiento.guardar(
+                documento.getOrganizacionId(), documento.getId(), nombre, combinado);
+        documento.setNombreOriginal(nombre);
+        documento.setTipoMime("application/pdf");
+        documento.setRutaAlmacenamiento(ruta);
+        if (rutaAnterior != null && !rutaAnterior.equals(ruta)) {
+            almacenamiento.borrar(rutaAnterior);
+        }
+
+        try {
+            ResultadoExtraccion resultado =
+                    extractor.extraer(
+                            combinado, nombre, "application/pdf", documento.getOrganizacionId());
+            documento.setExtraccionJson(serializar(resultado.extraccion()));
+            documento.setConfianzaExtraccion(resultado.confianza());
+            documento.setErrorExtraccion(null);
+        } catch (RuntimeException ex) {
+            log.warn("No se pudo releer el documento {} al anexar hojas", documento.getId(), ex);
+            documento.setErrorExtraccion("No se pudo leer el documento: " + ex.getMessage());
+        }
+
+        DocumentoCompra guardado = documentoRepository.saveAndFlush(documento);
+        if (auditoriaService != null) {
+            auditoriaService.registrar(
+                    "ANEXAR", "DOCUMENTO", guardado.getId(), guardado.getNombreOriginal());
+        }
+        return detalle(guardado);
+    }
+
     @Transactional
     public DocumentoDetalle guardarBorrador(UUID id, ExtraccionDocumento extraccion) {
         DocumentoCompra documento = buscarEditable(id);
@@ -224,6 +297,99 @@ public class DocumentoCompraService {
         return new ArchivoDescargable(
                 recurso, documento.getTipoMime(), documento.getNombreOriginal());
     }
+
+    /** Nombre con el que se guarda el archivo al descargarlo: fecha + nombre reconocible. */
+    @Transactional(readOnly = true)
+    public ArchivoDescargable descargar(UUID id) {
+        DocumentoCompra documento = buscar(id);
+        var recurso =
+                almacenamiento
+                        .cargar(documento.getRutaAlmacenamiento())
+                        .orElseThrow(
+                                () ->
+                                        new RecursoNoEncontradoException(
+                                                "El documento no tiene archivo adjunto"));
+        String nombre = "%s_%s".formatted(
+                fechaDe(documento), PaqueteZip.nombreSeguro(documento.getNombreOriginal()));
+        return new ArchivoDescargable(recurso, documento.getTipoMime(), nombre);
+    }
+
+    /**
+     * Empaqueta en un ZIP los albaranes de un periodo (un mes, por ejemplo) para llevarlos a
+     * la gestoria o guardarlos. Solo incluye documentos de la organizacion y local activos y
+     * con archivo guardado.
+     */
+    @Transactional(readOnly = true)
+    public byte[] descargarZip(LocalDate desde, LocalDate hasta) {
+        if (desde == null || hasta == null) {
+            throw new IllegalArgumentException("Indica el periodo: fecha desde y fecha hasta");
+        }
+        if (hasta.isBefore(desde)) {
+            throw new IllegalArgumentException("La fecha hasta no puede ser anterior a la desde");
+        }
+        if (java.time.temporal.ChronoUnit.DAYS.between(desde, hasta) > 400) {
+            throw new IllegalArgumentException(
+                    "El periodo es demasiado largo: descarga como maximo un ano por vez");
+        }
+
+        UUID organizacionId = organizacionService.organizacionActual();
+        UUID localId = organizacionService.localActual();
+        OffsetDateTime inicio = desde.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime fin = hasta.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+
+        List<DocumentoCompra> documentos = localId == null
+                ? documentoRepository
+                        .findByOrganizacionIdAndCreatedAtBetweenOrderByCreatedAtAsc(
+                                organizacionId, inicio, fin)
+                : documentoRepository
+                        .findByOrganizacionIdAndLocalIdAndCreatedAtBetweenOrderByCreatedAtAsc(
+                                organizacionId, localId, inicio, fin);
+
+        List<DocumentoCompra> conArchivo =
+                documentos.stream().filter(d -> d.getRutaAlmacenamiento() != null).toList();
+        if (conArchivo.isEmpty()) {
+            throw new RecursoNoEncontradoException(
+                    "No hay albaranes con archivo en ese periodo");
+        }
+        if (conArchivo.size() > MAXIMO_DOCUMENTOS_ZIP) {
+            throw new IllegalArgumentException(
+                    "Hay %d albaranes en ese periodo: acota el rango para no bajar un archivo "
+                            + "gigante".formatted(conArchivo.size()));
+        }
+
+        List<PaqueteZip.Archivo> archivos = new ArrayList<>();
+        for (DocumentoCompra documento : conArchivo) {
+            byte[] contenido = almacenamiento
+                    .cargar(documento.getRutaAlmacenamiento())
+                    .map(this::leerRecurso)
+                    .orElse(null);
+            if (contenido != null) {
+                archivos.add(new PaqueteZip.Archivo(
+                        "%s_%s".formatted(
+                                fechaDe(documento),
+                                PaqueteZip.nombreSeguro(documento.getNombreOriginal())),
+                        contenido));
+            }
+        }
+        return PaqueteZip.empaquetar(archivos);
+    }
+
+    private byte[] leerRecurso(org.springframework.core.io.Resource recurso) {
+        try (var entrada = recurso.getInputStream()) {
+            return entrada.readAllBytes();
+        } catch (IOException ex) {
+            log.warn("No se pudo leer un archivo para el ZIP: {}", ex.getMessage());
+            return null;
+        }
+    }
+
+    private String fechaDe(DocumentoCompra documento) {
+        return documento.getCreatedAt() == null
+                ? "sin-fecha"
+                : documento.getCreatedAt().toLocalDate().toString();
+    }
+
+
 
     private DocumentoDetalle detalle(DocumentoCompra documento) {
         return new DocumentoDetalle(
@@ -283,14 +449,55 @@ public class DocumentoCompraService {
         return archivos.stream().allMatch(
                 archivo -> {
                     byte[] contenido = leer(archivo);
-                    return (archivo.getContentType() != null
-                                    && archivo.getContentType().toLowerCase().startsWith("application/pdf"))
-                            || (contenido.length >= 4
-                                    && contenido[0] == '%'
-                                    && contenido[1] == 'P'
-                                    && contenido[2] == 'D'
-                                    && contenido[3] == 'F');
+                    return esPdf(archivo.getContentType(), contenido);
                 });
+    }
+
+    private boolean esPdf(String tipoMime, byte[] contenido) {
+        return (tipoMime != null && tipoMime.toLowerCase().startsWith("application/pdf"))
+                || (contenido.length >= 4
+                        && contenido[0] == '%'
+                        && contenido[1] == 'P'
+                        && contenido[2] == 'D'
+                        && contenido[3] == 'F');
+    }
+
+    private boolean esImagen(byte[] contenido) {
+        try {
+            return ImageIO.read(new ByteArrayInputStream(contenido)) != null;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    private byte[] leerGuardado(DocumentoCompra documento) {
+        Resource recurso =
+                almacenamiento
+                        .cargar(documento.getRutaAlmacenamiento())
+                        .orElseThrow(
+                                () ->
+                                        new DocumentoIlegibleException(
+                                                "El archivo del documento ya no esta disponible"));
+        try (var entrada = recurso.getInputStream()) {
+            return entrada.readAllBytes();
+        } catch (IOException ex) {
+            throw new UncheckedIOException("No se pudo leer el archivo guardado", ex);
+        }
+    }
+
+    /** Une las hojas: PDFs entre si, fotos como paginas de un PDF nuevo. */
+    private byte[] combinarHojas(List<byte[]> hojas) {
+        boolean todasPdf = hojas.stream().allMatch(hoja -> esPdf(null, hoja));
+        if (todasPdf) {
+            return juntarPdfBytes(hojas);
+        }
+        boolean todasImagen = hojas.stream().allMatch(this::esImagen);
+        if (todasImagen) {
+            return juntarImagenesEnPdf(hojas);
+        }
+        throw new DocumentoIlegibleException(
+                "No mezcles fotos y PDFs en un mismo albaran. Anade la hoja en el mismo formato "
+                        + "que las anteriores (foto con foto, PDF con PDF).");
     }
 
     private boolean todosSonImagen(List<MultipartFile> archivos) {
@@ -309,10 +516,14 @@ public class DocumentoCompraService {
     }
 
     private byte[] juntarPdf(List<MultipartFile> archivos) {
+        return juntarPdfBytes(archivos.stream().map(this::leer).toList());
+    }
+
+    private byte[] juntarPdfBytes(List<byte[]> documentos) {
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             PDFMergerUtility mezclador = new PDFMergerUtility();
-            for (MultipartFile archivo : archivos) {
-                mezclador.addSource(new RandomAccessReadBuffer(leer(archivo)));
+            for (byte[] documento : documentos) {
+                mezclador.addSource(new RandomAccessReadBuffer(documento));
             }
             mezclador.setDestinationStream(salida);
             mezclador.mergeDocuments(null);
@@ -325,22 +536,24 @@ public class DocumentoCompraService {
 
     /** Convierte varias fotos en un PDF de varias paginas, una por hoja. */
     private byte[] juntarEnPdf(List<MultipartFile> archivos) {
+        return juntarImagenesEnPdf(archivos.stream().map(this::leer).toList());
+    }
+
+    private byte[] juntarImagenesEnPdf(List<byte[]> imagenes) {
         try (PDDocument pdf = new PDDocument()) {
-            for (MultipartFile archivo : archivos) {
-                BufferedImage imagen =
-                        ImageIO.read(new ByteArrayInputStream(leer(archivo)));
+            for (byte[] contenido : imagenes) {
+                BufferedImage imagen = ImageIO.read(new ByteArrayInputStream(contenido));
                 if (imagen == null) {
                     throw new DocumentoIlegibleException(
-                            "El archivo " + archivo.getOriginalFilename() + " no es una imagen "
-                                    + "que se pueda leer. Usa JPG o PNG.");
+                            "Una de las hojas no es una imagen que se pueda leer. Usa JPG o PNG.");
                 }
                 float ancho = ANCHO_PAGINA_PDF;
                 float alto = ancho * imagen.getHeight() / imagen.getWidth();
                 PDPage pagina = new PDPage(new PDRectangle(ancho, alto));
                 pdf.addPage(pagina);
                 PDImageXObject imagenPdf = LosslessFactory.createFromImage(pdf, imagen);
-                try (PDPageContentStream contenido = new PDPageContentStream(pdf, pagina)) {
-                    contenido.drawImage(imagenPdf, 0, 0, ancho, alto);
+                try (PDPageContentStream contenidoPagina = new PDPageContentStream(pdf, pagina)) {
+                    contenidoPagina.drawImage(imagenPdf, 0, 0, ancho, alto);
                 }
             }
             ByteArrayOutputStream salida = new ByteArrayOutputStream();

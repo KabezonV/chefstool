@@ -68,7 +68,7 @@ class ExtractorHibridoTest {
     }
 
     @Test
-    void contrastaLineasDeIaConTesseractYUsaLasCantidadesLocales() {
+    void contrastaLineasDeIaConTesseractYSeQuedaConLaLecturaQueCuadra() {
         LineaExtraccion visionLinea =
                 new LineaExtraccion(
                         "Cebolla blanca", new BigDecimal("2.40"), "kg",
@@ -101,10 +101,186 @@ class ExtractorHibridoTest {
         assertThat(combinado.extraccion().numeroDocumento()).isEqualTo("A-2026/0457");
         assertThat(combinado.extraccion().fecha()).isEqualTo(java.time.LocalDate.of(2026, 11, 8));
         assertThat(combinado.extraccion().lineas()).hasSize(1);
+        // La misma linea leida por los dos: antes ganaba siempre Tesseract. En fotos con sombra
+        // devuelve cantidades inventadas, asi que ahora gana la lectura que cuadra mejor.
         assertThat(combinado.extraccion().lineas().getFirst().cantidad())
-                .isEqualByComparingTo("3");
+                .isEqualByComparingTo("2.40");
         assertThat(combinado.extraccion().lineas().getFirst().precioUnitario())
-                .isEqualByComparingTo("1.20");
+                .isEqualByComparingTo("1.90");
+    }
+
+    @Test
+    void noDuplicaLaLineaQueUnLectorLeyoMal() {
+        // Tesseract lee la misma linea con el texto roto y un importe identico
+        LineaExtraccion visionLechuga = linea("LECHUGA ROMANA", "5.00");
+        LineaExtraccion visionZanahoria = linea("ZANAHORIA", "5.50");
+        LineaExtraccion localLechuga = linea("LE CHUGA ROMANA", "5.00");
+        LineaExtraccion localZanahoria = linea("<ANAHOR1a", "5.50");
+
+        ResultadoExtraccion vision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, null, null, "EUR",
+                                new BigDecimal("10.50"), new BigDecimal("1.05"),
+                                new BigDecimal("11.55"),
+                                List.of(visionLechuga, visionZanahoria)),
+                        new BigDecimal("0.98"));
+        ResultadoExtraccion tesseract =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("10.50"), new BigDecimal("1.05"),
+                                new BigDecimal("11.55"),
+                                List.of(localLechuga, localZanahoria)),
+                        new BigDecimal("0.90"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal()).combinar(vision, tesseract);
+
+        assertThat(combinado.extraccion().lineas()).hasSize(2);
+        assertThat(combinado.extraccion().lineas())
+                .extracting(LineaExtraccion::descripcion)
+                .containsExactly("LECHUGA ROMANA", "ZANAHORIA");
+    }
+
+    @Test
+    void noJuntaDosProductosDistintosQueSoloCompartenUnaPalabra() {
+        LineaExtraccion tomatePera = linea("TOMATE PERA", "7.40");
+        LineaExtraccion tomateRama = linea("TOMATE RAMA", "7.40");
+
+        ResultadoExtraccion vision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, null, null, "EUR",
+                                new BigDecimal("14.80"), new BigDecimal("1.48"),
+                                new BigDecimal("16.28"), List.of(tomatePera)),
+                        new BigDecimal("0.90"));
+        ResultadoExtraccion tesseract =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("14.80"), new BigDecimal("1.48"),
+                                new BigDecimal("16.28"), List.of(tomateRama)),
+                        new BigDecimal("0.90"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal()).combinar(vision, tesseract);
+
+        assertThat(combinado.extraccion().lineas()).hasSize(2);
+    }
+
+    @Test
+    void usaLaLecturaQueCuadraYLaMarcaParaRevisarSiLosLectoresDiscrepan() {
+        // La IA lee bien un albaran con sombra; Tesseract se equivoca en la base y el total
+        LineaExtraccion lineaVision = linea("Lechuga romana", "37.80");
+        LineaExtraccion lineaTesseract = linea("LECHUGA ROMANA", "37.80");
+        ResultadoExtraccion vision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, "A-2026/0457", null, "EUR",
+                                new BigDecimal("37.80"), new BigDecimal("3.78"),
+                                new BigDecimal("41.58"), List.of(lineaVision)),
+                        new BigDecimal("0.98"));
+        ResultadoExtraccion tesseract =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("40.89"), new BigDecimal("4.09"),
+                                new BigDecimal("44.98"), List.of(lineaTesseract)),
+                        new BigDecimal("0.90"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal()).combinar(vision, tesseract);
+
+        // Se queda con el total que cuadra con sus lineas...
+        assertThat(combinado.extraccion().importeTotal()).isEqualByComparingTo("41.58");
+        // ...pero como los dos lectores no coinciden, no se presume de confianza alta
+        assertThat(combinado.confianza()).isLessThanOrEqualTo(new BigDecimal("0.60"));
+    }
+
+    @Test
+    void noPresumeDeConfianzaCuandoLosImportesNoCuadran() {
+        // Ni la IA ni Tesseract cuadran: la revision tiene que quedar marcada como dudosa
+        LineaExtraccion linea = linea("Lechuga romana", "7.40");
+        ResultadoExtraccion vision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, null, null, "EUR",
+                                new BigDecimal("37.80"), new BigDecimal("3.78"),
+                                new BigDecimal("44.98"), List.of(linea)),
+                        new BigDecimal("0.98"));
+        ResultadoExtraccion tesseract =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("40.89"), new BigDecimal("4.09"),
+                                new BigDecimal("44.98"), List.of(linea)),
+                        new BigDecimal("0.90"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal()).combinar(vision, tesseract);
+
+        assertThat(combinado.confianza()).isLessThanOrEqualTo(new BigDecimal("0.60"));
+    }
+
+    @Test
+    void unaLecturaQueCuadraNoPierdeLaConfianzaContrastada() {
+        LineaExtraccion linea = linea("Lechuga romana", "37.80");
+        ResultadoExtraccion vision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, null, null, "EUR",
+                                new BigDecimal("37.80"), new BigDecimal("3.78"),
+                                new BigDecimal("41.58"), List.of(linea)),
+                        new BigDecimal("0.40"));
+        ResultadoExtraccion tesseract =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("37.80"), new BigDecimal("3.78"),
+                                new BigDecimal("41.58"), List.of(linea)),
+                        new BigDecimal("0.35"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal()).combinar(vision, tesseract);
+
+        assertThat(combinado.confianza()).isEqualByComparingTo("0.85");
+    }
+
+    @Test
+    void noDuplicaUnaLineaCuandoElOcrSeComeUnaLetra() {
+        // "CEBOLLA BLANGA" es la misma línea que "CEBOLLA BLANCA", con una letra bailada
+        LineaExtraccion vision = linea("CEBOLLA BLANCA", "3.60");
+        LineaExtraccion tesseract = linea("CEBOLLA BLANGA", "3.80");
+
+        ResultadoExtraccion lecturaVision =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "Distribuciones Ejemplo", null, null, null, "EUR",
+                                new BigDecimal("3.60"), new BigDecimal("0.36"),
+                                new BigDecimal("3.96"), List.of(vision)),
+                        new BigDecimal("0.98"));
+        ResultadoExtraccion lecturaLocal =
+                new ResultadoExtraccion(
+                        new ExtraccionDocumento(
+                                "DISTRIBUCIONES EJEMPLO", null, null, null, "EUR",
+                                new BigDecimal("3.80"), new BigDecimal("0.38"),
+                                new BigDecimal("4.18"), List.of(tesseract)),
+                        new BigDecimal("0.90"));
+
+        ResultadoExtraccion combinado =
+                new ExtractorHibrido(mock(ExtractorVision.class), textoLocal())
+                        .combinar(lecturaVision, lecturaLocal);
+
+        assertThat(combinado.extraccion().lineas()).hasSize(1);
+        assertThat(combinado.extraccion().lineas().getFirst().descripcion())
+                .isEqualTo("CEBOLLA BLANCA");
+    }
+
+    private LineaExtraccion linea(String descripcion, String importe) {
+        return new LineaExtraccion(
+                descripcion, BigDecimal.ONE, "kg", new BigDecimal(importe),
+                new BigDecimal(importe), null, null, null);
     }
 
     private ExtractorTexto textoLocal() {

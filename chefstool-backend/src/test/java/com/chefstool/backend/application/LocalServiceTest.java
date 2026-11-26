@@ -26,7 +26,8 @@ class LocalServiceTest {
                     return local;
                 });
 
-        LocalService servicio = new LocalService(repositorio, organizacion);
+        LocalService servicio =
+                new LocalService(repositorio, organizacion, mock(AuditoriaService.class));
         var creado = servicio.crear(new LocalRequest("  Salón  "));
 
         assertThat(creado.nombre()).isEqualTo("Salón");

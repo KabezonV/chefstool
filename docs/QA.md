@@ -3,10 +3,10 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 163 tests (unitarios, integración y seguridad)
+# Backend: 190 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
-# Frontend: 46 tests (Vitest + Testing Library)
+# Frontend: 76 tests (Vitest + Testing Library)
 cd chefstool-frontend && npm test        # vitest run
 cd chefstool-frontend && npm run test:watch
 ```
@@ -33,7 +33,16 @@ Los tests de frontend no salen a red (`fetch` y el cliente de API van mockeados)
 | Extracción real | `DocumentoControllerTest` | Sube un PDF y comprueba los datos extraídos; imagen sin OCR no inventa datos; varias fotos se juntan en un solo documento |
 | OCR con IA | `ExtractorVisionTest` | Interpretación del JSON del modelo, importes en formato español, bloques markdown, respuesta vacía, cuándo se reintenta con el modelo de corrección y elección de la mejor lectura |
 | OCR híbrido | `ExtractorHibridoTest` | Usa la IA si está configurada y cae a Tesseract si falla o no hay clave |
-| OCR de fotos | `LectorImagenTest` | La segmentación por bloques mantiene cada fila del albarán en una línea, puntúa mejor que las columnas partidas, amplía las imágenes pequeñas y reduce las enormes |
+| OCR de fotos | `LectorImagenTest` | La segmentación por bloques mantiene cada fila del albarán en una línea, puntúa mejor que las columnas partidas, amplía las imágenes pequeñas y reduce las enormes; el contraste local recupera la mitad de la hoja que queda en sombra |
+| Añadir hojas al albarán | `DocumentoControllerTest`, `DocumentoDetalle.test.jsx` | La segunda página se une al PDF ya subido y se relee el documento entero; no se puede añadir a un albarán confirmado, ni mezclar foto con PDF |
+| Auditoría | `AuditoriaYLocalesTest`, `Auditoria.test.jsx`, `e2e/gestion.spec.js` | Muestra quién hizo qué en lenguaje claro; un miembro no puede verla (403) |
+| Locales | `AuditoriaYLocalesTest`, `Locales.test.jsx` | Crear, listar y eliminar locales; el alta y el borrado quedan auditados y un miembro recibe 403 |
+| Correo saliente | `CorreoEstadoTest` | Sin SMTP configurado la app explica qué falta y la prueba responde con el motivo en vez de fallar |
+| Descargas | `DocumentoControllerTest`, `Documentos.test.jsx`, `descargas.test.js` | El original se descarga con nombre `fecha_nombre`; el ZIP del periodo incluye solo documentos con archivo, avisa si el periodo está vacío y no deja bajar más de 300 de golpe |
+| Descargas de compras | `CompraDescargasTest`, `Compras.test.jsx` | Resumen de la compra en PDF (proveedor, líneas y totales) y ZIP de los albaranes originales del periodo, filtrable por proveedor; un mismo albarán no se duplica aunque tenga varias líneas |
+| Importes corregibles | `DocumentoDetalle.test.jsx`, `importes.test.js`, `e2e/importes.spec.js` | El importe de cada línea se puede escribir a mano (descuentos o precio cerrado); base y total se recalculan de esos importes y el total sigue siendo base más IVA |
+| Avisos de calidad | `DocumentoNuevo.test.jsx` | Una foto de menos de 1600 px avisa antes de procesarla y solo se sube si el usuario lo confirma; un PDF nunca se bloquea |
+| Confianza de la lectura | `ExtractorHibridoTest` | Se elige la lectura que cuadra con sus importes, y no se presume de confianza alta cuando los dos lectores discrepan o las cuentas no salen |
 | PDF escaneado | `LectorPdfTest` | Detecta que no hay texto y rasteriza las páginas (máx. 3) para pasarlas por OCR; aviso claro si el OCR no está disponible |
 | Compras y precios | `ComprasYPreciosTest`, `CompraServiceTest` | Filtros, detalle, mejor proveedor, alertas por umbral, alta del proveedor leído del albarán cuando no existe, reutilización del existente sin duplicar y descarte de nombres contaminados |
 | Solicitudes de compra | `SolicitudCompraServiceTest`, `AuthControllerTest`, `SolicitudesCompra.test.jsx` | Solicitud sin crear gasto confirmado, aprobación/rechazo auditados, aislamiento por organización/local, prohibición de autoaprobación y controles de rol en la interfaz |

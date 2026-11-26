@@ -109,6 +109,22 @@ public class AlmacenamientoS3 implements AlmacenamientoArchivos {
         }
     }
 
+    @Override
+    public void borrar(String rutaRelativa) {
+        if (rutaRelativa == null || rutaRelativa.isBlank()) {
+            return;
+        }
+        try {
+            cliente.deleteObject(
+                    software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(rutaRelativa)
+                            .build());
+        } catch (RuntimeException ex) {
+            // Si ya no estaba, el resultado es el mismo: no hay nada que limpiar
+        }
+    }
+
     private String limpiar(String nombre) {
         return nombre.replaceAll("^.*[/\\\\]", "").replaceAll("[^\\w.\\-]", "_");
     }

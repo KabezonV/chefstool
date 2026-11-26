@@ -29,7 +29,7 @@ probar. La primera vez tarda unos minutos porque compila el backend y el fronten
 
 | Módulo | Para qué sirve |
 | --- | --- |
-| Documentos | Foto o archivo del albarán → extracción → revisión → compra confirmada |
+| Documentos | Foto o archivo del albarán → extracción → revisión → compra confirmada. Si faltan hojas, se añaden desde la revisión y se relee entero |
 | Compras | Histórico de compras con filtros y detalle de líneas |
 | Solicitudes de compra | Solicitud de autorización y decisión de propietario/admin, separada de compras confirmadas |
 | Productos | Catálogo normalizado con histórico de precios, comparativa por proveedor e importación masiva CSV/Excel |
@@ -289,11 +289,14 @@ Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 | Proveedores | `/api/proveedores` |
 | Clientes | `/api/clientes` |
 | Eventos | `/api/eventos` |
-| Documentos | `/api/documentos` (+ `/confirmar`, `/archivo`) |
-| Compras | `/api/compras` |
+| Documentos | `/api/documentos` (+ `/confirmar`, `/archivo`, `/descarga`, `/zip` del periodo, `/hojas` para añadir la segunda página) |
+| Compras | `/api/compras` (+ `/pdf` resumen de la compra, `/zip` de los albaranes del periodo) |
 | Solicitudes de compra | `/api/solicitudes-compra` (solo propietario/admin puede aprobar o rechazar) |
 | Alertas de precio | `/api/alertas` |
 | Fichas técnicas | `/api/fichas` |
+| Locales | `/api/locales` (crear y borrar: solo propietario/admin) |
+| Auditoría | `/api/auditoria` (solo propietario/admin) |
+| Correo | `/api/correo/estado` y `/api/correo/prueba` (solo propietario/admin) |
 | Panel e informes | `/api/informes/panel`, `/api/informes/proveedores` |
 | Usuarios y organización | `/api/usuarios`, `/api/organizacion` |
 | Datos de ejemplo | `/api/demo/datos` (POST) |
@@ -328,8 +331,8 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 138 tests (necesita Docker: usa Testcontainers)
-cd chefstool-frontend && npm test                  # 42 tests
+cd chefstool-backend && ./mvnw clean test          # 190 tests (necesita Docker: usa Testcontainers)
+cd chefstool-frontend && npm test                  # 76 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
 ```

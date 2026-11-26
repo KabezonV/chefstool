@@ -15,10 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class LocalService {
     private final LocalRepository localRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
-    public LocalService(LocalRepository localRepository, OrganizacionService organizacionService) {
+    public LocalService(
+            LocalRepository localRepository,
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.localRepository = localRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -42,7 +47,11 @@ public class LocalService {
         Local local = new Local();
         local.setOrganizacionId(organizacionId);
         local.setNombre(nombre);
-        return LocalResponse.from(localRepository.save(local));
+        Local guardado = localRepository.save(local);
+        if (auditoriaService != null) {
+            auditoriaService.registrar("CREAR", "LOCAL", guardado.getId(), nombre);
+        }
+        return LocalResponse.from(guardado);
     }
 
     @Transactional
@@ -51,6 +60,9 @@ public class LocalService {
         local.setActivo(false);
         local.setDeletedAt(OffsetDateTime.now());
         localRepository.save(local);
+        if (auditoriaService != null) {
+            auditoriaService.registrar("ELIMINAR", "LOCAL", local.getId(), local.getNombre());
+        }
     }
 
     @Transactional(readOnly = true)

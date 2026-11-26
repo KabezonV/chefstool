@@ -35,7 +35,24 @@ export function ivaDe(importe, tipo) {
 }
 
 /**
- * Líneas en las que la cantidad por el precio no da el importe que traía el documento.
+ * Importe de una línea. Manda el importe escrito a mano en la revisión (albaranes con
+ * descuento o precio cerrado); si no hay, el que traía el documento; si tampoco, cantidad
+ * por precio.
+ */
+export function importeDeLinea(linea = {}) {
+  const manual = linea.importeManual
+  if (manual !== null && manual !== undefined && manual !== '') {
+    const valor = Number(manual)
+    if (Number.isFinite(valor)) return Math.round(valor * 100) / 100
+  }
+  if (Number.isFinite(Number(linea.importe))) {
+    return Math.round(numero(linea.importe) * 100) / 100
+  }
+  return Math.round(numero(linea.cantidad) * numero(linea.precioUnitario) * 100) / 100
+}
+
+/**
+ * Líneas en las que el importe no sale de la cantidad por el precio que traía el documento.
  * Es la señal más fina de un fallo de lectura: dice exactamente qué renglón revisar.
  */
 export function lineasDescuadradas(lineas = []) {
@@ -46,7 +63,7 @@ export function lineasDescuadradas(lineas = []) {
     const leido = numero(linea.importeLeido)
     const cantidad = numero(linea.cantidad)
     const precio = numero(linea.precioUnitario)
-    const calculado = Math.round(cantidad * precio * 100) / 100
+    const calculado = importeDeLinea(linea)
     if (leido <= 0 || cantidad <= 0 || precio <= 0) return []
     return Math.abs(leido - calculado) > TOLERANCIA
       ? [{ indice, leido, calculado, cantidad, precio }]
@@ -60,8 +77,7 @@ export function lineasDescuadradas(lineas = []) {
  */
 /** Importe de la línea: el que trae, o cantidad por precio si viene del formulario. */
 function importeDe(linea) {
-  if (Number.isFinite(Number(linea.importe))) return numero(linea.importe)
-  return Math.round(numero(linea.cantidad) * numero(linea.precioUnitario) * 100) / 100
+  return importeDeLinea(linea)
 }
 
 export function avisosDeImportes(cabecera = {}, lineas = []) {

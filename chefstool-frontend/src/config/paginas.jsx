@@ -1,4 +1,5 @@
 // Components
+import Auditoria from '@/pages/Auditoria'
 import Clientes from '@/pages/Clientes'
 import Compras from '@/pages/Compras'
 import Configuracion from '@/pages/Configuracion'
@@ -6,6 +7,7 @@ import Documentos from '@/pages/Documentos'
 import Eventos from '@/pages/Eventos'
 import Fichas from '@/pages/Fichas'
 import Informes from '@/pages/Informes'
+import Locales from '@/pages/Locales'
 import Productos from '@/pages/Productos'
 import Proveedores from '@/pages/Proveedores'
 import SolicitudesCompra from '@/pages/SolicitudesCompra'
@@ -22,6 +24,8 @@ export const PAGINAS = {
   '/solicitudes-compra': <SolicitudesCompra />,
   '/fichas': <Fichas />,
   '/informes': <Informes />,
+  '/locales': <Locales />,
   '/usuarios': <Usuarios />,
+  '/auditoria': <Auditoria />,
   '/configuracion': <Configuracion />,
 }

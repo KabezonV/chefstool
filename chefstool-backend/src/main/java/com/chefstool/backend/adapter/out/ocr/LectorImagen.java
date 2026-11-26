@@ -302,6 +302,20 @@ public class LectorImagen {
             }
         }
 
+        // Rescate con contraste local: en las fotos con la sombra de la mano o del propio movil
+        // media hoja queda oscura, y ahi el estiramiento global de contraste no recupera nada.
+        if (mejorPuntuacion < PUNTUACION_SUFICIENTE) {
+            Optional<String> conContrasteLocal =
+                    leerConTesseract(aPng(contrasteLocal(escalar(original))), PSM_BLOQUE);
+            if (conContrasteLocal.isPresent()) {
+                int puntuacion = puntuar(conContrasteLocal.get());
+                if (puntuacion > mejorPuntuacion) {
+                    mejorTexto = conContrasteLocal.get();
+                    mejorPuntuacion = puntuacion;
+                }
+            }
+        }
+
         if (mejorPuntuacion <= 0) {
             return Optional.empty();
         }
@@ -422,6 +436,61 @@ public class LectorImagen {
                                         (luminancia - minimo) * 255 / (maximo - minimo)));
                 int rgbNuevo = (nuevo << 16) | (nuevo << 8) | nuevo;
                 destino.setRGB(x, y, rgbNuevo);
+            }
+        }
+        return destino;
+    }
+
+    /**
+     * Normaliza el contraste por zonas en vez de con un unico minimo/maximo global.
+     *
+     * <p>En una foto hecha con el movil la sombra de la mano deja media hoja oscura: el
+     * estiramiento global toma ese negro y el blanco del papel y deja el texto de la zona en
+     * sombra sin rango util. Aqui cada pixel se compara con la media de su entorno, de modo que
+     * las dos mitades de la hoja se leen igual. Se calcula con una imagen integral para que sea
+     * una sola pasada por pixel.
+     */
+    BufferedImage contrasteLocal(BufferedImage original) {
+        BufferedImage origen = aRgb(original);
+        int ancho = origen.getWidth();
+        int alto = origen.getHeight();
+        long[] integral = new long[(ancho + 1) * (alto + 1)];
+        int[] gris = new int[ancho * alto];
+
+        for (int y = 0; y < alto; y++) {
+            long fila = 0;
+            for (int x = 0; x < ancho; x++) {
+                int rgb = origen.getRGB(x, y);
+                int luminancia =
+                        (299 * ((rgb >> 16) & 0xff)
+                                        + 587 * ((rgb >> 8) & 0xff)
+                                        + 114 * (rgb & 0xff))
+                                / 1000;
+                gris[y * ancho + x] = luminancia;
+                fila += luminancia;
+                integral[(y + 1) * (ancho + 1) + (x + 1)] =
+                        integral[y * (ancho + 1) + (x + 1)] + fila;
+            }
+        }
+
+        int radio = Math.max(8, Math.min(ancho, alto) / 24);
+        BufferedImage destino = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < alto; y++) {
+            int desdeY = Math.max(0, y - radio);
+            int hastaY = Math.min(alto - 1, y + radio);
+            for (int x = 0; x < ancho; x++) {
+                int desdeX = Math.max(0, x - radio);
+                int hastaX = Math.min(ancho - 1, x + radio);
+                long suma =
+                        integral[(hastaY + 1) * (ancho + 1) + (hastaX + 1)]
+                                - integral[desdeY * (ancho + 1) + (hastaX + 1)]
+                                - integral[(hastaY + 1) * (ancho + 1) + desdeX]
+                                + integral[desdeY * (ancho + 1) + desdeX];
+                int cuenta = (hastaX - desdeX + 1) * (hastaY - desdeY + 1);
+                int media = (int) (suma / cuenta);
+                int valor = 128 + (gris[y * ancho + x] - media) * 2;
+                int ajustado = Math.max(0, Math.min(255, valor));
+                destino.setRGB(x, y, (ajustado << 16) | (ajustado << 8) | ajustado);
             }
         }
         return destino;

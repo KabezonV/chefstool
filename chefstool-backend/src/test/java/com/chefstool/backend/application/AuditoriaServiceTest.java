@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import com.chefstool.backend.domain.model.Auditoria;
 import com.chefstool.backend.domain.port.out.AuditoriaRepository;
+import com.chefstool.backend.domain.port.out.UsuarioRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,8 @@ class AuditoriaServiceTest {
         org.mockito.Mockito.when(organizacion.organizacionActual()).thenReturn(organizacionId);
         org.mockito.Mockito.when(organizacion.usuarioActual()).thenReturn(Optional.of(usuarioId));
 
-        AuditoriaService servicio = new AuditoriaService(repositorio, organizacion);
+        AuditoriaService servicio =
+                new AuditoriaService(repositorio, mock(UsuarioRepository.class), organizacion);
         UUID entidadId = UUID.randomUUID();
         servicio.registrar("CREAR", "PRODUCTO", entidadId, "Tomate");
 

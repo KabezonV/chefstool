@@ -94,7 +94,8 @@ La aplicación está terminada y funciona, pero para meter datos reales falta **
 (servidor, dominio y copias de seguridad). Está detallado en `docs/PENDIENTES-BERNART.md`.
 Cuando me digas por dónde tirar, lo dejo funcionando.
 
-Cualquier cosa que veas rara al probarlo, dímela y la corrijo el mismo día.
+Si al probarlo encuentras algún problema o algo no queda claro, avísame y lo revisaré
+lo antes posible.
 
 Un saludo,
 Víctor

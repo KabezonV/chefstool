@@ -95,7 +95,9 @@ async function requestBlob(path) {
   }
   const respuesta = await fetch(`${BASE_URL}${path}`, { headers })
   if (!respuesta.ok) {
-    throw new Error(`Error ${respuesta.status} al descargar ${path}`)
+    // El backend explica el motivo (periodo vacio, demasiados albaranes...)
+    const cuerpo = await respuesta.json().catch(() => null)
+    throw new Error(cuerpo?.error ?? `Error ${respuesta.status} al descargar ${path}`)
   }
   return respuesta.blob()
 }
