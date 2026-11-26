@@ -1,5 +1,5 @@
 // Enumerations
-import { CLAVE_SESION, CLAVE_TOKEN } from '@/constants/claves'
+import { CLAVE_REFRESH, CLAVE_SESION, CLAVE_TOKEN } from '@/constants/claves'
 import { TAMANO_PAGINA, TAMANO_PETICION_MAXIMA } from '@/constants/paginacion'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
@@ -24,6 +24,7 @@ async function manejar(respuesta, path) {
       throw new Error(cuerpo?.error ?? 'Correo o contraseña incorrectos')
     }
     borrarToken()
+    localStorage.removeItem(CLAVE_REFRESH)
     localStorage.removeItem(CLAVE_SESION)
     if (window.location.pathname !== '/auth') {
       window.location.href = '/auth'
@@ -43,7 +44,7 @@ async function manejar(respuesta, path) {
   return respuesta.json()
 }
 
-function request(path, options = {}) {
+async function request(path, options = {}) {
   const headers = { ...options.headers }
   const token = tokenGuardado()
   if (token) {
@@ -53,9 +54,37 @@ function request(path, options = {}) {
     headers['Content-Type'] = 'application/json'
   }
 
-  return fetch(`${BASE_URL}${path}`, { ...options, headers }).then((respuesta) =>
-    manejar(respuesta, path),
-  )
+  let respuesta = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+
+  if (
+    respuesta.status === 401
+    && !path.startsWith('/auth/login')
+    && !path.startsWith('/auth/registro')
+    && !path.startsWith('/auth/refrescar')
+  ) {
+    const refreshToken = localStorage.getItem(CLAVE_REFRESH)
+    if (refreshToken) {
+      try {
+        const refrescada = await fetch(`${BASE_URL}/auth/refrescar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        })
+        if (refrescada.ok) {
+          const datos = await refrescada.json()
+          guardarToken(datos.token)
+          localStorage.setItem(CLAVE_REFRESH, datos.refreshToken)
+          localStorage.setItem(CLAVE_SESION, JSON.stringify(datos))
+          headers.Authorization = `Bearer ${datos.token}`
+          respuesta = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+        }
+      } catch {
+        // El flujo normal de manejar() cerrará la sesión si el retry falla.
+      }
+    }
+  }
+
+  return manejar(respuesta, path)
 }
 
 async function requestBlob(path) {
@@ -66,7 +95,9 @@ async function requestBlob(path) {
   }
   const respuesta = await fetch(`${BASE_URL}${path}`, { headers })
   if (!respuesta.ok) {
-    throw new Error(`Error ${respuesta.status} al descargar ${path}`)
+    // El backend explica el motivo (periodo vacio, demasiados albaranes...)
+    const cuerpo = await respuesta.json().catch(() => null)
+    throw new Error(cuerpo?.error ?? `Error ${respuesta.status} al descargar ${path}`)
   }
   return respuesta.blob()
 }

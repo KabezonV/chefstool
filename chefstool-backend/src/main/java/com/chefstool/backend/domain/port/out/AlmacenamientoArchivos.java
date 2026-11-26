@@ -14,4 +14,10 @@ public interface AlmacenamientoArchivos {
             UUID organizacionId, UUID documentoId, String nombreOriginal, byte[] contenido);
 
     Optional<Resource> cargar(String rutaRelativa);
+
+    /**
+     * Borra un archivo ya guardado. Se usa al rehacer un albaran con mas hojas: el PDF nuevo
+     * sustituye al anterior y no tiene sentido seguir pagando por el viejo.
+     */
+    default void borrar(String rutaRelativa) {}
 }

@@ -2,7 +2,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 // Enumerations
-import { CLAVE_SESION } from '@/constants/claves'
+import { CLAVE_REFRESH, CLAVE_SESION } from '@/constants/claves'
 
 // Handlers
 import { api, borrarToken, guardarToken } from '@/lib/api'
@@ -24,6 +24,9 @@ export function AuthProvider({ children }) {
 
   const iniciar = useCallback((datos) => {
     guardarToken(datos.token)
+    if (datos.refreshToken) {
+      localStorage.setItem(CLAVE_REFRESH, datos.refreshToken)
+    }
     localStorage.setItem(CLAVE_SESION, JSON.stringify(datos))
     setSesion(datos)
   }, [])
@@ -47,7 +50,12 @@ export function AuthProvider({ children }) {
   )
 
   const salir = useCallback(() => {
+    const refresh = localStorage.getItem(CLAVE_REFRESH)
+    if (refresh) {
+      api.post('/auth/logout', { refreshToken: refresh }).catch(() => null)
+    }
     borrarToken()
+    localStorage.removeItem(CLAVE_REFRESH)
     localStorage.removeItem(CLAVE_SESION)
     setSesion(null)
   }, [])

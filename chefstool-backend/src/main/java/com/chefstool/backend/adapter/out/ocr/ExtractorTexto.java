@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 public class ExtractorTexto implements ExtractorDocumento {
 
     /** Un albaran tiene una o dos paginas; no merece la pena procesar mas. */
-    private static final int MAXIMO_PAGINAS_OCR = 3;
+    private static final int MAXIMO_PAGINAS_OCR = 10;
 
     private static final int DPI_OCR = 300;
 
@@ -52,8 +52,12 @@ public class ExtractorTexto implements ExtractorDocumento {
         String texto;
         if (lectorPdf.esPdf(contenido)) {
             texto = lectorPdf.extraerTexto(contenido);
-            if (texto == null || texto.isBlank()) {
-                texto = ocrDePdfEscaneado(contenido);
+            if (!textoEmbebidoPareceCompleto(texto)) {
+                String textoOcr = ocrDePdfEscaneado(contenido);
+                if (texto == null || texto.isBlank()
+                        || textoOcr.length() > texto.length()) {
+                    texto = textoOcr;
+                }
             }
         } else {
             if (!lectorImagen.sePuedeDecodificar(contenido)) {
@@ -85,6 +89,16 @@ public class ExtractorTexto implements ExtractorDocumento {
         }
 
         return resultado;
+    }
+
+    private boolean textoEmbebidoPareceCompleto(String texto) {
+        if (texto == null || texto.trim().length() < 80) {
+            return false;
+        }
+        long digitos = texto.chars().filter(Character::isDigit).count();
+        long letras = texto.chars().filter(Character::isLetter).count();
+        long importes = java.util.regex.Pattern.compile("\\d+[.,]\\d{2}").matcher(texto).results().count();
+        return digitos >= 10 && letras >= 40 && importes >= 2;
     }
 
     /** PDF sin texto embebido: se rasterizan las paginas y se les pasa el OCR. */

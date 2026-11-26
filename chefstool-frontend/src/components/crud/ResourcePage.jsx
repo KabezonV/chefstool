@@ -276,10 +276,10 @@ export default function ResourcePage({ recurso }) {
               title={recurso.importar.ayuda}
             >
               <Upload className="size-4" />
-              {importando ? 'Importando…' : 'Importar CSV'}
+              {importando ? 'Importando…' : 'Importar CSV/Excel'}
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 className="hidden"
                 onChange={importar}
                 disabled={importando}

@@ -29,9 +29,10 @@ probar. La primera vez tarda unos minutos porque compila el backend y el fronten
 
 | Módulo | Para qué sirve |
 | --- | --- |
-| Documentos | Foto o archivo del albarán → extracción → revisión → compra confirmada |
+| Documentos | Foto o archivo del albarán → extracción → revisión → compra confirmada. Si faltan hojas, se añaden desde la revisión y se relee entero |
 | Compras | Histórico de compras con filtros y detalle de líneas |
-| Productos | Catálogo normalizado con histórico de precios y comparativa por proveedor |
+| Solicitudes de compra | Solicitud de autorización y decisión de propietario/admin, separada de compras confirmadas |
+| Productos | Catálogo normalizado con histórico de precios, comparativa por proveedor e importación masiva CSV/Excel |
 | Proveedores / Clientes / Eventos | Imputación de compras y costes por servicio |
 | Fichas técnicas | Escandallos con coste por ración y margen sobre precio de venta, exportables a PDF A4 |
 | RGPD | Aviso de privacidad, descarga de datos personales y baja de cuenta con borrado en cascada |
@@ -39,6 +40,10 @@ probar. La primera vez tarda unos minutos porque compila el backend y el fronten
 | Dashboard e informes | Gasto mensual, coste histórico por proveedor, variaciones y ahorro potencial |
 | Usuarios y configuración | Organización, miembros y roles |
 | Datos de ejemplo | Rellena una organización nueva con catálogo, albaranes y fichas para probar |
+
+Las solicitudes de compra quedan pendientes hasta que un propietario o administrador
+distinto de quien la creó las apruebe o rechace. La aprobación se registra en auditoría,
+pero no genera un pedido, pago ni compra contable automáticamente.
 
 ## Arranque en local
 
@@ -110,11 +115,14 @@ que la lectura de fotos de albarán funciona sin instalar nada más.
 | `CHEFSTOOL_JWT_SECRET` | entorno del backend | Clave HMAC para firmar los JWT (mínimo 32 caracteres) |
 | `CHEFSTOOL_SEGURIDAD` | entorno del backend | `false` desactiva la autenticación (solo para pruebas) |
 | `CHEFSTOOL_UPLOADS` | entorno del backend | Carpeta donde se guardan los albaranes (por defecto `./uploads`) |
+| `CHEFSTOOL_ACCESS_MINUTOS`, `CHEFSTOOL_REFRESH_DIAS` | entorno del backend | Duración del access token y del refresh token |
+| `CHEFSTOOL_SMTP_HOST`, `CHEFSTOOL_SMTP_PORT`, `CHEFSTOOL_SMTP_USER`, `CHEFSTOOL_SMTP_PASSWORD` | entorno del backend | Conexión SMTP genérica para correo |
+| `CHEFSTOOL_ALERTAS_CORREO`, `CHEFSTOOL_ALERTAS_CORREO_CRON` | entorno del backend | Activa alertas por correo y su frecuencia |
 | `VITE_API_URL` | `chefstool-frontend/.env` | Base de la API (por defecto `/api`, que usa el proxy) |
 
 ## Autenticación y roles
 
-- **JWT firmado con HS256**, válido 12 horas. El token viaja en
+- **JWT firmado con HS256**, con acceso de 15 minutos por defecto y refresh token persistido de 30 días. El token viaja en
   `Authorization: Bearer …`.
 - Todas las rutas `/api/**` exigen token salvo `/api/auth/login` y
   `/api/auth/registro`.
@@ -131,6 +139,18 @@ que la lectura de fotos de albarán funciona sin instalar nada más.
 Si se define `CHEFSTOOL_OCR_VISION_CLAVE` (Google AI Studio: gratis y sin tarjeta), los
 documentos se leen con un modelo de visión —incluidas fotos torcidas y tablas— y Tesseract
 queda como respaldo automático si falla, no hay clave o se agota la cuota.
+
+### Sesiones y varios locales
+
+- El acceso usa un token de corta duración y un refresh token persistido con revocación.
+- Cada organización puede tener varios locales; productos y proveedores siguen siendo compartidos.
+- Compras, documentos y fichas técnicas se separan por el local activo.
+
+### Importación masiva y correo
+
+- Los productos se pueden importar desde CSV, XLSX y XLS.
+- Las alertas semanales pueden enviarse por SMTP. El sistema no depende de un proveedor concreto de correo.
+- La auditoría básica registra altas, cambios, eliminaciones, confirmaciones y documentos relevantes.
 
 ### Recuperar la contraseña
 
@@ -269,10 +289,14 @@ Plan de la fase 2 (OCR con Amazon Textract, AWS y tareas pendientes):
 | Proveedores | `/api/proveedores` |
 | Clientes | `/api/clientes` |
 | Eventos | `/api/eventos` |
-| Documentos | `/api/documentos` (+ `/confirmar`, `/archivo`) |
-| Compras | `/api/compras` |
+| Documentos | `/api/documentos` (+ `/confirmar`, `/archivo`, `/descarga`, `/zip` del periodo, `/hojas` para añadir la segunda página) |
+| Compras | `/api/compras` (+ `/pdf` resumen de la compra, `/zip` de los albaranes del periodo) |
+| Solicitudes de compra | `/api/solicitudes-compra` (solo propietario/admin puede aprobar o rechazar) |
 | Alertas de precio | `/api/alertas` |
 | Fichas técnicas | `/api/fichas` |
+| Locales | `/api/locales` (crear y borrar: solo propietario/admin) |
+| Auditoría | `/api/auditoria` (solo propietario/admin) |
+| Correo | `/api/correo/estado` y `/api/correo/prueba` (solo propietario/admin) |
 | Panel e informes | `/api/informes/panel`, `/api/informes/proveedores` |
 | Usuarios y organización | `/api/usuarios`, `/api/organizacion` |
 | Datos de ejemplo | `/api/demo/datos` (POST) |
@@ -307,8 +331,8 @@ sirven desde caché, para no mostrar datos financieros obsoletos.
 ## Calidad
 
 ```bash
-cd chefstool-backend && ./mvnw clean test          # 138 tests (necesita Docker: usa Testcontainers)
-cd chefstool-frontend && npm test                  # 42 tests
+cd chefstool-backend && ./mvnw clean test          # 195 tests (necesita Docker: usa Testcontainers)
+cd chefstool-frontend && npm test                  # 76 tests
 cd chefstool-frontend && npm run lint && npm run build
 ./scripts/qa-volumen.sh                            # prueba de volumen (crea una org nueva)
 ```

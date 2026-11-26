@@ -8,7 +8,7 @@ export const productos = {
   endpoint: '/productos',
   importar: {
     endpoint: '/productos/importar',
-    ayuda: 'CSV con columnas nombre;categoria;unidadBase (la cabecera es opcional)',
+    ayuda: 'CSV o Excel (.xlsx/.xls) con columnas nombre;categoria;unidadBase (la cabecera es opcional)',
   },
   titulo: 'Productos',
   singular: 'producto',

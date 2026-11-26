@@ -11,4 +11,7 @@ public interface FichaRepository extends JpaRepository<Ficha, UUID> {
 
     org.springframework.data.domain.Page<Ficha> findByOrganizacionIdAndDeletedAtIsNull(
             UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Ficha> findByOrganizacionIdAndLocalIdAndDeletedAtIsNull(
+            UUID organizacionId, UUID localId, org.springframework.data.domain.Pageable pageable);
 }

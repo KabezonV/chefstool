@@ -1,14 +1,19 @@
 // Vendors
-import { FileText, Plus } from 'lucide-react'
+import { Download, FileText, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 // Utils
+import { descargarArchivo, mesEnCurso } from '@/lib/descargas'
 import { fechaCorta } from '@/lib/formato'
 import { COLUMNAS_DOCUMENTOS } from './utils/columnas'
 import { formatearConfianza } from './utils/confianza'
 
 // Enumerations
 import { ESTADOS_DOCUMENTO } from '@/constants/documentos'
+
+// Handlers
+import { api } from '@/lib/api'
 
 // Hooks
 import { useListado } from '@/lib/useListado'
@@ -17,6 +22,7 @@ import { useListado } from '@/lib/useListado'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import Paginador from '@/components/ui/paginador'
 import { BotonesExportar, CabeceraOrdenable, Celda, Tabla } from '@/components/ui/tabla'
 
@@ -38,6 +44,26 @@ export default function Documentos() {
     ordenarPor,
     exportar,
   } = useListado('/documentos')
+
+  const [periodo, setPeriodo] = useState(mesEnCurso())
+  const [errorZip, setErrorZip] = useState(null)
+  const [descargandoZip, setDescargandoZip] = useState(false)
+
+  /** Todos los albaranes del periodo en un ZIP (para la gestoria o una copia). */
+  async function descargarZip() {
+    setDescargandoZip(true)
+    setErrorZip(null)
+    try {
+      const blob = await api.descargar(
+        `/documentos/zip?desde=${periodo.desde}&hasta=${periodo.hasta}`,
+      )
+      descargarArchivo(blob, `albaranes-${periodo.desde}_${periodo.hasta}.zip`)
+    } catch (err) {
+      setErrorZip(err.message)
+    } finally {
+      setDescargandoZip(false)
+    }
+  }
 
   const columnasExport = [
     { label: 'Archivo', valor: (documento) => documento.nombreOriginal },
@@ -82,10 +108,46 @@ export default function Documentos() {
         </div>
       )}
 
+      {errorZip && (
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+          {errorZip}
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Bandeja de entrada</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              <Input
+                type="date"
+                aria-label="Albaranes desde"
+                className="h-8 w-32 sm:w-36"
+                value={periodo.desde}
+                onChange={(event) =>
+                  setPeriodo((previo) => ({ ...previo, desde: event.target.value }))
+                }
+              />
+              <Input
+                type="date"
+                aria-label="Albaranes hasta"
+                className="h-8 w-32 sm:w-36"
+                value={periodo.hasta}
+                onChange={(event) =>
+                  setPeriodo((previo) => ({ ...previo, hasta: event.target.value }))
+                }
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={descargarZip}
+                disabled={descargandoZip}
+                title="Descarga los albaranes con archivo de ese periodo en un ZIP"
+              >
+                <Download className="size-4" />
+                {descargandoZip ? 'Preparando…' : 'ZIP'}
+              </Button>
+            </div>
             <BotonesExportar
               onCsv={() => exportar(columnasExport)}
               onExcel={() => exportar(columnasExport, 'xlsx')}

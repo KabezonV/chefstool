@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.application.AlertaCorreoProgramada;
 import com.chefstool.backend.application.AlertaPrecioService;
 import com.chefstool.backend.adapter.in.web.dto.AlertaPrecioResponse;
 import java.util.List;
@@ -12,21 +13,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/alertas")
 public class AlertaPrecioController {
 
     private final AlertaPrecioService alertaService;
+    private final AlertaCorreoProgramada correoProgramado;
 
-    public AlertaPrecioController(AlertaPrecioService alertaService) {
+    public AlertaPrecioController(
+            AlertaPrecioService alertaService,
+            AlertaCorreoProgramada correoProgramado) {
         this.alertaService = alertaService;
+        this.correoProgramado = correoProgramado;
     }
 
     @GetMapping
     public List<AlertaPrecioResponse> listar(
             @RequestParam(defaultValue = "false") boolean todas) {
         return todas ? alertaService.todas() : alertaService.pendientes();
+    }
+
+    @PostMapping("/correo/enviar")
+    @PreAuthorize("hasAnyRole('propietario','admin')")
+    public int enviarCorreo() {
+        return correoProgramado.enviarResumenSemanal();
     }
 
     @PostMapping("/{id}/reconocer")

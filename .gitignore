@@ -19,3 +19,7 @@ coverage/
 
 # Albaranes subidos en local
 uploads/
+
+# Artefactos de Playwright
+test-results/
+playwright-report/

@@ -31,14 +31,17 @@ public class ProductoService {
     private final ProductoRepository productoRepository;
     private final LineaCompraRepository lineaCompraRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
     public ProductoService(
             ProductoRepository productoRepository,
             LineaCompraRepository lineaCompraRepository,
-            OrganizacionService organizacionService) {
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.productoRepository = productoRepository;
         this.lineaCompraRepository = lineaCompraRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -47,6 +50,8 @@ public class ProductoService {
                 productoRepository
                         .findById(productoId)
                         .filter(p -> p.getDeletedAt() == null)
+                        .filter(p -> organizacionService.organizacionActual()
+                                .equals(p.getOrganizacionId()))
                         .orElseThrow(
                                 () -> new RecursoNoEncontradoException("Producto no encontrado"));
 
@@ -157,7 +162,9 @@ public class ProductoService {
         producto.setOrganizacionId(organizacionId);
         producto.setNombre(nombre);
         aplicar(producto, request);
-        return ProductoResponse.from(productoRepository.save(producto));
+        Producto guardado = productoRepository.save(producto);
+        if (auditoriaService != null) auditoriaService.registrar("CREAR", "PRODUCTO", guardado.getId(), guardado.getNombre());
+        return ProductoResponse.from(guardado);
     }
 
     @Transactional
@@ -171,13 +178,17 @@ public class ProductoService {
 
         producto.setNombre(nombre);
         aplicar(producto, request);
-        return ProductoResponse.from(productoRepository.save(producto));
+        Producto guardado = productoRepository.save(producto);
+        if (auditoriaService != null) auditoriaService.registrar("ACTUALIZAR", "PRODUCTO", guardado.getId(), guardado.getNombre());
+        return ProductoResponse.from(guardado);
     }
 
     @Transactional
     public void eliminar(UUID id) {
         Producto producto = buscar(id);
         producto.setDeletedAt(OffsetDateTime.now());
+        productoRepository.save(producto);
+        if (auditoriaService != null) auditoriaService.registrar("ELIMINAR", "PRODUCTO", producto.getId(), producto.getNombre());
     }
 
     private void aplicar(Producto producto, ProductoRequest request) {
@@ -198,6 +209,8 @@ public class ProductoService {
         return productoRepository
                 .findById(id)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 }

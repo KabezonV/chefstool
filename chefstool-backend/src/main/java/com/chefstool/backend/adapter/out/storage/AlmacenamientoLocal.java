@@ -59,4 +59,20 @@ public class AlmacenamientoLocal implements AlmacenamientoArchivos {
         }
         return Optional.of(new FileSystemResource(archivo));
     }
+
+    @Override
+    public void borrar(String rutaRelativa) {
+        if (rutaRelativa == null || rutaRelativa.isBlank()) {
+            return;
+        }
+        Path archivo = base.resolve(rutaRelativa).normalize();
+        if (!archivo.startsWith(base)) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(archivo);
+        } catch (IOException ex) {
+            throw new UncheckedIOException("No se pudo borrar el archivo anterior", ex);
+        }
+    }
 }

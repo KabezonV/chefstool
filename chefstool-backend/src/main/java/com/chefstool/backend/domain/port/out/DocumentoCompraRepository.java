@@ -16,4 +16,17 @@ public interface DocumentoCompraRepository extends JpaRepository<DocumentoCompra
 
     org.springframework.data.domain.Page<DocumentoCompra> findByOrganizacionId(
             UUID organizacionId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<DocumentoCompra> findByOrganizacionIdAndLocalId(
+            UUID organizacionId, UUID localId, org.springframework.data.domain.Pageable pageable);
+
+    /** Documentos con archivo de un periodo, para descargarlos juntos en un ZIP. */
+    List<DocumentoCompra> findByOrganizacionIdAndCreatedAtBetweenOrderByCreatedAtAsc(
+            UUID organizacionId, java.time.OffsetDateTime desde, java.time.OffsetDateTime hasta);
+
+    List<DocumentoCompra> findByOrganizacionIdAndLocalIdAndCreatedAtBetweenOrderByCreatedAtAsc(
+            UUID organizacionId,
+            UUID localId,
+            java.time.OffsetDateTime desde,
+            java.time.OffsetDateTime hasta);
 }

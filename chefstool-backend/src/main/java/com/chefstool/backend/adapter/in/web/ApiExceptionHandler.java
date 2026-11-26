@@ -1,5 +1,6 @@
 package com.chefstool.backend.adapter.in.web;
 
+import com.chefstool.backend.application.DocumentoIlegibleException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,5 +45,12 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> validacion(MethodArgumentNotValidException ex) {
         return Map.of("error", "Datos no validos: revisa los campos obligatorios");
+    }
+
+    /** Archivo que no se puede leer (formato raro, hojas mezcladas...). */
+    @ExceptionHandler(DocumentoIlegibleException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> ilegible(DocumentoIlegibleException ex) {
+        return Map.of("error", ex.getMessage());
     }
 }

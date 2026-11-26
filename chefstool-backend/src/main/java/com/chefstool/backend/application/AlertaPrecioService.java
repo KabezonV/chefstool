@@ -45,6 +45,8 @@ public class AlertaPrecioService {
         AlertaPrecio alerta =
                 alertaRepository
                         .findById(id)
+                        .filter(otra -> organizacionService.organizacionActual()
+                                .equals(otra.getOrganizacionId()))
                         .orElseThrow(
                                 () -> new RecursoNoEncontradoException("Alerta no encontrada"));
         alerta.setReconocida(true);

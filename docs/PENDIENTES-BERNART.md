@@ -129,7 +129,7 @@ Lo que no haría es meter datos reales de compras ahí.
 
 | Tema | Qué falta | Dónde está el detalle |
 | --- | --- | --- |
-| **Correo transaccional** | Contratar proveedor (Resend, SES o SendGrid) y verificar el dominio. Hoy las invitaciones y la recuperación generan el enlace, pero no envían correo | `INFORME-BERNART.md` → Decisión 2 |
+| **Correo transaccional** | Contratar proveedor y facilitar 5 datos: servidor, puerto, usuario, contraseña y remitente. El backend ya admite SMTP genérico, Resend/SES/SendGrid. **Nuevo:** en Configuración → *Correo saliente* la app dice qué falta y envía un correo de prueba | `INFORME-BERNART.md` → Decisión 2 |
 | **Contratos RGPD (art. 28)** | Firmar el encargo del tratamiento con el proveedor de alojamiento y con el de OCR si se activa | `RGPD.md` → punto 2 |
 | **Copias de seguridad** | Snapshot y **prueba de restauración** hecha de verdad, no solo programada | `DESPLIEGUE.md` → checklist |
 | **Plazo de conservación** | Definir cuántos años se guardan albaranes y compras (fiscal: 4 años) | `RGPD.md` → punto 2 |
@@ -146,9 +146,19 @@ Lo que no haría es meter datos reales de compras ahí.
 - Productos con histórico de precios, proveedores, clientes y eventos.
 - Fichas técnicas con coste por ración, margen y exportación a PDF A4.
 - Panel, informes de coste por proveedor, variaciones de precio, alertas y exportación a Excel.
+- Importación masiva CSV, XLS y XLSX, refresh tokens y varios locales.
+- **Auditoría con pantalla propia**: quién hizo qué y cuándo (altas, cambios, borrados,
+  albaranes, compras y aprobaciones), solo para propietario y administrador.
+- **Gestión de locales desde la app**: crear, cambiar el activo y eliminar, con permisos
+  solo para propietario y administrador.
+- **Descargas**: el original de cada albarán, ZIP de un periodo (Documentos y Compras,
+  filtrable por proveedor) y resumen de la compra en PDF.
+- **Albaranes de varias hojas**: la segunda página se añade desde la revisión y se relee
+  el documento entero.
+- **Importes corregibles a mano** en la revisión, con base y total recalculados.
 - RGPD: aviso de privacidad, descarga de datos y baja de cuenta con borrado en cascada.
-- **118 pruebas de backend** (con su propio PostgreSQL en Testcontainers) y **30 de frontend**,
-  todas en verde.
+- **190 pruebas de backend** (con su propio PostgreSQL en Testcontainers), **76 de frontend**
+  y **5 de navegador**, todas en verde.
 - Documentación completa en `docs/` (ver índice en el `README.md`).
 
 ---
@@ -160,7 +170,9 @@ Lo que no haría es meter datos reales de compras ahí.
    precisión de la lectura en fotos de verdad.
 3. **Cuenta de AWS** (o Render) + rol IAM + dominio + región. Si AWS se alarga, publicamos la
    demo en Render y seguimos.
-4. **Correo**: ¿contratamos ya un proveedor (0–15 €/mes) o lo dejamos para el piloto?
+4. **Correo**: si lo contratamos (0–15 €/mes), necesito cinco datos del proveedor:
+   servidor SMTP, puerto, usuario, contraseña (o clave de aplicación) y dirección remitente.
+   En cuanto los tenga, Configuración → *Correo saliente* comprueba el envío en un clic.
 5. **Una cocina piloto** con su jefe de cocina.
 
 Con el punto 1 publico la demo privada; con los albaranes reales afino la lectura. **El OCR ya

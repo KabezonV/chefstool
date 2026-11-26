@@ -1,9 +1,10 @@
 // Vendors
-import { BellRing, Check, ExternalLink } from 'lucide-react'
+import { BellRing, Check, Download, ExternalLink } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 // Utils
+import { descargarArchivo } from '@/lib/descargas'
 import { fechaCorta, moneda } from '@/lib/formato'
 import { COLUMNAS_COMPRAS } from './utils/columnas'
 
@@ -51,6 +52,42 @@ export default function Compras() {
   const [proveedores, setProveedores] = useState([])
   const [alertas, setAlertas] = useState([])
   const [detalle, setDetalle] = useState(null)
+  const [descargando, setDescargando] = useState(false)
+  const [errorDescarga, setErrorDescarga] = useState(null)
+
+  /** Albaranes originales de las compras filtradas, en un ZIP. */
+  async function descargarZip() {
+    if (!filtros.desde || !filtros.hasta) {
+      setErrorDescarga('Elige el periodo (desde y hasta) para descargar los albaranes')
+      return
+    }
+    setDescargando(true)
+    setErrorDescarga(null)
+    try {
+      const consulta = new URLSearchParams({ desde: filtros.desde, hasta: filtros.hasta })
+      if (filtros.proveedorId) consulta.set('proveedorId', filtros.proveedorId)
+      const blob = await api.descargar(`/compras/zip?${consulta.toString()}`)
+      descargarArchivo(blob, `compras-${filtros.desde}_${filtros.hasta}.zip`)
+    } catch (err) {
+      setErrorDescarga(err.message)
+    } finally {
+      setDescargando(false)
+    }
+  }
+
+  /** Resumen de la compra en PDF (proveedor, lineas y totales). */
+  async function descargarPdf(compra) {
+    setDescargando(true)
+    setErrorDescarga(null)
+    try {
+      const blob = await api.descargar(`/compras/${compra.id}/pdf`)
+      descargarArchivo(blob, `compra-${compra.numeroDocumento ?? compra.id}.pdf`)
+    } catch (err) {
+      setErrorDescarga(err.message)
+    } finally {
+      setDescargando(false)
+    }
+  }
 
   useEffect(() => {
     listarTodo('/proveedores')
@@ -106,6 +143,12 @@ export default function Compras() {
         </p>
       </div>
 
+      {errorDescarga && (
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+          {errorDescarga}
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
           {error}
@@ -156,6 +199,16 @@ export default function Compras() {
               onExcel={() => exportar(columnasExport, 'xlsx')}
               exportando={exportando}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={descargarZip}
+              disabled={descargando}
+              title="Descarga los albaranes originales de las compras filtradas"
+            >
+              <Download className="size-4" />
+              ZIP albaranes
+            </Button>
             <Badge>{cargando ? 'Cargando…' : `${datos.totalElementos} compras`}</Badge>
           </div>
         </CardHeader>
@@ -298,6 +351,15 @@ export default function Compras() {
                   Ver documento
                 </Link>
               )}
+              <button
+                type="button"
+                onClick={() => descargarPdf(detalle)}
+                disabled={descargando}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground disabled:opacity-50"
+              >
+                <Download className="size-3.5" />
+                PDF de la compra
+              </button>
               <Button variant="ghost" size="sm" onClick={() => setDetalle(null)}>
                 Cerrar
               </Button>

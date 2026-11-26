@@ -6,8 +6,12 @@ import com.chefstool.backend.adapter.in.web.dto.CompraResponse;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoDetalle;
 import com.chefstool.backend.adapter.in.web.dto.DocumentoResumen;
 import com.chefstool.backend.domain.model.ExtraccionDocumento;
+import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +60,14 @@ public class DocumentoController {
         return documentoService.subir(archivos, origen);
     }
 
+    /** Añade hojas al albarán que se está revisando (por ejemplo, la segunda página). */
+    @PostMapping(value = "/{id}/hojas", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public DocumentoDetalle anexarHojas(
+            @PathVariable UUID id,
+            @RequestParam(value = "archivo", required = false) List<MultipartFile> archivos) {
+        return documentoService.anexarHojas(id, archivos);
+    }
+
     @PutMapping("/{id}")
     public DocumentoDetalle guardarBorrador(
             @PathVariable UUID id, @RequestBody ExtraccionDocumento extraccion) {
@@ -86,5 +98,43 @@ public class DocumentoController {
                         "Content-Disposition",
                         "inline; filename=\"%s\"".formatted(archivo.nombre()))
                 .body(archivo.recurso());
+    }
+
+    /** Descarga el original con un nombre claro (fecha_nombre) en vez de abrirlo en el visor. */
+    @GetMapping("/{id}/descarga")
+    public ResponseEntity<org.springframework.core.io.Resource> descargar(@PathVariable UUID id) {
+        ArchivoDescargable archivo = documentoService.descargar(id);
+        return ResponseEntity.ok()
+                .contentType(
+                        archivo.tipoMime() == null
+                                ? MediaType.APPLICATION_OCTET_STREAM
+                                : MediaType.parseMediaType(archivo.tipoMime()))
+                .header(
+                        "Content-Disposition",
+                        ContentDisposition.attachment()
+                                .filename(archivo.nombre(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .body(archivo.recurso());
+    }
+
+    /** Todos los albaranes de un periodo en un ZIP, para la gestoria. */
+    @GetMapping("/zip")
+    public ResponseEntity<byte[]> descargarZip(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate hasta) {
+        byte[] zip = documentoService.descargarZip(desde, hasta);
+        String nombre = "albaranes-%s_%s.zip".formatted(desde, hasta);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .header(
+                        "Content-Disposition",
+                        ContentDisposition.attachment()
+                                .filename(nombre, StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .body(zip);
     }
 }

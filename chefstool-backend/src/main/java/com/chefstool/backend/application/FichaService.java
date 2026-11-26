@@ -42,18 +42,21 @@ public class FichaService {
     private final ProductoRepository productoRepository;
     private final ProveedorProductoRepository proveedorProductoRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
     public FichaService(
             FichaRepository fichaRepository,
             FichaLineaRepository fichaLineaRepository,
             ProductoRepository productoRepository,
             ProveedorProductoRepository proveedorProductoRepository,
-            OrganizacionService organizacionService) {
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.fichaRepository = fichaRepository;
         this.fichaLineaRepository = fichaLineaRepository;
         this.productoRepository = productoRepository;
         this.proveedorProductoRepository = proveedorProductoRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -72,9 +75,12 @@ public class FichaService {
                                 Sort.by("nombre").ascending(),
                                 "nombre", "precioVenta", "raciones"));
 
-        return Pagina.desde(
-                        fichaRepository.findByOrganizacionIdAndDeletedAtIsNull(
-                                organizacionId, pageable)
+        UUID localId = organizacionService.localActual();
+        var fichas = localId == null
+                ? fichaRepository.findByOrganizacionIdAndDeletedAtIsNull(organizacionId, pageable)
+                : fichaRepository.findByOrganizacionIdAndLocalIdAndDeletedAtIsNull(
+                        organizacionId, localId, pageable);
+        return Pagina.desde(fichas)
                                 .map(
                         ficha -> {
                             List<FichaLinea> lineas =
@@ -89,7 +95,7 @@ public class FichaService {
                                     porRacion,
                                     margen(ficha.getPrecioVenta(), porRacion),
                                     lineas.size());
-                        }));
+                        });
     }
 
     @Transactional(readOnly = true)
@@ -102,9 +108,11 @@ public class FichaService {
     public FichaDetalle crear(FichaRequest request) {
         Ficha ficha = new Ficha();
         ficha.setOrganizacionId(organizacionService.organizacionActual());
+        ficha.setLocalId(organizacionService.localActual());
         aplicar(ficha, request);
         Ficha guardada = fichaRepository.save(ficha);
         sustituirLineas(guardada, request.lineas());
+        if (auditoriaService != null) auditoriaService.registrar("CREAR", "FICHA", guardada.getId(), guardada.getNombre());
         return detalle(guardada, mejoresPrecios(guardada.getOrganizacionId()));
     }
 
@@ -114,6 +122,7 @@ public class FichaService {
         aplicar(ficha, request);
         fichaRepository.save(ficha);
         sustituirLineas(ficha, request.lineas());
+        if (auditoriaService != null) auditoriaService.registrar("ACTUALIZAR", "FICHA", ficha.getId(), ficha.getNombre());
         return detalle(ficha, mejoresPrecios(ficha.getOrganizacionId()));
     }
 
@@ -122,6 +131,7 @@ public class FichaService {
         Ficha ficha = buscar(id);
         ficha.setDeletedAt(OffsetDateTime.now());
         fichaRepository.save(ficha);
+        if (auditoriaService != null) auditoriaService.registrar("ELIMINAR", "FICHA", ficha.getId(), ficha.getNombre());
     }
 
     private void aplicar(Ficha ficha, FichaRequest request) {
@@ -253,6 +263,8 @@ public class FichaService {
         return productoRepository
                 .findById(productoId)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 
@@ -260,6 +272,8 @@ public class FichaService {
         return fichaRepository
                 .findById(id)
                 .filter(ficha -> ficha.getDeletedAt() == null)
+                .filter(ficha -> organizacionService.organizacionActual()
+                        .equals(ficha.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Ficha no encontrada"));
     }
 }

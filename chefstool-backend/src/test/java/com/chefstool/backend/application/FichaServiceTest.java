@@ -40,6 +40,14 @@ class FichaServiceTest {
     @Mock private OrganizacionService organizacionService;
     @InjectMocks private FichaService fichaService;
 
+    @org.junit.jupiter.api.BeforeEach
+    void contextoDeOrganizacion() {
+        // La búsqueda de fichas comprueba que pertenecen a la organización activa
+        org.mockito.Mockito.lenient()
+                .when(organizacionService.organizacionActual())
+                .thenReturn(ORG);
+    }
+
     @Test
     void calculaElCosteConElMejorPrecioEntreProveedores() {
         Producto tomate = producto("Tomate");

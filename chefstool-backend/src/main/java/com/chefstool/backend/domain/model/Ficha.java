@@ -29,6 +29,9 @@ public class Ficha {
     @Column(name = "organizacion_id", nullable = false)
     private UUID organizacionId;
 
+    @Column(name = "local_id")
+    private UUID localId;
+
     @Column(nullable = false)
     private String nombre;
 

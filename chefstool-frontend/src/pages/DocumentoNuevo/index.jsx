@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 // Utils
+import { revisarCalidad } from './utils/calidad'
 import { OPCIONES_ALTA } from './utils/opciones'
 
 // Handlers
@@ -13,58 +14,20 @@ import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-const ANCHO_MINIMO_AVISO = 1200
-
-/** Ancho en pixeles del archivo, o null si no es una imagen que se pueda medir. */
-async function anchoDeImagen(archivo) {
-  if (!archivo.type.startsWith('image/') || typeof createImageBitmap !== 'function') {
-    return null
-  }
-  try {
-    const mapa = await createImageBitmap(archivo)
-    const ancho = mapa.width
-    mapa.close?.()
-    return ancho
-  } catch {
-    return null
-  }
-}
-
-/** Imágenes con tan poca resolución que el texto pequeño del albarán no se puede leer. */
-async function imagenesPequenas(archivos) {
-  const pequenas = []
-  for (const archivo of archivos) {
-    const ancho = await anchoDeImagen(archivo)
-    if (ancho !== null && ancho < ANCHO_MINIMO_AVISO) {
-      pequenas.push({ nombre: archivo.name, ancho })
-    }
-  }
-  return pequenas
-}
-
 export default function DocumentoNuevo() {
   const navigate = useNavigate()
   const camaraRef = useRef(null)
   const archivoRef = useRef(null)
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState(null)
-  const [avisoCalidad, setAvisoCalidad] = useState([])
+  const [avisos, setAvisos] = useState([])
+  const [pendiente, setPendiente] = useState(null)
 
-  async function enviar(archivos, origen) {
+  async function subir(archivos, origen) {
     setSubiendo(true)
     setError(null)
 
     try {
-      if (archivos.length === 0) {
-        const datos = new FormData()
-        datos.append('origen', 'demo')
-        const documento = await api.subir('/documentos', datos)
-        navigate(`/documentos/${documento.id}`)
-        return
-      }
-
-      setAvisoCalidad(await imagenesPequenas(archivos))
-
       // Varias fotos van en una sola subida: el backend las junta en un PDF y la
       // revision es una unica compra, no una por hoja.
       const datos = new FormData()
@@ -78,6 +41,42 @@ export default function DocumentoNuevo() {
     } finally {
       setSubiendo(false)
     }
+  }
+
+  async function enviar(archivos, origen, { confirmado = false } = {}) {
+    setError(null)
+    setAvisos([])
+    setPendiente(null)
+
+    if (archivos.length === 0) {
+      setSubiendo(true)
+      try {
+        const datos = new FormData()
+        datos.append('origen', 'demo')
+        const documento = await api.subir('/documentos', datos)
+        navigate(`/documentos/${documento.id}`)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setSubiendo(false)
+      }
+      return
+    }
+
+    // El aviso tiene que verse antes de procesar: si se muestra mientras se sube, la
+    // navegación a la revisión lo esconde y el usuario nunca llega a enterarse.
+    if (!confirmado) {
+      setSubiendo(true)
+      const encontrados = await revisarCalidad(archivos)
+      setSubiendo(false)
+      if (encontrados.length > 0) {
+        setAvisos(encontrados)
+        setPendiente({ archivos, origen })
+        return
+      }
+    }
+
+    await subir(archivos, origen)
   }
 
   function alElegir(event, origen) {
@@ -115,11 +114,14 @@ export default function DocumentoNuevo() {
         </div>
       )}
 
-      {avisoCalidad.length > 0 && (
-        <div className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
+      {avisos.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning"
+        >
           <p className="font-medium">Estas imágenes tienen poca resolución</p>
           <ul className="mt-1 list-disc pl-5">
-            {avisoCalidad.map((imagen) => (
+            {avisos.map((imagen) => (
               <li key={imagen.nombre}>
                 {imagen.nombre} ({imagen.ancho} px de ancho)
               </li>
@@ -129,13 +131,33 @@ export default function DocumentoNuevo() {
             El texto pequeño puede no leerse bien. Sube la foto original (no reenviada por
             mensajería) o, mejor, el PDF del proveedor.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setAvisos([])
+                setPendiente(null)
+                archivoRef.current?.click()
+              }}
+            >
+              Elegir otra imagen
+            </Button>
+            <Button
+              size="sm"
+              disabled={subiendo}
+              onClick={() => enviar(pendiente.archivos, pendiente.origen, { confirmado: true })}
+            >
+              Subir igualmente
+            </Button>
+          </div>
         </div>
       )}
 
       <input
         ref={camaraRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png"
         capture="environment"
         className="hidden"
         onChange={(event) => alElegir(event, 'camara')}

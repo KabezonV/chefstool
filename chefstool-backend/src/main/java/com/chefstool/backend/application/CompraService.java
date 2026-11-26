@@ -56,6 +56,7 @@ public class CompraService {
     private final ProveedorProductoRepository proveedorProductoRepository;
     private final AlertaPrecioRepository alertaPrecioRepository;
     private final OrganizacionService organizacionService;
+    private final AuditoriaService auditoriaService;
 
     public CompraService(
             CompraRepository compraRepository,
@@ -66,7 +67,8 @@ public class CompraService {
             EventoRepository eventoRepository,
             ProveedorProductoRepository proveedorProductoRepository,
             AlertaPrecioRepository alertaPrecioRepository,
-            OrganizacionService organizacionService) {
+            OrganizacionService organizacionService,
+            AuditoriaService auditoriaService) {
         this.compraRepository = compraRepository;
         this.lineaCompraRepository = lineaCompraRepository;
         this.proveedorRepository = proveedorRepository;
@@ -76,6 +78,7 @@ public class CompraService {
         this.proveedorProductoRepository = proveedorProductoRepository;
         this.alertaPrecioRepository = alertaPrecioRepository;
         this.organizacionService = organizacionService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -100,6 +103,7 @@ public class CompraService {
         return Pagina.desde(
                         compraRepository.buscarPaginado(
                                 organizacionService.organizacionActual(),
+                                organizacionService.localActual(),
                                 proveedorId,
                                 desde,
                                 hasta,
@@ -112,6 +116,8 @@ public class CompraService {
         Compra compra =
                 compraRepository
                         .findById(id)
+                        .filter(otra -> organizacionService.organizacionActual()
+                                .equals(otra.getOrganizacionId()))
                         .orElseThrow(
                                 () -> new RecursoNoEncontradoException("Compra no encontrada"));
         List<LineaCompraResponse> lineas =
@@ -126,6 +132,7 @@ public class CompraService {
             DocumentoCompra documento, ExtraccionDocumento extraccion) {
         Compra compra = new Compra();
         compra.setOrganizacionId(documento.getOrganizacionId());
+        compra.setLocalId(documento.getLocalId());
         compra.setDocumento(documento);
         compra.setProveedor(resolverProveedor(documento.getOrganizacionId(), extraccion));
         compra.setNumeroDocumento(extraccion.numeroDocumento());
@@ -160,6 +167,10 @@ public class CompraService {
             actualizarPrecioYAlertas(guardada, lineaGuardada, producto);
         }
 
+        if (auditoriaService != null) auditoriaService.registrar(
+                "CONFIRMAR", "COMPRA", guardada.getId(),
+                guardada.getNumeroDocumento() == null ? guardada.getId().toString()
+                        : guardada.getNumeroDocumento());
         return CompraResponse.from(guardada, lineas.size());
     }
 
@@ -245,6 +256,7 @@ public class CompraService {
             return proveedorRepository
                     .findById(extraccion.proveedorId())
                     .filter(proveedor -> proveedor.getDeletedAt() == null)
+                    .filter(proveedor -> organizacionId.equals(proveedor.getOrganizacionId()))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
         }
         String nombre = nombreDeProveedorUtilizable(extraccion.proveedorNombre());
@@ -289,6 +301,8 @@ public class CompraService {
         return productoRepository
                 .findById(productoId)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 
@@ -299,6 +313,8 @@ public class CompraService {
         return clienteRepository
                 .findById(clienteId)
                 .filter(cliente -> cliente.getDeletedAt() == null)
+                .filter(cliente -> organizacionService.organizacionActual()
+                        .equals(cliente.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
     }
 
@@ -309,6 +325,8 @@ public class CompraService {
         return eventoRepository
                 .findById(eventoId)
                 .filter(evento -> evento.getDeletedAt() == null)
+                .filter(evento -> organizacionService.organizacionActual()
+                        .equals(evento.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Evento no encontrado"));
     }
 
