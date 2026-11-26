@@ -263,6 +263,8 @@ public class FichaService {
         return productoRepository
                 .findById(productoId)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 
@@ -270,6 +272,8 @@ public class FichaService {
         return fichaRepository
                 .findById(id)
                 .filter(ficha -> ficha.getDeletedAt() == null)
+                .filter(ficha -> organizacionService.organizacionActual()
+                        .equals(ficha.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Ficha no encontrada"));
     }
 }

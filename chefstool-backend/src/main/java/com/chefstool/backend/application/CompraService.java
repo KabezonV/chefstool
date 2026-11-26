@@ -116,6 +116,8 @@ public class CompraService {
         Compra compra =
                 compraRepository
                         .findById(id)
+                        .filter(otra -> organizacionService.organizacionActual()
+                                .equals(otra.getOrganizacionId()))
                         .orElseThrow(
                                 () -> new RecursoNoEncontradoException("Compra no encontrada"));
         List<LineaCompraResponse> lineas =
@@ -254,6 +256,7 @@ public class CompraService {
             return proveedorRepository
                     .findById(extraccion.proveedorId())
                     .filter(proveedor -> proveedor.getDeletedAt() == null)
+                    .filter(proveedor -> organizacionId.equals(proveedor.getOrganizacionId()))
                     .orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
         }
         String nombre = nombreDeProveedorUtilizable(extraccion.proveedorNombre());
@@ -298,6 +301,8 @@ public class CompraService {
         return productoRepository
                 .findById(productoId)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 
@@ -308,6 +313,8 @@ public class CompraService {
         return clienteRepository
                 .findById(clienteId)
                 .filter(cliente -> cliente.getDeletedAt() == null)
+                .filter(cliente -> organizacionService.organizacionActual()
+                        .equals(cliente.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
     }
 
@@ -318,6 +325,8 @@ public class CompraService {
         return eventoRepository
                 .findById(eventoId)
                 .filter(evento -> evento.getDeletedAt() == null)
+                .filter(evento -> organizacionService.organizacionActual()
+                        .equals(evento.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Evento no encontrado"));
     }
 

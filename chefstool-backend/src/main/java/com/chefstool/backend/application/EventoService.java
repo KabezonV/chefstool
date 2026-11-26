@@ -93,6 +93,8 @@ public class EventoService {
         return clienteRepository
                 .findById(clienteId)
                 .filter(cliente -> cliente.getDeletedAt() == null)
+                .filter(cliente -> organizacionService.organizacionActual()
+                        .equals(cliente.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
     }
 
@@ -100,6 +102,8 @@ public class EventoService {
         return eventoRepository
                 .findById(id)
                 .filter(evento -> evento.getDeletedAt() == null)
+                .filter(evento -> organizacionService.organizacionActual()
+                        .equals(evento.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Evento no encontrado"));
     }
 }

@@ -3,7 +3,7 @@
 ## Cómo se ejecutan
 
 ```bash
-# Backend: 190 tests (unitarios, integración y seguridad)
+# Backend: 195 tests (unitarios, integración y seguridad)
 cd chefstool-backend && ./mvnw clean test
 
 # Frontend: 76 tests (Vitest + Testing Library)
@@ -190,6 +190,76 @@ Prueba con un albarán de 19 líneas partido en dos fotos (mitad de arriba y mit
 
 En los dos casos el IVA (59,33 €) y el total (652,63 €) cuadran, y la línea de portes entra
 como una línea más. Es la vía para los tickets densos que con una sola foto se quedan cortos.
+
+
+## QA completa (26/11/2026)
+
+Pasada completa sobre la versión del commit `b5356f5` con la app levantada en Docker
+(PostgreSQL + API + web). Cubre regresión automática, recorrido funcional en navegador,
+permisos, aislamiento entre organizaciones, OCR degradado y responsive.
+
+### Resultados
+
+| Ámbito | Comprobaciones | Resultado |
+| --- | --- | --- |
+| Backend (`mvn clean test`) | 195 tests con PostgreSQL real | ✅ 0 fallos |
+| Frontend (`npm test`) | 76 tests | ✅ 0 fallos |
+| Navegador (Playwright) | 7 recorridos | ✅ 0 fallos |
+| Recorrido funcional completo | 16 pasos de un jefe de cocina | ✅ |
+| Permisos y aislamiento (API) | 19 comprobaciones | ✅ 19/19 |
+| OCR con degradaciones | 10 escenarios, importes exactos | ✅ 10/10 |
+| Responsive 320 / 390 / 768 px | 6 pantallas × 3 anchos | ✅ sin desbordes |
+
+Recorrido funcional (navegador, una sola cuenta): registro, alta de proveedor, alta de
+producto, foto de albarán → revisión con 6 líneas, corrección de un importe a mano,
+descarga del original, confirmación de compra, compra visible en el histórico con su PDF,
+ZIP del mes, informes, solicitud de compra, alta de local, auditoría con movimientos,
+estado del correo, ruta 404 amable y cierre de sesión.
+
+Permisos comprobados por API: un miembro crea productos pero no los borra (403), no ve la
+auditoría, no crea locales, no ve el correo y no aprueba su propia solicitud; el
+propietario sí, y una solicitud ya resuelta responde 409.
+
+OCR: limpio, WhatsApp 768 px, sombra fuerte, poca luz, desenfoque, giro de 12°, perspectiva,
+ruido ISO, JPEG calidad 35 y tablet con sombra. En los 10 casos la base, el IVA y el total
+coinciden con el documento (37,80 + 3,78 = 41,58).
+
+### Fallo crítico encontrado y corregido: aislamiento entre organizaciones
+
+Una cuenta de la organización B podía **leer, modificar y borrar** datos de la organización
+A conociendo el identificador. La causa: ocho servicios buscaban por id con `findById` sin
+comprobar a qué organización pertenecía el registro.
+
+Alcance corregido:
+
+| Servicio | Qué se podía hacer desde otra organización |
+| --- | --- |
+| `ProductoService` | Ver el histórico de precios, editar y **borrar** |
+| `ProveedorService` | Editar y borrar |
+| `ClienteService` | Editar y borrar |
+| `EventoService` | Editar y borrar, y enlazar clientes ajenos |
+| `FichaService` | Abrir la ficha y usar productos ajenos |
+| `DocumentoCompraService` | Ver y descargar el albarán, confirmarlo y descartarlo |
+| `CompraService` | Abrir la compra, descargar su PDF y enlazar proveedor/producto/cliente/evento ajenos |
+| `AlertaPrecioService` | Reconocer alertas de otra organización |
+
+Corrección: todas las búsquedas por identificador filtran ahora por la organización activa y
+devuelven **404** (no 403) cuando el registro es de otra, para no revelar que existe. La regla
+queda cubierta por `AislamientoEntreOrganizacionesTest`, que crea dos organizaciones y
+comprueba producto, proveedor, albarán, compra y ZIP.
+
+### Segundo fallo encontrado y corregido
+
+`/documentos` desbordaba 82 px en pantallas de 320 px: el bloque de fechas y el botón ZIP
+que se añadieron no cabían. Ahora ese bloque se reparte en varias líneas y las fechas son más
+estrechas en móvil. Lo vigila `e2e/responsive.spec.js` en 320, 390 y 768 px.
+
+### Lo que esta pasada no puede cubrir
+
+- Albaranes reales de los proveedores de la cocina (solo se simulan degradaciones).
+- Móvil, tablet y cámara físicos; Safari de iPhone e instalación de la PWA.
+- Envío real de correo (sin credenciales SMTP).
+- Concurrencia de varios usuarios a la vez y accesibilidad con lector de pantalla.
 
 ## Pendiente de verificar a mano
 

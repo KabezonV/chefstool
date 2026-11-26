@@ -405,8 +405,12 @@ public class DocumentoCompraService {
     }
 
     private DocumentoCompra buscar(UUID id) {
+        // Un documento de otra organización no existe para quien pregunta: 404, no 403,
+        // para no revelar que existe.
         return documentoRepository
                 .findById(id)
+                .filter(documento -> organizacionService.organizacionActual()
+                        .equals(documento.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Documento no encontrado"));
     }
 

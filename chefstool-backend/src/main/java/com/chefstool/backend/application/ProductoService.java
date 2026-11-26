@@ -50,6 +50,8 @@ public class ProductoService {
                 productoRepository
                         .findById(productoId)
                         .filter(p -> p.getDeletedAt() == null)
+                        .filter(p -> organizacionService.organizacionActual()
+                                .equals(p.getOrganizacionId()))
                         .orElseThrow(
                                 () -> new RecursoNoEncontradoException("Producto no encontrado"));
 
@@ -207,6 +209,8 @@ public class ProductoService {
         return productoRepository
                 .findById(id)
                 .filter(producto -> producto.getDeletedAt() == null)
+                .filter(producto -> organizacionService.organizacionActual()
+                        .equals(producto.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 }

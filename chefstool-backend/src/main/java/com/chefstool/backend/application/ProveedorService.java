@@ -113,6 +113,8 @@ public class ProveedorService {
         return proveedorRepository
                 .findById(id)
                 .filter(proveedor -> proveedor.getDeletedAt() == null)
+                .filter(proveedor -> organizacionService.organizacionActual()
+                        .equals(proveedor.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
     }
 }

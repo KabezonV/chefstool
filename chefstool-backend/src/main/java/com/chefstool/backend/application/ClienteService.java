@@ -101,6 +101,8 @@ public class ClienteService {
         return clienteRepository
                 .findById(id)
                 .filter(cliente -> cliente.getDeletedAt() == null)
+                .filter(cliente -> organizacionService.organizacionActual()
+                        .equals(cliente.getOrganizacionId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
     }
 }

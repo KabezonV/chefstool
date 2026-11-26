@@ -118,11 +118,11 @@ export default function Documentos() {
         <CardHeader>
           <CardTitle>Bandeja de entrada</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
               <Input
                 type="date"
                 aria-label="Albaranes desde"
-                className="h-8 w-36"
+                className="h-8 w-32 sm:w-36"
                 value={periodo.desde}
                 onChange={(event) =>
                   setPeriodo((previo) => ({ ...previo, desde: event.target.value }))
@@ -131,7 +131,7 @@ export default function Documentos() {
               <Input
                 type="date"
                 aria-label="Albaranes hasta"
-                className="h-8 w-36"
+                className="h-8 w-32 sm:w-36"
                 value={periodo.hasta}
                 onChange={(event) =>
                   setPeriodo((previo) => ({ ...previo, hasta: event.target.value }))
